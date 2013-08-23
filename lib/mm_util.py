@@ -46,6 +46,7 @@ SANDBOX_ENDPOINT_SHORT    = "https://test.salesforce.com"
 PRERELEASE_ENDPOINT_SHORT = "https://prerellogin.pre.salesforce.com"
 
 WSDL_PATH = os.path.join(config.base_path,"lib","wsdl") #this can be overridden by client settings or request parameter
+config.logger.debug('WSDL PATH: ',WSDL_PATH)
 
 ENDPOINTS = {
     "production" : PRODUCTION_ENDPOINT,
