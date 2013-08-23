@@ -103,6 +103,10 @@ class MavensMateProject(object):
             self.__set_sfdc_session()
             mm_util.put_password_by_key(self.id, self.password)
             self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
+            
+            if os.path.exists(os.path.join(config.connection.workspace,self.project_name,"metadata.zip")):
+                os.remove(os.path.join(config.connection.workspace,self.project_name,"metadata.zip"))
+
             if action == 'new':
                 return mm_util.generate_success_response("Project Retrieved and Created Successfully")
             else:
