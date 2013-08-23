@@ -192,8 +192,9 @@ class MavensMatePluginConnection(object):
                         os.system("'{0}' --project '{1}'".format(subl_location,os.path.join(self.project.location,self.project.project_name+".sublime-project")))
                     else:
                         subl_location = self.get_plugin_client_setting('mm_subl_location')
-                        os.system("'{0}' --project '{1}'".format(subl_location,os.path.join(self.project.location,self.project.project_name+".sublime-project")))
-
+                        cmd = '"{0}" --project "{1}"'.format(subl_location,os.path.join(self.project.location,self.project.project_name+".sublime-project"))
+                        import subprocess
+                        subprocess.call(cmd)
 
 
             return result
