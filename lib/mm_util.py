@@ -175,7 +175,7 @@ def zip_directory(directory_to_zip, where_to_put_zip_file=None, base64_encode=Tr
         where_to_put_zip_file = get_temp_directory()
     shutil.make_archive(os.path.join(where_to_put_zip_file,'mm'), 'zip', os.path.join(directory_to_zip))
     if base64_encode == True:
-        file_contents = open(os.path.join(where_to_put_zip_file,"mm.zip"), "r").read()
+        file_contents = open(os.path.join(where_to_put_zip_file,"mm.zip"), "rb").read()
         base64_zip = base64.b64encode(file_contents)
         return base64_zip
 
@@ -187,7 +187,7 @@ def extract_base64_encoded_zip(encoded, where_to_extract):
     src.write(data)
     src.close()
     #extract file from disk - z.extractall(where_to_extract) fails with non ascii chars
-    f = zipfile.ZipFile(zip_path, 'r')
+    f = zipfile.ZipFile(zip_path, 'rb')
     for fileinfo in f.infolist():
         path = where_to_extract
         directories = fileinfo.filename.decode('utf8').split('/')
