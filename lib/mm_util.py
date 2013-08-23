@@ -183,7 +183,7 @@ def extract_base64_encoded_zip(encoded, where_to_extract):
     zip_path = os.path.join(where_to_extract,"metadata.zip")
     #write file to disk
     data = base64.b64decode(encoded)
-    src = open(zip_path, "w")
+    src = open(zip_path, "wb")
     src.write(data)
     src.close()
     #extract file from disk - z.extractall(where_to_extract) fails with non ascii chars
