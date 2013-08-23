@@ -199,7 +199,10 @@ def extract_base64_encoded_zip(encoded, where_to_extract):
         outputfile = open(path, "wb")
         shutil.copyfileobj(f.open(fileinfo.filename), outputfile)
     #remove zip file
-    os.remove(where_to_extract+"/metadata.zip")
+    try:
+        os.remove(where_to_extract+"/metadata.zip")
+    except:
+        pass #windows may not like this, so we'll verify the cleanup later
 
 def rename_directory(old_directory_name, new_directory_name):
     os.rename(old_directory_name, new_directory_name)
