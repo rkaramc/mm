@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Written by: David Lanstein ( dlanstein gmail com )
-
+import sys
 import os.path
 import lib.config as config
 import lib.mm_util as mm_util
@@ -83,7 +83,10 @@ class SforceBaseClient(object):
       # check if file exists, else let bubble up to suds as is
       # definitely don't want to assume http or https
       if os.path.isfile(wsdl):
-        wsdl = 'file://' + os.path.abspath(wsdl) #could have trouble here when frozen
+        if 'darwin' in sys.platform or 'linux' in sys.platform:
+          wsdl = 'file://' + os.path.abspath(wsdl) #could have trouble here when frozen
+        else:
+          wsdl = 'file:///' + os.path.abspath(wsdl) #could have trouble here when frozen
     if cacheDuration > 0:
       cache = FileCache()
       cache.setduration(seconds = cacheDuration)
