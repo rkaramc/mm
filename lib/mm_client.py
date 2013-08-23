@@ -413,8 +413,7 @@ class MavensMateClient(object):
         for file_path in files:
             payload = {}
             file_name = file_path.split('.')[0]
-            #file_suffix = file_path.split('.')[-1]
-            file_name = file_name.split('/')[-1]
+            file_name = mm_util.get_file_name_no_extension(file_path)
             metadata_def = mm_util.get_meta_type_by_suffix(file_path.split('.')[-1])
             metadata_type = metadata_def['xmlName']
             if metadata_type == 'ApexPage':
