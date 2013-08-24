@@ -539,16 +539,27 @@ class MavensMateProject(object):
 
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
-                    if '/src/package.xml' not in full_file_path:
-                        os.remove(full_file_path)
+                    if 'win' in sys.platform:
+                        if '\src\package.xml' not in full_file_path:
+                            os.remove(full_file_path)
+                    else:
+                        if '/src/package.xml' not in full_file_path:
+                            os.remove(full_file_path)
 
             #replaces with retrieved metadata
             for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
-                    if '/unpackaged/package.xml' in full_file_path:
-                        continue
-                    destination = full_file_path.replace('/unpackaged/', '/src/')
+                    if 'win' in sys.platform:
+                        if '\unpackaged\package.xml' in full_file_path:
+                            continue
+                    else:
+                        if '/unpackaged/package.xml' in full_file_path:
+                            continue
+                    if 'win' in sys.platform:
+                        destination = full_file_path.replace('\unpackaged\\', '\src\\')
+                    else:
+                        destination = full_file_path.replace('/unpackaged/', '/src/')
                     destination_directory = os.path.dirname(destination)
                     if not os.path.exists(destination_directory):
                         os.makedirs(destination_directory)
@@ -567,6 +578,8 @@ class MavensMateProject(object):
                 os.remove(os.path.join(self.location,"src","package.xml"))
                 shutil.move(os.path.join(self.location,"unpackaged","package.xml"), os.path.join(self.location,"src"))
             shutil.rmtree(os.path.join(self.location,"unpackaged"))
+            if 'win' in sys.platform:
+                os.remove(os.path.join(self.location,"metadata.zip"))
             return mm_util.generate_success_response('Project Cleaned Successfully')
         except Exception, e:
             #TODO: if the clean fails, we need to have a way to ensure the project is returned to its original state
@@ -1784,7 +1797,6 @@ class IndexCall(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        startThread = time.clock()
         for mtype in self.clean_types:
             if mtype == None:
                 self.results.append({})
@@ -1812,7 +1824,6 @@ class IndexCall(threading.Thread):
                     "hasChildTypes" : 'childXmlNames' in mtype
 
                 })
-                elapsed =  (time.clock() - startThread)
             except BaseException, e:
                 #print 'ERROR: %s\n' % str(e)
                 #print self.result
@@ -1841,10 +1852,5 @@ class IndexCall(threading.Thread):
                     "inFolder"      : mtype['inFolder'],
                     "hasChildTypes" : 'childXmlNames' in mtype
                 })
-                elapsed =  (time.clock() - startThread)
                 continue
-
-
-
-
-
+                
