@@ -270,27 +270,27 @@ def put_tmp_directory_on_disk(put_unpackaged_directory=False):
 def put_tmp_file_on_disk(name, body, ext=''):
     tmp_dir = get_temp_directory()
     file_name = '[--SERVER COPY--] '+name
-    f = open("{0}/{1}.{2}".format(tmp_dir, file_name, ext), 'w')
+    f = open("{0}/{1}.{2}".format(tmp_dir, file_name, ext), 'wb')
     f.write(body)
     f.close()
     return "{0}/{1}.{2}".format(tmp_dir, file_name, ext)
 
 def put_file_in_tmp_directory(file_name, body):
     tmp_dir = get_temp_directory()
-    f = open(os.path.join(tmp_dir, file_name), 'w')
+    f = open(os.path.join(tmp_dir, file_name), 'wb')
     f.write(body)
     f.close()
     return os.path.join(tmp_dir, file_name)
 
 def put_package_xml_in_directory(directory, file_contents, isDelete=False):
     file_name = 'package.xml' if isDelete == False else 'destructiveChanges.xml'
-    f = open("{0}/{1}".format(directory, file_name), 'w')
+    f = open("{0}/{1}".format(directory, file_name), 'wb')
     f.write(file_contents)
     f.close()
 
 def put_empty_package_xml_in_directory(directory, file_contents):
     file_name = 'package.xml'
-    f = open("{0}/{1}".format(directory, file_name), 'w')
+    f = open("{0}/{1}".format(directory, file_name), 'wb')
     f.write(file_contents)
     f.close()
 
@@ -389,13 +389,13 @@ def put_skeleton_files_on_disk(metadata_type, api_name, where, apex_class_type='
     file_body = template.render(api_name=api_name,object_name=apex_trigger_object_api_name)
     metadata_type = get_meta_type_by_name(metadata_type)
     os.makedirs("{0}/{1}".format(where, metadata_type['directoryName']))
-    f = open("{0}/{1}/{2}".format(where, metadata_type['directoryName'], api_name+"."+metadata_type['suffix']), 'w')
+    f = open("{0}/{1}/{2}".format(where, metadata_type['directoryName'], api_name+"."+metadata_type['suffix']), 'wb')
     f.write(file_body)
     f.close()
 
     template = env.get_template('meta.html')
     file_body = template.render(api_name=api_name, sfdc_api_version=SFDC_API_VERSION,meta_type=metadata_type['xmlName'])
-    f = open("{0}/{1}/{2}".format(where, metadata_type['directoryName'], api_name+"."+metadata_type['suffix'])+"-meta.xml", 'w')
+    f = open("{0}/{1}/{2}".format(where, metadata_type['directoryName'], api_name+"."+metadata_type['suffix'])+"-meta.xml", 'wb')
     f.write(file_body)
     f.close()
 

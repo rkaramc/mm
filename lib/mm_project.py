@@ -926,7 +926,7 @@ class MavensMateProject(object):
                 'username'      : payload['username'],
                 'environment'   : payload['org_type']
             })
-            src = open(os.path.join(self.location,"config",".org_connections"), 'w')
+            src = open(os.path.join(self.location,"config",".org_connections"), 'wb')
             json_data = json.dumps(org_connections, sort_keys=False, indent=4)
             src.write(json_data)
             src.close()
@@ -954,7 +954,7 @@ class MavensMateProject(object):
             for connection in org_connections:
                 if connection['id'] != payload['id']:
                     updated_org_connections.append(connection)
-            src = open(os.path.join(self.location,"config",".org_connections"), 'w')
+            src = open(os.path.join(self.location,"config",".org_connections"), 'wb')
             json_data = json.dumps(updated_org_connections, sort_keys=False, indent=4)
             src.write(json_data)
             src.close()
