@@ -767,7 +767,10 @@ class MavensMateClient(object):
                                     if os.path.isdir(os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs")) == False:
                                         os.makedirs(os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs"))
                                     ts = time.time()
-                                    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                                    if 'win' in sys.platform:
+                                        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                                    else:
+                                        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
                                     file_name = st+"."+r["ApexLogId"]+".json"
                                     file_path = os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs", file_name)
                                     debug_log_body = self.download_log(r["ApexLogId"])
