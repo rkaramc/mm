@@ -251,7 +251,7 @@ def parse_json(filename):
         return json.loads(content)
 
 def get_temp_directory():
-    if sys.platform == 'linux2':
+    if 'linux' in sys.platform:
         if not os.path.exists(os.path.join(os.path.expanduser('~'),".mm")):
             os.makedirs(os.path.join(os.path.expanduser('~'),".mm"))
         return os.path.join(os.path.expanduser('~'),".mm")
@@ -263,8 +263,8 @@ def put_tmp_directory_on_disk(put_unpackaged_directory=False):
     mm_tmp_directory = os.path.join(tmp_dir,".org.mavens.mavensmate."+get_random_string())
     os.makedirs(mm_tmp_directory)
     if put_unpackaged_directory == True:
-        os.makedirs(mm_tmp_directory+"/unpackaged")
-        return mm_tmp_directory, mm_tmp_directory+"/unpackaged"
+        os.makedirs(os.path.join(mm_tmp_directory,"unpackaged"))
+        return mm_tmp_directory, os.path.join(mm_tmp_directory,"unpackaged")
     return mm_tmp_directory
 
 def put_tmp_file_on_disk(name, body, ext=''):
