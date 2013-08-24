@@ -374,7 +374,10 @@ class MavensMateProject(object):
                 for full_file_path in files:
                     if '/package.xml' in full_file_path:
                         continue
-                    destination = tmp + '/unpackaged/' + full_file_path.split('/src/')[1]
+                    if 'win' in sys.platform: 
+                        destination = os.path.join(tmp,'unpackaged',full_file_path.split('\src\\')[1])
+                    else:
+                        destination = os.path.join(tmp,'unpackaged',full_file_path.split('/src/')[1])
                     destination_directory = os.path.dirname(destination)
                     if not os.path.exists(destination_directory):
                         os.makedirs(destination_directory)
