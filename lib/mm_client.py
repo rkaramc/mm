@@ -489,7 +489,7 @@ class MavensMateClient(object):
         r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
         r.raise_for_status()
         query_result = mm_util.parse_rest_response(r.text)
-        print query_result
+        #print query_result
         try:
             return query_result['records'][0]['Id']
         except:
