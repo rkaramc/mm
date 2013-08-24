@@ -190,7 +190,10 @@ class MavensMateProject(object):
                     if 'package.xml' in filename:
                         continue
                     full_file_path = os.path.join(dirname, filename)
-                    extension = filename.split(".")[-1]
+                    if '-meta.xml' in filename:
+                        extension = filename.replace('-meta.xml','').split(".")[-1]
+                    else:
+                        extension = filename.split(".")[-1]
                     mt = mm_util.get_meta_type_by_suffix(extension)
                     if mt != None: 
                         meta_dir = mt['directoryName']
