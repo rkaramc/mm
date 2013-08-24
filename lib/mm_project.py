@@ -722,7 +722,10 @@ class MavensMateProject(object):
 
         for prop in properties:
             if prop.type != "Package":
-                filename = prop.fileName.split('/')[-1];
+                if 'win' in sys.platform:
+                    filename = prop.fileName.split('\\')[-1];
+                else:
+                    filename = prop.fileName.split('/')[-1];
                 fileprop = {
                     'createdById': prop.createdById,
                     'createdByName': prop.createdByName,
