@@ -507,6 +507,14 @@ class MavensMateProject(object):
         self.__put_settings_file(current_settings)
         return mm_util.generate_success_response('Subscription updated successfully')
 
+    def reset_metadata_container(self):
+        self.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
+        resp = self.sfdc_client.new_metadatacontainer_for_this_user()
+        new_settings = self.settings
+        new_settings['metadata_container'] = resp["id"]
+        self.__put_settings_file(new_settings)
+        return resp["id"]
+
     #reverts a project to the server state based on the existing package.xml
     def clean(self, **kwargs):
         try:
@@ -520,12 +528,7 @@ class MavensMateProject(object):
             
             use_tooling_api = config.connection.get_plugin_client_setting('mm_compile_with_tooling_api', False)
             if use_tooling_api == True and int(float(mm_util.SFDC_API_VERSION)) >= 27:
-                self.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
-                resp = self.sfdc_client.new_metadatacontainer_for_this_user()
-                #{u'errors': [], u'id': u'1dc40000000PBgKAAW', u'success': True}
-                new_settings = self.settings
-                new_settings['metadata_container'] = resp["id"]
-                self.__put_settings_file(new_settings)
+                self.reset_metadata_container()
 
             project_metadata = self.sfdc_client.retrieve(package=self.package)
             mm_util.extract_base64_encoded_zip(project_metadata.zipFile, self.location)

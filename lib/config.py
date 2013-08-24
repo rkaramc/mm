@@ -39,6 +39,7 @@ def __get_is_frozen():
     else:
         return False
 
+request_payload = None
 frozen = __get_is_frozen()
 base_path = __get_base_path()
 connection = None

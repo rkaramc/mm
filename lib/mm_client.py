@@ -433,7 +433,7 @@ class MavensMateClient(object):
             config.logger.debug(payload)
             r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), verify=False)
             response = mm_util.parse_rest_response(r.text)
-    
+            
             #if it's a dup (probably bc we failed to delete before, let's delete and retry)
             if type(response) is list and 'errorCode' in response[0]:
                 if response[0]['errorCode'] == 'DUPLICATE_VALUE':
@@ -451,6 +451,12 @@ class MavensMateClient(object):
                     r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), verify=False)
                     response = mm_util.parse_rest_response(r.text)
                     member_id = response['id']
+                elif response[0]['errorCode'] == 'INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY':
+                    config.connection.project.reset_metadata_container()
+                    config.connection.project.compile_selected_metadata(config.request_payload)
+                    return
+                else:
+                    return mm_util.generate_error_response(response[0]['errorCode'])
             else:
                 member_id = response['id']
 

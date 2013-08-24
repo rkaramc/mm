@@ -12,6 +12,7 @@ from lib.mm_client import MavensMateClient
 from lib.mm_exceptions import MMException
 
 request_payload = util.get_request_payload()
+config.request_payload = request_payload
 #config.logger.debug('\n\n\n>>>>>>>>\nhandling request with payload >>>>>')
 #config.logger.debug(request_payload)
 def main():
