@@ -1367,7 +1367,10 @@ class MavensMateProject(object):
 
                 for r in checkpoint_results['records']:
                     if 'HeapDump' in r and 'className' in r['HeapDump']:
-                        file_name = r["HeapDump"]["heapDumpDate"]+"-"+r["UserId"]+".json"
+                        modstamp = r["HeapDump"]["heapDumpDate"]
+                        if 'win' in sys.platform:
+                            modstamp = modstamp.replace(':', ' ')
+                        file_name = modstamp+"-"+r["UserId"]+".json"
                         file_path = os.path.join(config.connection.workspace,self.project_name,"debug","checkpoints",r['HeapDump']['className'],str(r['Line']),file_name)
                         src = open(file_path, "w")
                         src.write(json.dumps(r,sort_keys=True,indent=4))
@@ -1403,7 +1406,10 @@ class MavensMateProject(object):
                         print e
                 number_of_logs = len(logs)
                 for log in logs:
-                    file_name = log["modstamp"]+"-"+log["userid"]+".json"
+                    modstamp = log["modstamp"]
+                    if 'win' in sys.platform:
+                        modstamp = modstamp.replace(':', ' ')
+                    file_name = modstamp+"-"+log["userid"]+".json"
                     src = open(os.path.join(config.connection.workspace,self.project_name,"debug","logs",file_name), "w")
                     src.write(log["log"])
                     src.close() 
