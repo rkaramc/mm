@@ -246,7 +246,7 @@ class MavensMateProject(object):
                 metadata_hash[val['name']] = [val['members']]
 
         new_package_xml_contents = mm_util.get_package_xml_contents(metadata_hash)
-        existing_package_xml = open(os.path.join(self.location,"src","package.xml"), "wb")
+        existing_package_xml = open(os.path.join(self.location,"src","package.xml"), "w")
         existing_package_xml.write(new_package_xml_contents)
         existing_package_xml.close()
 
@@ -749,7 +749,7 @@ class MavensMateProject(object):
         return apex_file_properties
 
     def write_apex_file_properties(self, json_data):
-        src = open(self.apex_file_properties_path, "wb")
+        src = open(self.apex_file_properties_path, "w")
         json_data = json.dumps(json_data, sort_keys=True, indent=4)
         src.write(json_data)
         src.close()
@@ -1011,7 +1011,7 @@ class MavensMateProject(object):
             #so we simply overwirte .org_metadata with the new index 
             if mtypes == None:
                 file_body = json.dumps(return_list, sort_keys=False, indent=4)
-                src = open(os.path.join(self.location,"config",".org_metadata"), "wb")
+                src = open(os.path.join(self.location,"config",".org_metadata"), "w")
                 src.write(file_body)
                 src.close()
                 return file_body
@@ -1025,7 +1025,7 @@ class MavensMateProject(object):
                             break
 
                 file_body = json.dumps(existing_index, sort_keys=False, indent=4)
-                src = open(os.path.join(self.location,"config",".org_metadata"), "wb")
+                src = open(os.path.join(self.location,"config",".org_metadata"), "w")
                 src.write(file_body)
                 src.close()
                 return file_body
@@ -1369,7 +1369,7 @@ class MavensMateProject(object):
                     if 'HeapDump' in r and 'className' in r['HeapDump']:
                         file_name = r["HeapDump"]["heapDumpDate"]+"|"+r["UserId"]+".json"
                         file_path = os.path.join(config.connection.workspace,self.project_name,"debug","checkpoints",r['HeapDump']['className'],str(r['Line']),file_name)
-                        src = open(file_path, "wb")
+                        src = open(file_path, "w")
                         src.write(json.dumps(r,sort_keys=True,indent=4))
                         src.close() 
             else:
@@ -1404,7 +1404,7 @@ class MavensMateProject(object):
                 number_of_logs = len(logs)
                 for log in logs:
                     file_name = log["modstamp"]+"|"+log["userid"]+".json"
-                    src = open(os.path.join(config.connection.workspace,self.project_name,"debug","logs",file_name), "wb")
+                    src = open(os.path.join(config.connection.workspace,self.project_name,"debug","logs",file_name), "w")
                     src.write(log["log"])
                     src.close() 
             else:
@@ -1556,7 +1556,7 @@ class MavensMateProject(object):
     def __log_anonymous_apex(self, apex_body):
         if not os.path.exists(os.path.join(self.location, "apex-scripts")):
             os.makedirs(os.path.join(self.location, "apex-scripts"))
-        src = open(os.path.join(self.location, "apex-scripts", mm_util.get_timestamp()), "wb")
+        src = open(os.path.join(self.location, "apex-scripts", mm_util.get_timestamp()), "w")
         src.write(apex_body)
         src.close()
 
@@ -1573,7 +1573,7 @@ class MavensMateProject(object):
             }
             if int(float(mm_util.SFDC_API_VERSION)) >= 27:
                 settings['metadata_container'] = self.sfdc_client.get_metadata_container_id()
-        src = open(os.path.join(config.connection.workspace,self.project_name,"config",".settings"), "wb")
+        src = open(os.path.join(config.connection.workspace,self.project_name,"config",".settings"), "w")
         json_data = json.dumps(settings, sort_keys=False, indent=4)
         src.write(json_data)
         src.close()
@@ -1581,7 +1581,7 @@ class MavensMateProject(object):
     #write a file containing the dynamic describe information for the org
     def __put_describe_file(self):
         file_name = ".describe"
-        src = open(os.path.join(config.connection.workspace,self.project_name,"config",file_name), "wb")
+        src = open(os.path.join(config.connection.workspace,self.project_name,"config",file_name), "w")
         describe_result = self.sfdc_client.describeMetadata()
         d = xmltodict.parse(describe_result,postprocessor=mm_util.xmltodict_postprocessor)
         json_data = json.dumps(d["soapenv:Envelope"]["soapenv:Body"]["describeMetadataResponse"]["result"], sort_keys=True, indent=4)
@@ -1591,7 +1591,7 @@ class MavensMateProject(object):
     #write a file containing the dynamic describe information for the org
     def __put_overlays_file(self, overlays):
         file_name = ".overlays"
-        src = open(os.path.join(config.connection.workspace,self.project_name,"config",file_name), "wb")
+        src = open(os.path.join(config.connection.workspace,self.project_name,"config",file_name), "w")
         src.write(overlays)
         src.close()   
 
@@ -1625,7 +1625,7 @@ class MavensMateProject(object):
         project_path = os.path.join(config.connection.workspace,self.project_name)
         if not os.path.exists(os.path.join(project_path, 'config')):
             os.makedirs(os.path.join(project_path, 'config'))
-        src = open(os.path.join(project_path, 'config', '.debug'), "wb")  
+        src = open(os.path.join(project_path, 'config', '.debug'), "w")  
         debug_settings = {
             "users" : [
                 self.sfdc_client.user_id
@@ -1648,7 +1648,7 @@ class MavensMateProject(object):
         if config.connection.plugin_client == 'SUBLIME_TEXT_2' or config.connection.plugin_client == 'SUBLIME_TEXT_3':
             sublime_project_file_path = os.path.join(config.connection.workspace,self.project_name,self.project_name+".sublime-project")
             project_path = os.path.join(config.connection.workspace,self.project_name)
-            src = open(sublime_project_file_path, "wb")
+            src = open(sublime_project_file_path, "w")
             project_file = {
                 "folders" : [
                     { "path": project_path }
@@ -1706,7 +1706,7 @@ class MavensMateProject(object):
                 "endpoint"              : self.sfdc_client.endpoint
             }
             file_body = json.dumps(session)
-            src = open(os.path.join(self.location,"config",".session"), "wb")
+            src = open(os.path.join(self.location,"config",".session"), "w")
             src.write(file_body)
             src.close()
         except:
