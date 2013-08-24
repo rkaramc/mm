@@ -229,7 +229,7 @@ class MavensMatePluginConnection(object):
                     if not os.path.exists(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')):
                         os.makedirs(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate'))
 
-                    src = open(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate','.github.json'), "w")
+                    src = open(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate','.github.json'), "wb")
                     src.write(json.dumps(response, sort_keys=False, indent=4))
                     src.close() 
                     return mm_util.generate_success_response('Connected to GitHub successfully!')

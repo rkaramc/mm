@@ -771,7 +771,7 @@ class MavensMateClient(object):
                                     file_name = st+"."+r["ApexLogId"]+".json"
                                     file_path = os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs", file_name)
                                     debug_log_body = self.download_log(r["ApexLogId"])
-                                    src = open(file_path, "w")
+                                    src = open(file_path, "wb")
                                     src.write(debug_log_body)
                                     src.close() 
 
