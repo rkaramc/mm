@@ -187,7 +187,7 @@ def extract_base64_encoded_zip(encoded, where_to_extract):
     src.write(data)
     src.close()
     #extract file from disk - z.extractall(where_to_extract) fails with non ascii chars
-    f = zipfile.ZipFile(zip_path, 'rb')
+    f = zipfile.ZipFile(zip_path, 'r')
     for fileinfo in f.infolist():
         path = where_to_extract
         directories = fileinfo.filename.decode('utf8').split('/')
