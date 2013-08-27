@@ -377,7 +377,7 @@ class MavensMateProject(object):
                 for full_file_path in files:
                     if '/package.xml' in full_file_path:
                         continue
-                    if 'win' in sys.platform: 
+                    if config.is_windows: 
                         destination = os.path.join(tmp,'unpackaged',full_file_path.split('\src\\')[1])
                     else:
                         destination = os.path.join(tmp,'unpackaged',full_file_path.split('/src/')[1])
@@ -542,7 +542,7 @@ class MavensMateProject(object):
 
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
-                    if 'win' in sys.platform:
+                    if config.is_windows:
                         if '\src\package.xml' not in full_file_path:
                             os.remove(full_file_path)
                     else:
@@ -553,13 +553,13 @@ class MavensMateProject(object):
             for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
-                    if 'win' in sys.platform:
+                    if config.is_windows:
                         if '\unpackaged\package.xml' in full_file_path:
                             continue
                     else:
                         if '/unpackaged/package.xml' in full_file_path:
                             continue
-                    if 'win' in sys.platform:
+                    if config.is_windows:
                         destination = full_file_path.replace('\unpackaged\\', '\src\\')
                     else:
                         destination = full_file_path.replace('/unpackaged/', '/src/')
@@ -581,7 +581,7 @@ class MavensMateProject(object):
                 os.remove(os.path.join(self.location,"src","package.xml"))
                 shutil.move(os.path.join(self.location,"unpackaged","package.xml"), os.path.join(self.location,"src"))
             shutil.rmtree(os.path.join(self.location,"unpackaged"))
-            if 'win' in sys.platform:
+            if config.is_windows:
                 os.remove(os.path.join(self.location,"metadata.zip"))
             return mm_util.generate_success_response('Project Cleaned Successfully')
         except Exception, e:
@@ -741,7 +741,7 @@ class MavensMateProject(object):
 
         for prop in properties:
             if prop.type != "Package":
-                if 'win' in sys.platform:
+                if config.is_windows:
                     filename = prop.fileName.split('\\')[-1];
                 else:
                     filename = prop.fileName.split('/')[-1];
@@ -1384,7 +1384,7 @@ class MavensMateProject(object):
                 for r in checkpoint_results['records']:
                     if 'HeapDump' in r and 'className' in r['HeapDump']:
                         modstamp = r["HeapDump"]["heapDumpDate"]
-                        if 'win' in sys.platform:
+                        if config.is_windows:
                             modstamp = modstamp.replace(':', ' ')
                         file_name = modstamp+"-"+r["UserId"]+".json"
                         file_path = os.path.join(config.connection.workspace,self.project_name,"debug","checkpoints",r['HeapDump']['className'],str(r['Line']),file_name)
@@ -1423,7 +1423,7 @@ class MavensMateProject(object):
                 number_of_logs = len(logs)
                 for log in logs:
                     modstamp = log["modstamp"]
-                    if 'win' in sys.platform:
+                    if config.is_windows:
                         modstamp = modstamp.replace(':', ' ')
                     file_name = modstamp+"-"+log["userid"]+".json"
                     src = open(os.path.join(config.connection.workspace,self.project_name,"debug","logs",file_name), "w")

@@ -38,8 +38,15 @@ def __get_is_frozen():
         return True
     else:
         return False
-
-request_payload = None
 frozen = __get_is_frozen()
 base_path = __get_base_path()
 connection = None
+
+windows_platforms = ["win32","win64","cygwin"]
+linux_platforms = ["linux2"]
+osx_platforms = ["darwin"]
+user_platform = sys.platform
+
+is_windows   = user_platform in windows_platforms
+is_linux     = user_platform in windows_platforms
+is_osx       = user_platform in windows_platforms
