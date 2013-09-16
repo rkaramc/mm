@@ -47,7 +47,7 @@
 						</select>
 					</div>
 					<div class="clearfix" style="margin-top:20px;">
-						<a class="btn btn-success" onclick="updateProjectCreds();">
+						<a class="btn btn-success btn-embossed" onclick="updateProjectCreds();">
 							Update Credentials
 						</a>
 					</div> 												
@@ -75,7 +75,7 @@
 						</select>	
 					</div>
 					<div class="clearfix" style="margin-top:0px;">
-						<a class="btn btn-success" onclick="updateSubscription();">
+						<a class="btn btn-success btn-embossed" onclick="updateSubscription();">
 							Update Subscription
 						</a>
 					</div> 
@@ -100,7 +100,7 @@
 		<div id="metadata" class="tab-pane active">
 			<div class="alert alert-info" id="filter">
 				<input type="text" placeholder="Search for metadata" id="txtFilter" style="width:300px;height:35px;" />
-				<a href="#" class="btn btn-success" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
+				<a href="#" class="btn btn-success btn-embossed" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
 				<a href="#" class="btn btn-select" id="select-btn" ><i class="icon-check-empty"></i></a>
 			</div>
 			<div id="project_wrapper">
@@ -115,8 +115,8 @@
 {% endblock %}  
 
 {% block buttons %}					
-	<input type="button" id="btnSubmit" class="btn btn-info" value="Update Project"  onclick="updateProject();">
-	<button type="reset" class="btn" onclick="window.close();">Cancel</button>
+	<input type="button" id="btnSubmit" class="btn btn-info btn-embossed" value="Update Project"  onclick="updateProject();">
+	<button type="reset" class="btn btn-embossed" onclick="window.close();">Cancel</button>
 {% endblock %}  
 
 {% block body_js %}

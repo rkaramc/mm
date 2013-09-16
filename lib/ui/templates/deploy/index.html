@@ -294,8 +294,8 @@
 			
 			<div class="alert alert-info" id="filter">
 				<input type="text" placeholder="Search for metadata" id="txtFilter" style="width:300px;height:35px;" />
-				<a href="#" class="btn btn-success" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
-				<a href="#" class="btn btn-select" id="select-btn" ><i class="icon-check-empty"></i></a>
+				<a href="#" class="btn btn-success btn-embossed" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
+				<a href="#" class="btn btn-select btn-embossed" id="select-btn" ><i class="icon-check-empty"></i></a>
 			</div>
 
 			<div id="project_wrapper">
@@ -321,7 +321,7 @@
 
 
 {% block buttons %}					
-	<input id="btnDeploy" type="button" class="btn btn-info" value="Deploy to Server" onclick='deploy()'>
+	<input id="btnDeploy" type="button" class="btn btn-info btn-embossed" value="Deploy to Server" onclick='deploy()'>
 	{% include 'snippets/cancel_button.html' %}
 	{% include 'snippets/running_indicator.html' %}
 {% endblock %}
