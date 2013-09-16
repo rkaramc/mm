@@ -353,8 +353,13 @@ class MavensMateProject(object):
                 container_id = self.settings['metadata_container']
             
             file_ext = files[0].split('.')[-1]
-
-            result = self.sfdc_client.compile_with_tooling_api(files, container_id)
+            try:
+                result = self.sfdc_client.compile_with_tooling_api(files, container_id)
+            except MetadataContainerException:
+                self.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
+                self.sfdc_client.new_metadatacontainer_for_this_user()
+                self.compile_selected_metadata(params)
+            
             if 'Id' in result and 'State' in result:
                 return mm_util.generate_response(result)
 
