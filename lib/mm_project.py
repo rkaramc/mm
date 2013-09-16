@@ -388,7 +388,7 @@ class MavensMateProject(object):
                 os.makedirs(os.path.join(tmp,"unpackaged"))
                 #copy files from project directory to tmp
                 for full_file_path in files:
-                    if '/package.xml' in full_file_path:
+                    if 'package.xml' in full_file_path:
                         continue
                     if config.is_windows: 
                         destination = os.path.join(tmp,'unpackaged',full_file_path.split('\src\\')[1])
