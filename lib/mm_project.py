@@ -10,6 +10,7 @@ import shutil
 import xmltodict
 import threading
 import time
+import datetime
 import collections
 import webbrowser
 import tempfile
@@ -918,9 +919,22 @@ class MavensMateProject(object):
     #deploys metadata to one or more orgs
     def deploy_to_server(self, params):
         try:
+            archive_deployments = config.connection.get_plugin_client_setting("mm_archive_deployments", True)
             deploy_metadata = self.sfdc_client.retrieve(package=params['package'])
             threads = []
             for destination in params['destinations']:
+                if archive_deployments:
+                    deploy_path = os.path.join(self.location,"deploy",destination['username'])
+                    if not os.path.exists(deploy_path):
+                        os.makedirs(deploy_path)
+                    ts = time.time()
+                    if not config.is_windows:
+                        timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
+                    os.makedirs(os.path.join(self.location,"deploy",destination['username'],timestamp))
+                    mm_util.extract_base64_encoded_zip(deploy_metadata.zipFile, os.path.join(self.location,"deploy",destination['username'],timestamp))
+
                 thread = DeploymentHandler(self, destination, params, deploy_metadata)
                 threads.append(thread)
                 thread.start()  
