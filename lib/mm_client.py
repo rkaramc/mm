@@ -11,6 +11,7 @@ import datetime
 from operator import itemgetter
 sys.path.append('../')
 
+from mm_exceptions import *
 from sforce.base import SforceBaseClient
 from suds import WebFault
 from sforce.partner import SforcePartnerClient
@@ -248,11 +249,12 @@ class MavensMateClient(object):
             if has_children_metadata == True and len(list_response) > 0: #metadata objects like customobject, workflow, etc.
                 request_names = []
                 for element in list_response:
-                    request_names.append(element['fullName'])
+                    if element['fullName'] != 'PersonAccount':
+                        request_names.append(element['fullName'])
                 retrieve_result = self.retrieve(package={
                     metadata_request_type : request_names
                 })
-                #print retrieve_result
+                #print '>>>> ',retrieve_result
                 tmp = mm_util.put_tmp_directory_on_disk()
                 mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, tmp)
 
@@ -264,16 +266,17 @@ class MavensMateClient(object):
                         data = mm_util.parse_xml_from_file(full_file_path)
                         c_hash = {}
                         for child_type in metadata_type_def['childXmlNames']:
-                            #print 'processing child type >>>>> ', child_type
                             child_type_def = mm_util.get_meta_type_by_name(child_type)
                             if child_type_def == None: #TODO handle newer child types
                                 continue
                             tag_name = child_type_def['tagName']
                             items = []
                             try:
-                                for i, val in enumerate(data['CustomObject'][tag_name]):
-                                    #print val['fullName']
-                                    items.append(val['fullName'])
+                                if tag_name in data[metadata_request_type]:
+                                    if type(data[metadata_request_type][tag_name]) is not list:
+                                        data[metadata_request_type][tag_name] = [data[metadata_request_type][tag_name]]
+                                    for i, val in enumerate(data[metadata_request_type][tag_name]):
+                                        items.append(val['fullName'])
                             except BaseException, e:
                                 #print 'exception >>>> ', e.message
                                 pass
@@ -284,7 +287,7 @@ class MavensMateClient(object):
                         object_hash[base_name] = c_hash
 
                 shutil.rmtree(tmp)
-
+            #print '>>> ',object_hash
             return_elements = []
             for element in list_response:
                 if config.connection.get_plugin_client_setting('mm_ignore_managed_metadata') == True:
@@ -373,7 +376,7 @@ class MavensMateClient(object):
                 if metadata_type_def['xmlName'] == 'Workflow':
                     is_leaf = True
                     cls = ''
-
+                #print '>>> ',element
                 return_elements.append({
                     "text"      : element['fullName'],
                     "isFolder"  : is_folder_metadata or has_children_metadata,
@@ -426,9 +429,9 @@ class MavensMateClient(object):
                 tooling_type = 'ApexTriggerMember'
 
             #create/submit "member"
-            payload['MetadataContainerId'] = container_id
-            payload['ContentEntityId'] = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
-            payload['Body'] = open(file_path, 'r').read()
+            payload['MetadataContainerId']  = container_id
+            payload['ContentEntityId']      = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
+            payload['Body']                 = open(file_path, 'r').read()
             payload = json.dumps(payload)
             config.logger.debug(payload)
             r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), verify=False)
@@ -451,10 +454,8 @@ class MavensMateClient(object):
                     r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), verify=False)
                     response = mm_util.parse_rest_response(r.text)
                     member_id = response['id']
-                elif response[0]['errorCode'] == 'INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY':
-                    config.connection.project.reset_metadata_container()
-                    config.connection.project.compile_selected_metadata(config.request_payload)
-                    return
+                elif response[0]['errorCode'] == 'INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY' or response[0]['errorCode'] == 'MALFORMED_ID':
+                    raise MetadataContainerException('Invalid metadata container')
                 else:
                     return mm_util.generate_error_response(response[0]['errorCode'])
             else:
@@ -773,7 +774,7 @@ class MavensMateClient(object):
                                     if os.path.isdir(os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs")) == False:
                                         os.makedirs(os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs"))
                                     ts = time.time()
-                                    if 'win' in sys.platform:
+                                    if not config.is_windows:
                                         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
                                     else:
                                         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
@@ -817,12 +818,15 @@ class MavensMateClient(object):
 
     def tooling_query(self, soql):
         r = requests.get(self.get_tooling_url()+"/query/", params={'q':soql}, headers=self.get_rest_headers(), verify=False)
-        #print r.text.encode('utf-8').strip()
+        if r.status_code != 200:
+            _exception_handler(r)
         r.raise_for_status()
         return r.json()
 
     def query(self, soql):
         r = requests.get(self.get_base_url()+"/query/", params={'q':soql}, headers=self.get_rest_headers(), verify=False)
+        if r.status_code != 200:
+            _exception_handler(r)
         r.raise_for_status()
         return r.json()
 
@@ -907,4 +911,34 @@ class MavensMateClient(object):
             metadata_server_url=self.metadata_server_url, 
             server_url=self.endpoint)
 
+    def _exception_handler(result, name=""):
+        url = result.url
+        try:
+            response_content = result.json()
+        except Exception:
+            response_content = result.text
 
+        if result.status_code == 300:
+            message = "More than one record for {url}. Response content: {content}"
+            message = message.format(url=url, content=response_content)
+            raise SalesforceMoreThanOneRecord(message)
+        elif result.status_code == 400:
+            message = "Malformed request {url}. Response content: {content}"
+            message = message.format(url=url, content=response_content)
+            raise SalesforceMalformedRequest(message)
+        elif result.status_code == 401:
+            message = "Expired session for {url}. Response content: {content}"
+            message = message.format(url=url, content=response_content)
+            raise SalesforceExpiredSession(message)
+        elif result.status_code == 403:
+            message = "Request refused for {url}. Resonse content: {content}"
+            message = message.format(url=url, content=response_content)
+            raise SalesforceRefusedRequest(message)
+        elif result.status_code == 404:
+            message = 'Resource {name} Not Found. Response content: {content}'
+            message = message.format(name=name, content=response_content)
+            raise SalesforceResourceNotFound(message)
+        else:
+            message = 'Error Code {status}. Response content: {content}'
+            message = message.format(status=result.status_code, content=response_content)
+            raise SalesforceGeneralError(message)
