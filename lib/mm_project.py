@@ -689,14 +689,17 @@ class MavensMateProject(object):
             for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
-                    if '/unpackaged/package.xml' in full_file_path:
+                    if '/unpackaged/package.xml' in full_file_path or '\\unpackaged\\package.xml' in full_file_path:
                         continue
                     destination = full_file_path.replace('/unpackaged/', '/src/')
+                    destination = full_file_path.replace('\\unpackaged\\', '\\src\\')
                     destination_directory = os.path.dirname(destination)
                     if not os.path.exists(destination_directory):
                         os.makedirs(destination_directory)
                     shutil.move(full_file_path, destination)
             shutil.rmtree(os.path.join(self.location,"unpackaged"))
+            if os.path.exists(os.path.join(self.location,"metadata.zip")):
+                os.remove(os.path.join(self.location,"metadata.zip"))
             return mm_util.generate_success_response("Refresh Completed Successfully")
         except Exception, e:
             return mm_util.generate_error_response(e.message)
