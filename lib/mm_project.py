@@ -1647,26 +1647,31 @@ class MavensMateProject(object):
         self.__put_describe_file()
         self.__put_debug_file()
 
-    def __put_debug_file(self):
+    def update_debug_settings(self, payload):
+        users       = payload.get('users', None)
+        levels      = payload.get('debug_categories', None)
+        expiration  = payload.get('expiration', None)
+        self.__put_debug_file(users, levels, expiration)
+        return mm_util.generate_success_response("Debug settings updated successfully")
+
+    def __put_debug_file(self, users=None, levels=None, expiration=60):
         project_path = os.path.join(config.connection.workspace,self.project_name)
         if not os.path.exists(os.path.join(project_path, 'config')):
             os.makedirs(os.path.join(project_path, 'config'))
         src = open(os.path.join(project_path, 'config', '.debug'), "w")  
-        debug_settings = {
-            "users" : [
-                self.sfdc_client.user_id
-            ],
-            "levels" : {
-                "Database"      : "INFO",
-                "System"        : "INFO",
-                "Visualforce"   : "DEBUG",
-                "Workflow"      : "INFO",
-                "Validation"    : "INFO",
-                "Callout"       : "INFO",
-                "ApexCode"      : "DEBUG"
-            },
-            "expiration" : 60
-        } 
+        debug_settings = {}
+        default_levels = {
+            "Database"      : "INFO",
+            "System"        : "DEBUG",
+            "Visualforce"   : "DEBUG",
+            "Workflow"      : "INFO",
+            "Validation"    : "INFO",
+            "Callout"       : "INFO",
+            "ApexCode"      : "DEBUG"
+        }
+        debug_settings["users"]       = users or [self.sfdc_client.user_id]
+        debug_settings["levels"]      = levels or default_levels
+        debug_settings["expiration"]  = expiration
         src.write(json.dumps(debug_settings, sort_keys=False, indent=4))
         src.close()
 
