@@ -19,7 +19,7 @@ class MavensMatePluginConnection(object):
     
     def __init__(self, params={}, **kwargs):
         config.connection = self
-        params = dict(params.items() + kwargs.items())
+        params = dict(params.items() + kwargs.items()) #join params and kwargs
         self.operation              = params.get('operation', None)
         self.platform               = sys.platform
         self.plugin_client          = params.get('client', 'SUBLIME_TEXT_3') #=> "Sublime Text", "Notepad++", "TextMate"
@@ -173,7 +173,7 @@ class MavensMatePluginConnection(object):
                 self.project = MavensMateProject(params)
                 result = self.project.retrieve_and_write_to_disk('existing')
 
-            if json.loads(result)['success'] == True:
+            if json.loads(result)['success'] == True and self.get_plugin_client_setting('mm_open_project_on_create', True):
                 #opens project based on the client
                 client_location = self.get_plugin_client_setting('mm_plugin_client_location')
                 if client_location == None:
