@@ -15,6 +15,7 @@ import webbrowser
 import tempfile
 import subprocess
 import crawlJson
+from health_check import HealthCheck
 
 from xml.dom import minidom
 from mm_exceptions import MMException
@@ -296,6 +297,9 @@ class MavensMateProject(object):
             except:
                 pass
             return mm_util.generate_error_response(e.message)
+
+    def run_health_check(self):
+        return HealthCheck(self.location).run()
 
     #compiles metadata
     def compile_selected_metadata(self, params):        

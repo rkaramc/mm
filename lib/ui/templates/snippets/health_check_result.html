@@ -1,0 +1,50 @@
+<h6>Apex</h6>
+<table class="table table-striped">
+  {% for key, value in result['apex_statistics'].iteritems() %}
+  <tr>
+      <td>
+        <a href="javascript:void(0)" class="match-label">{{ value["label"] }}</a>
+        <div class="matches">
+          {% for result in value['results'] %}
+            <div class="match">
+              <div class="match-file-name">
+                <span><i class="icon-file"></i>&nbsp;&nbsp;{{ result['file_name'] }}</span>
+              </div>
+              <div class="match-body">
+                {% for match in result['matches'] %}
+                  <div class="match-item">
+                    {% if match is mapping and "lineNumber" in match %}
+                      <pre class="prettyprint mvl linenums:{{match['lineNumber']}}">
+                    {% else %}
+                      <pre class="prettyprint mvl">
+                    {% endif %}
+                    {% if match is mapping and "statement" in match %}
+                      {% if match["statement"] is mapping and "line_contents" in match %}
+                        {{ htmlize(match["line_contents"]) }}
+                      {% else %}
+                        {{ htmlize(match["statement"]) }}
+                      {% endif %}
+                    {% else %}
+                      {{ match}}
+                    {% endif %}
+                    </pre>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </td>
+
+      {% if value['count'] > 10 %}
+        {% set label_class = " label-important"  %}
+      {% elif value['count'] > 0 %}
+        {% set label_class = " label-warning"  %}
+      {% else %}
+        {% set label_class = " label-success"  %}
+      {% endif %}
+
+      <td><span class="nav-label label {{ label_class }}">{{ value["count"] }}</span></td>
+  </tr>
+  {% endfor %}
+</table>

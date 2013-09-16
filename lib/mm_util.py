@@ -478,6 +478,7 @@ def generate_ui(operation,params={}):
             project_location=config.connection.project.location,
             connections=config.connection.project.get_org_connections(False),
             operation=operation,
+            packages=config.connection.project.get_deployment_names(),
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'execute_apex':
         template = env.get_template('/execute_apex/index.html')
@@ -509,11 +510,20 @@ def generate_ui(operation,params={}):
         file_body = template.render(
             base_path=config.base_path,
             client=config.connection.plugin_client).encode('UTF-8')
+    elif operation == 'project_health_check':
+        template = env.get_template('/project/health_check.html')
+        file_body = template.render(
+            base_path=config.base_path,
+            client=config.connection.plugin_client,
+            name=config.connection.project.project_name
+            ).encode('UTF-8')
+    else:
+        raise MMException('Unsupported UI Command')
     temp.write(file_body)
     temp.close()
     return temp.name
 
-def generate_html_response(operation, obj, params):
+def generate_html_response(operation, obj, params=None):
     template_path = config.base_path + "/lib/ui/templates"
     env = Environment(loader=FileSystemLoader(template_path),trim_blocks=True,extensions=['jinja2.ext.loopcontrols', jinja2htmlcompress.HTMLCompress])
     env.globals['get_file_lines'] = get_file_lines
@@ -543,6 +553,9 @@ def generate_html_response(operation, obj, params):
         config.logger.debug(obj)
         config.logger.debug(deploy_results)
         html = template.render(deploy_results=deploy_results,args=params)
+    elif operation == 'project_health_check':
+        template = env.get_template('/snippets/health_check_result.html')
+        html = template.render(result=obj)
     return html
 
 def play_sounds():
