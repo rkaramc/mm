@@ -45,6 +45,14 @@
 		width:300px;
 	}
 
+	#package-selector div.btn-group.select.select-block.mbl.info {
+		margin-bottom:12px;
+	}
+
+	div#filter {
+		margin-bottom:12px;
+	}
+
 </style>
 <div id="result_output">
 	
@@ -113,7 +121,7 @@
 						</div>
 						<div class="span4">
 							<label class="checkbox" for="rollback">
-							  <input type="checkbox" value="" id="rollback" data-toggle="checkbox">
+							  <input type="checkbox" checked="checked" value="" id="rollback" data-toggle="checkbox">
 							  Rollback on Error
 							</label>
 						</div>
@@ -260,7 +268,7 @@
 	      						</select>
 	      					</div>
 
-	      					<a id="btnSubmit" class="btn btn-success" onclick="newConnection()">Create Connection <i class="icon-circle-arrow-right"></i></a>
+	      					<a id="btnSubmit" class="btn btn-success btn-embossed" onclick="newConnection()">Create Connection <i class="icon-circle-arrow-right"></i></a>
 	      									
 	      				</fieldset>
 	      			</form>
@@ -291,7 +299,13 @@
 		</div>
 
 		<div id="metadata" class="tab-pane">
-			
+			<div class="" id="package-selector">
+				<select id="package" class="select-block mbl info" data-size="12">
+					{% for p in packages %}
+						<option value="{{p}}">{{p}}</option>
+					{% endfor %}
+				</select>
+			</div>
 			<div class="alert alert-info" id="filter">
 				<input type="text" placeholder="Search for metadata" id="txtFilter" style="width:300px;height:35px;" />
 				<a href="#" class="btn btn-success btn-embossed" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
@@ -369,15 +383,15 @@
 
 		$(window).resize(function() {
 			resize_arcade()
-			resizeProjectWrapper()
+			resizeProjectWrapper(136)
 		});
 
 		//render tree when tab is clicked, otherwise there's an extjs and it doesnt render
 		$('a[data-toggle="tab"]').on('shown', function (e) {
 			if (e.target.href.indexOf("metadata") != -1) {
 				if (tree === undefined) {
-					renderTree()
-					setTimeout(resizeProjectWrapper(),500)
+					renderTree(136)
+					setTimeout(resizeProjectWrapper(136),500)
 					resizeFilter()
 				}
 			}
@@ -418,7 +432,7 @@
 		resize_games()
 		window.resizeTo(900, 720)
 		centerWindow()
-		setTimeout(resizeProjectWrapper(),500)
+		setTimeout(resizeProjectWrapper(136),500)
 	});
 
 	function repopulate_connection_list(conns) {
@@ -504,12 +518,12 @@
 				show_message(response["body"])
 			} else {
 				if (tree === undefined) {
-					renderTree()  
+					renderTree(136)  
 				} else {
 					$("#tree").dynatree("getTree").reload();
 				}
 			}
-			resizeProjectWrapper();
+			resizeProjectWrapper(136);
 			notify_sound();
 			hideLoading();
 		}

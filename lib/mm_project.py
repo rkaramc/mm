@@ -987,6 +987,28 @@ class MavensMateProject(object):
         except:
             return []
 
+    #returns a list of all org connections for this project
+    def get_deployment_names(self):
+        package_names = ["package.xml"]
+        try:
+            if not os.path.exists(os.path.join(self.location,"deploy")):
+                return package_names
+            else:
+                for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"deploy")):
+                    for filename in filenames:
+                        if filename == "package.xml":
+                            full_file_path = os.path.join(dirname, filename)
+                            if "linux" in sys.platform or "darwin" in sys.platform:
+                                directory_parts = full_file_path.split("/");
+                            else:
+                                directory_parts = full_file_path.split("\\");
+                            directory_parts.remove("package.xml")
+                            directory_parts.remove("unpackaged")
+                            package_names.append(" | ".join(directory_parts[-2:]))
+        except:
+            return package_names
+        return package_names
+
     #delete a specific org connection
     def delete_org_connection(self, payload):  
         try:
@@ -1077,7 +1099,7 @@ class MavensMateProject(object):
 
             return mm_util.generate_error_response(e.message)
 
-    def __select_metadata_based_on_package_xml(self, return_list):
+    def __select_metadata_based_on_package_xml(self, return_list, package_name="package.xml"):
         #process package and select only the items the package has specified
         package_types = self.get_package_types();
         #expand standard "custombjects" to customfields
@@ -1516,7 +1538,7 @@ class MavensMateProject(object):
         om = self.get_org_metadata(False, False, payload.get("ids", []), payload.get("keyword", None))
         return json.dumps(om)
 
-    def get_org_metadata(self, raw=False, selectBasedOnPackageXml=False, selectedIds=[], keyword=None):
+    def get_org_metadata(self, raw=False, selectBasedOnPackageXml=False, selectedIds=[], keyword=None, **kwargs):
         if self.get_is_metadata_indexed():
             if raw:
                 org_metadata_raw = mm_util.get_file_as_string(os.path.join(self.location,"config",".org_metadata"))
