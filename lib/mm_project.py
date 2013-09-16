@@ -355,11 +355,12 @@ class MavensMateProject(object):
             file_ext = files[0].split('.')[-1]
             try:
                 result = self.sfdc_client.compile_with_tooling_api(files, container_id)
-            except MetadataContainerException:
+            except MetadataContainerException as e:
                 self.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
-                self.sfdc_client.new_metadatacontainer_for_this_user()
-                self.compile_selected_metadata(params)
-            
+                response = self.sfdc_client.new_metadatacontainer_for_this_user()
+                self.__update_setting("metadata_container",response["id"])
+                return self.compile_selected_metadata(params)
+
             if 'Id' in result and 'State' in result:
                 return mm_util.generate_response(result)
 
@@ -1612,7 +1613,10 @@ class MavensMateProject(object):
             password = mm_util.get_password_by_key(id)
         else:
             password = mm_util.get_password_by_project_name(project_name)
-  
+        
+        if password == None:
+            raise MMException("Unable to retrieve password from the keychain store.")
+
         creds = { }
         creds['username'] = username
         creds['password'] = password
@@ -1633,6 +1637,10 @@ class MavensMateProject(object):
         src = open(os.path.join(self.location, "apex-scripts", mm_util.get_timestamp()), "w")
         src.write(apex_body)
         src.close()
+
+    def __update_setting(self, setting, value):
+        self.settings[setting] = value
+        self.__put_settings_file(self.settings)
 
     #write a file containing the MavensMate settings for the project
     def __put_settings_file(self, settings=None):
