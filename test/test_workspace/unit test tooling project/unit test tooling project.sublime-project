@@ -1,0 +1,27 @@
+{
+    "folders": [
+        {
+            "path": "/Users/josephferraro/Development/GitHub/mm/test/test_workspace/unit test tooling project"
+        }
+    ], 
+    "settings": {
+        "auto_complete_triggers": [
+            {
+                "characters": ".", 
+                "selector": "source"
+            }, 
+            {
+                "characters": ":", 
+                "selector": "text.html"
+            }, 
+            {
+                "characters": "<", 
+                "selector": "text.html"
+            }, 
+            {
+                "characters": " ", 
+                "selector": "text.html"
+            }
+        ]
+    }
+}

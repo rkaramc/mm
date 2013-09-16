@@ -1,0 +1,15 @@
+{
+    "levels": {
+        "Database": "FINE", 
+        "Callout": "FINE", 
+        "System": "FINE", 
+        "ApexCode": "FINE", 
+        "Workflow": "FINE", 
+        "Validation": "FINE", 
+        "Visualforce": "FINE"
+    }, 
+    "users": [
+        "005d0000000xxzsAAA"
+    ], 
+    "expiration": 120
+}

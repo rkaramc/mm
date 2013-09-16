@@ -1,0 +1,17 @@
+{
+    "username": "mm@force.com", 
+    "project_name": "unit test tooling project", 
+    "namespace": "", 
+    "metadata_container": "1dcd0000000CfisAAC", 
+    "environment": "developer", 
+    "id": "EITYW7Z5T8DNUP80TZ8N34FIQF2366DN", 
+    "subscription": [
+        "ApexClass", 
+        "ApexComponent", 
+        "ApexPage", 
+        "ApexTrigger", 
+        "StaticResource", 
+        "CustomObject", 
+        "Profile"
+    ]
+}
