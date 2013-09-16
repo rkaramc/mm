@@ -1683,19 +1683,19 @@ class MavensMateProject(object):
                     "auto_complete_triggers" :
                     [
                         {
-                            "selector": "source",
+                            "selector": "source - comment",
                             "characters": "."
                         },
                         {
-                            "selector": "text.html", 
+                            "selector": "text.html - comment", 
                             "characters": ":"
                         },
                         {
-                            "selector": "text.html", 
+                            "selector": "text.html - comment", 
                             "characters": "<"
                         },
                         {
-                            "selector": "text.html", 
+                            "selector": "text.html - comment", 
                             "characters": " "
                         }
                     ]
