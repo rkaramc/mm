@@ -19,6 +19,8 @@ from health_check import HealthCheck
 
 from xml.dom import minidom
 from mm_exceptions import MMException
+from mm_exceptions import MetadataContainerException
+from mm_exceptions import MMRequestException
 from operator import itemgetter
 from mm_client import MavensMateClient
 sys.path.append('../')
@@ -1332,6 +1334,11 @@ class MavensMateProject(object):
                     "Workflow"          : ""
                 }
             '''
+            if 'type' not in payload:
+                raise MMRequestException("Please include the type of log, 'user' or 'apex'")
+            if 'debug_categories' not in payload:
+                raise MMRequestException("Please include debug categories in dictionary format: e.g.: {'ApexCode':'DEBUG', 'Visualforce':'INFO'}")
+
             request = {}
             if payload['type'] == 'user':
                 request['ScopeId'] = None
