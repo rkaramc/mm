@@ -415,7 +415,7 @@ def generate_ui(operation,params={}):
     env.globals['client_subscription_list'] = client_subscription_list
     env.globals['base_local_server_url']    = base_local_server_url
     env.globals['operation']                = operation
-    temp = tempfile.NamedTemporaryFile(delete=False, prefix="mm")
+    temp = tempfile.NamedTemporaryFile(delete=False, prefix="mm", suffix=".html")
     if operation == 'new_project':
         template = env.get_template('/project/new.html')
         file_body = template.render(user_action='new',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
@@ -611,7 +611,12 @@ def htmlize(seed):
 def launch_ui(tmp_html_file_location):
     use_browser_as_ui = config.connection.get_plugin_client_setting('mm_use_browser_as_ui', False)
     if use_browser_as_ui or sys.platform != 'darwin':
-        webbrowser.open_new("{0}{1}".format("file:///",tmp_html_file_location))
+        if 'linux' in sys.platform:
+            webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+        elif 'darwin' in sys.platform:
+            webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+        else: 
+            webbrowser.get('windows-default').open("{0}{1}".format("file:///",tmp_html_file_location))
     else:
         os.system("open -n '"+config.base_path+"/bin/MavensMateWindowServer.app' --args -url '"+tmp_html_file_location+"'")
     #threading.Thread(target=remove_tmp_html_file, args=(tmp_html_file_location,)).start()
