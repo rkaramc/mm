@@ -556,7 +556,7 @@ class MavensMateProject(object):
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
                     if config.is_windows:
-                        if '\src\package.xml' not in full_file_path:
+                        if '\\src\\package.xml' not in full_file_path:
                             os.remove(full_file_path)
                     else:
                         if '/src/package.xml' not in full_file_path:
@@ -567,13 +567,13 @@ class MavensMateProject(object):
                 for filename in filenames:
                     full_file_path = os.path.join(dirname, filename)
                     if config.is_windows:
-                        if '\unpackaged\package.xml' in full_file_path:
+                        if '\\unpackaged\\package.xml' in full_file_path:
                             continue
                     else:
                         if '/unpackaged/package.xml' in full_file_path:
                             continue
                     if config.is_windows:
-                        destination = full_file_path.replace('\unpackaged\\', '\src\\')
+                        destination = full_file_path.replace('\\unpackaged\\', '\\src\\')
                     else:
                         destination = full_file_path.replace('/unpackaged/', '/src/')
                     destination_directory = os.path.dirname(destination)
