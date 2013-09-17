@@ -27,6 +27,7 @@ class HealthCheck(object):
         self.soql_no_where_clause       = None
         self.action_poller              = None
         self.multiple_form              = None
+        self.see_all_data               = None
         self.without_sharing_count      = 0
         self.dml_for_loop_count         = 0
         self.soql_for_loop_count        = 0
@@ -35,6 +36,7 @@ class HealthCheck(object):
         self.no_where_clause_count      = 0
         self.action_poller_count        = 0
         self.multiple_form_count        = 0
+        self.see_all_data_count         = 0
         self.apex_files_to_check        = []
         self.vf_files_to_check          = []
         self.parser_results             = {}
@@ -67,6 +69,11 @@ class HealthCheck(object):
                     "count"     : 0,
                     "results"   : []
                 },
+                "see_all_data_annotations" : {
+                    "label"     : "Apex Classes using (seeAllData=true) annotation",
+                    "count"     : 0,
+                    "results"   : []
+                }
             }
             ,
             "visualforce_statistics" : {
@@ -77,6 +84,11 @@ class HealthCheck(object):
                 },
                 "multiple_form" : {
                     "label"     : "Visualforce Pages with multiple forms",
+                    "count"     : 0,
+                    "results"   : []
+                },
+                "hardcoded_url" : {
+                    "label"     : "Visualforce Pages with hardcoded URLs",
                     "count"     : 0,
                     "results"   : []
                 }
@@ -133,12 +145,59 @@ class HealthCheck(object):
             
             #print parser_result
             if "forLoops" not in parser_result:
-                print file_name
+                #print file_name
                 continue
 
             for_loops       = parser_result["forLoops"]
             dml_statements  = parser_result["dmlStatements"]
             queries         = parser_result["queries"]
+            methods         = parser_result["methods"]
+            classes         = parser_result["classes"]
+
+            #seealldata
+            see_all_data_matches     = []
+            for m in methods:
+                if "annotations" in m and len(m["annotations"]) > 0:
+                    for a in m["annotations"]:
+                        if "pairs" in a:
+                            for p in a["pairs"]:
+                                if p["name"].lower() == "seealldata" and p["value"]["value"] == True:
+                                    
+                                    line_contents = ""
+                                    for lnum in range(p["beginLine"], p["beginLine"]+2):
+                                        line_contents += print_file_line(file_name, lnum)
+                                    
+                                    m["lineNumber"]       = p["beginLine"]
+                                    m["line_contents"]    = line_contents
+
+                                    see_all_data_matches.append(m)  
+
+            for c in classes:
+                if "annotations" in c and len(c["annotations"]) > 0:
+                    for a in c["annotations"]:
+                        if "pairs" in a:
+                            for p in a["pairs"]:
+                                if p["name"].lower() == "seealldata" and p["value"]["value"] == True:
+                                    
+                                    line_contents = ""
+                                    for lnum in range(p["beginLine"], p["beginLine"]+2):
+                                        line_contents += print_file_line(file_name, lnum)
+                                    
+                                    c["lineNumber"]       = p["beginLine"]
+                                    c["line_contents"]    = line_contents
+
+                                    see_all_data_matches.append(c)  
+                        
+
+            if len(see_all_data_matches) > 0:
+                    self.result["apex_statistics"]["see_all_data_annotations"]["results"].append(
+                        {
+                            "file_name" : base_name,
+                            "flagged"   : len(see_all_data_matches) > 0,
+                            "matches"   : see_all_data_matches   
+                        }
+                    )
+                    self.see_all_data_count += len(see_all_data_matches)
 
             #SOQL WITHOUT WHERE CLAUSES
             no_where_clause_matches     = []
@@ -219,14 +278,15 @@ class HealthCheck(object):
                     self.soql_for_loop_count += len(query_matches)
 
 
-        self.result["apex_statistics"]["without_sharing"]["count"]         = self.without_sharing_count
-        self.result["apex_statistics"]["dml_for_loop"]["count"]            = self.dml_for_loop_count
-        self.result["apex_statistics"]["soql_for_loop"]["count"]           = self.soql_for_loop_count
-        self.result["apex_statistics"]["soql_negative_operators"]["count"] = self.negative_soql_count
-        self.result["apex_statistics"]["soql_no_where_clause"]["count"]    = self.no_where_clause_count
+        self.result["apex_statistics"]["without_sharing"]["count"]          = self.without_sharing_count
+        self.result["apex_statistics"]["dml_for_loop"]["count"]             = self.dml_for_loop_count
+        self.result["apex_statistics"]["soql_for_loop"]["count"]            = self.soql_for_loop_count
+        self.result["apex_statistics"]["soql_negative_operators"]["count"]  = self.negative_soql_count
+        self.result["apex_statistics"]["soql_no_where_clause"]["count"]     = self.no_where_clause_count
+        self.result["apex_statistics"]["see_all_data_annotations"]["count"] = self.see_all_data_count
 
-        self.result["visualforce_statistics"]["action_poller"]["count"]    = self.action_poller_count
-        self.result["visualforce_statistics"]["multiple_form"]["count"]    = self.multiple_form_count
+        self.result["visualforce_statistics"]["action_poller"]["count"]     = self.action_poller_count
+        self.result["visualforce_statistics"]["multiple_form"]["count"]     = self.multiple_form_count
         
         return self.result
 

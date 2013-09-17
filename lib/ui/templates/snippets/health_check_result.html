@@ -24,6 +24,8 @@
                       {% else %}
                         {{ htmlize(match["statement"]) }}
                       {% endif %}
+                    {% elif match is mapping and "lineNumber" in match %}
+                      {{ htmlize(match["line_contents"]) }}
                     {% else %}
                       {{ match}}
                     {% endif %}

@@ -5,7 +5,8 @@ private class CompileAndTest {
 		Database.query('Select foo from bar');
 	}
 	
-	@isTest static void test_method_two() {
+	@isTest (SeeAllData=true)
+	static void test_method_two() {
 		// Implement test code
 		Account a = [SELECT ID FROM Account];
 	}

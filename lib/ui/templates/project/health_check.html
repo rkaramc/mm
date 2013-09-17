@@ -28,6 +28,7 @@
 
 
 {% block buttons %}					
+	<button id="" class="btn btn-info btn-embossed" onclick="run_health_check();">Analyze Project</button>
 	<button id="btnCancel" class="btn btn-embossed" onclick="window.close();">Close</button>
 {% endblock %}
 
@@ -69,7 +70,7 @@
 			  $(this).next().toggle()
 			})
 
-			window.resizeTo(900, 700)
+			window.resizeTo(1000, 800)
 			centerWindow()
 			run_health_check()
 		});	
