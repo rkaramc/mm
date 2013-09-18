@@ -612,7 +612,9 @@ def launch_ui(tmp_html_file_location):
     use_browser_as_ui = config.connection.get_plugin_client_setting('mm_use_browser_as_ui', False)
     if use_browser_as_ui or sys.platform != 'darwin':
         if 'linux' in sys.platform:
-            webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+            #webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+            b = lambda : webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+            threading.Thread(target=b).start()
         elif 'darwin' in sys.platform:
             webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
         else: 
