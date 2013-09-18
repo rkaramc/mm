@@ -65,8 +65,6 @@ class MavensMateRequest():
             self.operation = self.payload['operation']
         else:
             self.operation = self.args.operation
-        if self.operation not in self.operation_dict:
-            raise MMException('Unsupported operation')
         
     # each operation sets up a single connection
     # the connection holds information about the plugin running it
@@ -93,6 +91,8 @@ class MavensMateRequest():
             util.launch_ui(tmp_html_file)
             print util.generate_success_response('UI Generated Successfully')
         else:        
+            if self.operation not in self.operation_dict:
+                raise MMException('Unsupported operation')
             requested_function = self.operation_dict[self.operation]
             requested_function()
 
