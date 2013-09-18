@@ -290,7 +290,7 @@ class MavensMateRequest():
     def get_symbol_table(self):
         print config.connection.project.get_symbol_table(self.payload)
 
-    def index_apex_file_properties():
+    def index_apex_file_properties(self):
         print config.connection.project.index_apex_file_properties()
 
     def eval_function(self):
