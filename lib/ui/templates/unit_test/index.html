@@ -4,11 +4,7 @@
 
 {% block yield %}
 
-<link href="{{ base_path }}/lib/ui/resources/css/multiselect.css" rel="stylesheet" type="text/css"/> 
 <link href="{{ base_path }}/lib/ui/resources/css/progress.css" rel="stylesheet" type="text/css"/>
-<script src="{{ base_path }}/lib/ui/resources/js/multi-select.js" type="text/javascript"></script>
-<!-- <script src="{{ base_path }}/lib/ui/resources/js/buttons.js" type="text/javascript"></script>
-<script src="{{ base_path }}/lib/ui/resources/js/modal.js" type="text/javascript"></script> -->
 
 <style>
 	.results_hidden {
@@ -89,19 +85,6 @@
 		font-weight:normal;
 	}
 
-	.ms-selectable, .ms-selection {
-		width:292px;
-	}
-
-	.ms-container {
-		background: none !important;
-	}
-
-	.ms-selectable {
-		margin-right:10px !important;
-		margin-bottom: 10px !important;
-	}
-
 	table.test_result {
 		border-top:none;
 	}
@@ -155,7 +138,6 @@
 
 		<ul id="maintabs" class="nav nav-tabs nav-append-content">
 			<li class="active"><a href="#tests_content" data-toggle="tab">Apex Tests</a></li>
-			<li><a href="#debug_content" data-toggle="tab">Debug Options</a></li>
 			<li class="game"><a href="#arcade" data-toggle="tab">Arcade</a></li>
 			
 			<li class="results_hidden dropdown active">
@@ -174,16 +156,17 @@
 		</ul> 
 
 		<div class="tab-content" id="main-tab-content">
-			<div class="tab-pane active" id="tests_content">
-				<select id="tests" multiple="multiple" class="multiselect" style="display: none;">
+			<div class="tab-pane active" id="tests_content" style="padding-top:10px;">
+				<label for="tests">Apex Unit Tests</label>
+				<select id="tests" class="select-block mbl info" style="display:none;" id="un_list" multiple="multiple" data-placeholder="Select 1 or more unit tests to run..." data-selected-text-format="count>3" data-size="5">
 					{% for cls in classes %}
 					<option value="{{ cls }}" {% if cls in selected %}selected{% endif %}>{{ cls }}</option>
 					{% endfor %}
 				</select>
+
+				{% include 'snippets/log_levels.html' %}
 			</div>
 			
-			{% include 'snippets/log_levels.html' %}
-
 			{% include 'snippets/arcade.html' %}
 
 			<div id="tests_results" class="tab-pane active">
@@ -285,28 +268,7 @@
 		});
 	}
 
-	function resize_height() {
-		window.resizeTo(window.width, document.getElementById('content1').offsetHeight+65);
-	}
-
-	function resize_test_container_sizes() {
-		$(".ms-selectable, .ms-selection").css("width", $(".tab-content").width()/2 - 15)
-		$(".ms-selectable, .ms-selection").css("height", $(window).height() - 220)
-		$(".ms-list").css("height", $(".ms-selectable").height()-90)
-	}
-
-	$(function(){
-	
-		$(window).resize(function() {
-			$("#result_wrapper").height($(window).height() - 210)
-			$("#class_coverage_wrapper").height($(window).height() - 260)   
-			$("#trigger_coverage_wrapper").height($(window).height() - 260)
-			$("#warnings_coverage_wrapper").height($(window).height() - 210)
-			$("#log_coverage_wrapper").height($(window).height() - 210)
-			resize_test_container_sizes()  
-			resize_arcade()
-		});
-
+	$(function(){	
 		$(".item-search.class input").change(function() {
 			var thevalue = $(this).val().toLowerCase()
 			$("#class_coverage_wrapper").find("div.alert h3").each(function() {
@@ -337,14 +299,16 @@
 	        $(this).change();
 	    });
 
+		$(window).resize(function() {
+			$("#result_wrapper").height($(window).height() - 210)
+			$("#class_coverage_wrapper").height($(window).height() - 260)   
+			$("#trigger_coverage_wrapper").height($(window).height() - 260)
+			$("#warnings_coverage_wrapper").height($(window).height() - 210)
+			$("#log_coverage_wrapper").height($(window).height() - 210)
+			resize_arcade()
+		});
 		window.resizeTo(950, 700)
 
-		$('#tests').multiSelect({
-			selectableHeader : '<div class="alert alert-info block-message-custom"><p style="float:left;"><strong>Available Tests</strong></p><p style="float:right;"><a style="color:#0069D6;" href="javascript:void(0);" onclick="$(\'#tests\').multiSelect(\'select_all\');">Select All</a></p><div style="clear:both;"></div></div>',
-			selectedHeader : '<div class="alert alert-info block-message-custom"><p style="float:left;"><strong>Selected Tests</strong></p><p style="float:right;"><a style="color:#0069D6;" href="javascript:void(0);" onclick="$(\'#tests\').multiSelect(\'deselect_all\');">Select None</a></p><div style="clear:both;"></div></div>'
-		});
-
-		resize_test_container_sizes()
 		resize_arcade()
 		centerWindow()
 	});
