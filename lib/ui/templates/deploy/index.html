@@ -299,13 +299,13 @@
 		</div>
 
 		<div id="metadata" class="tab-pane">
-			<div class="" id="package-selector">
+			<!-- <div class="" id="package-selector">
 				<select id="package" class="select-block mbl info" data-size="12">
 					{% for p in packages %}
 						<option value="{{p}}">{{p}}</option>
 					{% endfor %}
 				</select>
-			</div>
+			</div> -->
 			<div class="alert alert-info" id="filter">
 				<input type="text" placeholder="Search for metadata" id="txtFilter" style="width:300px;height:35px;" />
 				<a href="#" class="btn btn-success btn-embossed" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
@@ -383,15 +383,15 @@
 
 		$(window).resize(function() {
 			resize_arcade()
-			resizeProjectWrapper(136)
+			resizeProjectWrapper(86)
 		});
 
 		//render tree when tab is clicked, otherwise there's an extjs and it doesnt render
 		$('a[data-toggle="tab"]').on('shown', function (e) {
 			if (e.target.href.indexOf("metadata") != -1) {
 				if (tree === undefined) {
-					renderTree(136)
-					setTimeout(resizeProjectWrapper(136),500)
+					renderTree(86)
+					setTimeout(resizeProjectWrapper(86),500)
 					resizeFilter()
 				}
 			}
@@ -432,7 +432,7 @@
 		resize_games()
 		window.resizeTo(900, 720)
 		centerWindow()
-		setTimeout(resizeProjectWrapper(136),500)
+		setTimeout(resizeProjectWrapper(86),500)
 	});
 
 	function repopulate_connection_list(conns) {
@@ -518,12 +518,12 @@
 				show_message(response["body"])
 			} else {
 				if (tree === undefined) {
-					renderTree(136)  
+					renderTree(86)  
 				} else {
 					$("#tree").dynatree("getTree").reload();
 				}
 			}
-			resizeProjectWrapper(136);
+			resizeProjectWrapper(86);
 			notify_sound();
 			hideLoading();
 		}
