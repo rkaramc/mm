@@ -24,3 +24,5 @@ lib/debug.log
 mm.spec
 
 mm.sublime-project
+
+tools/*
