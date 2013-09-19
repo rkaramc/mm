@@ -192,6 +192,8 @@ class MavensMatePluginConnection(object):
                         os.system("'{0}' --project '{1}'".format(subl_location,os.path.join(self.project.location,self.project.project_name+".sublime-project")))
                     else:
                         subl_location = self.get_plugin_client_setting('mm_windows_subl_location')
+                        if not os.path.isfile(subl_location) and "x86" not in subl_location:
+                            subl_location = subl_location.replace("Program Files", "Program Files (x86)")
                         cmd = '"{0}" --project "{1}"'.format(subl_location,os.path.join(self.project.location,self.project.project_name+".sublime-project"))
                         import subprocess
                         subprocess.call(cmd)
