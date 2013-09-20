@@ -27,10 +27,13 @@ class MavensMatePluginConnection(object):
             self.plugin_client = 'SUBLIME_TEXT_3'
         self.plugin_client_version  = params.get('client_version', '2.0.1') #=> "1.0", "1.1.1", "v1"
         self.plugin_client_settings = self.get_plugin_client_settings()
-        self.workspace              = params.get('workspace', self.get_workspace())
+        self.project_location       = params.get('project_location', None)
+        if self.project_location == None:
+            self.workspace              = params.get('workspace', self.get_workspace())
+        else:
+            self.workspace              = os.path.dirname(self.project_location)
         self.project_name           = params.get('project_name', None)
-        self.project_location       = None
-        if self.project_name != None:
+        if self.project_name != None and self.project_location == None:
             self.project_location = os.path.join(self.workspace,self.project_name)
         self.project_id             = params.get('project_id', None)
         self.project                = None
@@ -46,7 +49,7 @@ class MavensMatePluginConnection(object):
 
         if self.operation != 'new_project' and self.operation != 'upgrade_project' and self.operation != 'new_project_from_existing_directory' and self.project_location != None:
             if not os.path.exists(os.path.join(self.project_location)):
-                raise MMException('Could not find project in workspace: '+self.workspace)
+               raise MMException('Could not find project in workspace: '+self.workspace)
             if not os.path.exists(os.path.join(self.project_location,"config",".settings")):
                 raise MMException('This does not seem to be a valid MavensMate project, missing config/.settings')
             if not os.path.exists(os.path.join(self.project_location,"src","package.xml")):
@@ -91,7 +94,7 @@ class MavensMatePluginConnection(object):
     def get_workspace(self):
         mm_workspace_path = None
         mm_workspace_setting = self.get_plugin_client_setting('mm_workspace')
-        if type(mm_workspace_setting) is list and len(mm_workspace_path) > 0:
+        if type(mm_workspace_setting) is list and len(mm_workspace_setting) > 0:
             mm_workspace_path = mm_workspace_setting[0] #grab the first path
         else:
             mm_workspace_path = mm_workspace_setting #otherwise, it's a string, set it
@@ -104,6 +107,19 @@ class MavensMatePluginConnection(object):
             except:
                 raise MMException("Unable to create mm_workspace location")
         return mm_workspace_path
+
+    #returns the list of workspaces
+    def get_workspaces(self):
+        workspaces = []
+        mm_workspace_setting = self.get_plugin_client_setting('mm_workspace')
+        if type(mm_workspace_setting) is list and len(mm_workspace_setting) == 0:
+            raise MMException("mm_workspace not properly set")
+
+        if type(mm_workspace_setting) is list and len(mm_workspace_setting) > 0:
+            workspaces = mm_workspace_setting
+        else:
+            workspaces = [mm_workspace_setting]
+        return workspaces
 
     #returns the MavensMate settings as a dict for the current plugin
     def get_plugin_client_settings(self):

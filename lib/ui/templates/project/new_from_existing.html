@@ -21,6 +21,15 @@
 
 				<fieldset>
 					<div class="control-group large">
+						<select id="workspace" class="select-block mbl info" 
+							data-placeholder="Select a workspace" data-size="5">
+							{% for m in workspaces %}
+								<option value="{{ m }}">{{ m }}</option>
+							{% endfor %}
+						</select>
+					</div> 
+					
+					<div class="control-group large">
 						<input class="span12" placeholder="Project Name" type="text" id="pn" value="{{ project_name }}">
 					</div>
 					<div class="control-group large">
@@ -75,6 +84,7 @@
 					 password 		: $("#pw").val(), 
 					 org_type 		: $("#org_type").val(),
 					 directory 		: $("#directory").val(),
+					 workspace 		: $("#workspace").val(),
 					 action 		: "existing"
 				}),
 				beforeSend: function() { showLoading('Creating new MavensMate project'); },

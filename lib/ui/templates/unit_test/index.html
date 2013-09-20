@@ -259,7 +259,8 @@
 			data: JSON.stringify({
 				project_name 		: '{{ name }}',
 				classes 			: $('#tests').val(),
-				debug_categories 	: get_log_levels_json()
+				debug_categories 	: get_log_levels_json(),
+				project_location	: $("#STATIC-project-location").val()
 			}),
 			beforeSend: function() { toggleRunningIndicator(); $("#btnRunTests").hide() },
 			complete: function(data){

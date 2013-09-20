@@ -44,6 +44,8 @@
 		</div>
 	</div>
 </div>  
+
+<input type="hidden" value="{{workspace}}" id="workspace"/>
 	
 {% endblock %}
 
@@ -68,7 +70,8 @@
 			    	org_type 			: $("#org_type").val(),
 			    	override_session	: true,
 			    	defer_connection 	: true,
-			    	project_name 		: '{{ name }}' 
+			    	project_name 		: '{{ name }}',
+			    	project_location	: $("#STATIC-project-location").val()
 				}),
 				beforeSend: function() { showLoading('Upgrading your project'); },
 				complete: function(data){	

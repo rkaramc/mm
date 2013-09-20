@@ -1650,6 +1650,7 @@ class MavensMateProject(object):
         if settings == None:
             settings = {
                 "project_name"          : self.project_name,
+                "workspace"             : config.connection.workspace,
                 "username"              : self.username,
                 "environment"           : self.org_type,
                 "namespace"             : self.sfdc_client.get_org_namespace(),
