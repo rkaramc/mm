@@ -27,7 +27,7 @@ class MavensMatePluginConnection(object):
             self.plugin_client = 'SUBLIME_TEXT_3'
         self.plugin_client_version  = params.get('client_version', '2.0.1') #=> "1.0", "1.1.1", "v1"
         self.plugin_client_settings = self.get_plugin_client_settings()
-        self.workspace              = self.get_workspace()
+        self.workspace              = params.get('workspace', self.get_workspace())
         self.project_name           = params.get('project_name', None)
         self.project_location       = None
         if self.project_name != None:
@@ -89,15 +89,21 @@ class MavensMatePluginConnection(object):
 
     #returns the workspace for the current connection (/Users/username/Workspaces/MavensMate)
     def get_workspace(self):
+        mm_workspace_path = None
         mm_workspace_setting = self.get_plugin_client_setting('mm_workspace')
-        if mm_workspace_setting == None or mm_workspace_setting == '':
+        if type(mm_workspace_setting) is list and len(mm_workspace_path) > 0:
+            mm_workspace_path = mm_workspace_setting[0] #grab the first path
+        else:
+            mm_workspace_path = mm_workspace_setting #otherwise, it's a string, set it
+
+        if mm_workspace_path == None or mm_workspace_path == '':
             raise MMException("Please set mm_workspace to the location where you'd like your mavensmate projects to reside")
-        elif not os.path.exists(mm_workspace_setting):
+        elif not os.path.exists(mm_workspace_path):
             try:
-                os.makedirs(mm_workspace_setting)
+                os.makedirs(mm_workspace_path)
             except:
                 raise MMException("Unable to create mm_workspace location")
-        return self.get_plugin_client_setting('mm_workspace')
+        return mm_workspace_path
 
     #returns the MavensMate settings as a dict for the current plugin
     def get_plugin_client_settings(self):
