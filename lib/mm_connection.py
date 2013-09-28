@@ -243,20 +243,30 @@ class MavensMatePluginConnection(object):
         except:
             return None
 
+    def get_app_settings_directory(self):
+        if self.platform == 'darwin':
+            if not os.path.exists(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')):
+                os.makedirs(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate'))
+            return os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')
+        elif 'linux' in self.platform:
+            if not os.path.exists(os.path.join(os.path.expanduser('~'),'.config','mavensmate')):
+                os.makedirs(os.path.join(os.path.expanduser('~'),'.config','mavensmate'))
+            return os.path.join(os.path.expanduser('~'),'.config','mavensmate')
+        elif self.platform == 'win32':
+            if not os.path.exists(os.path.join(os.environ['APPDATA'], 'MavensMate')):
+                os.makedirs(os.path.join(os.environ['APPDATA'], 'MavensMate'))
+            return os.path.join(os.path.join(os.environ['APPDATA'], 'MavensMate'))
+
     def sign_in_with_github(self, creds):
         try:
             response = mm_github.sign_in(creds)
             if 'message' in response:
                 return mm_util.generate_error_response(response['message'])
             elif 'authentication' in response:
-                if self.platform == 'darwin':
-                    if not os.path.exists(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')):
-                        os.makedirs(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate'))
-
-                    src = open(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate','.github.json'), "wb")
-                    src.write(json.dumps(response, sort_keys=False, indent=4))
-                    src.close() 
-                    return mm_util.generate_success_response('Connected to GitHub successfully!')
+                src = open(os.path.join(self.get_app_settings_directory(),'.github.json'), "wb")
+                src.write(json.dumps(response, sort_keys=False, indent=4))
+                src.close()
+                return mm_util.generate_success_response('Connected to GitHub successfully!')
             else:
                 return mm_util.generate_error_response(response)
         except Exception, e:
