@@ -418,10 +418,17 @@ def generate_ui(operation,params={}):
     env.globals['client_subscription_list'] = client_subscription_list
     env.globals['base_local_server_url']    = base_local_server_url
     env.globals['operation']                = operation
+    env.globals['project_location']         = config.connection.project_location
     temp = tempfile.NamedTemporaryFile(delete=False, prefix="mm", suffix=".html")
     if operation == 'new_project':
         template = env.get_template('/project/new.html')
-        file_body = template.render(user_action='new',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
+        file_body = template.render(
+            user_action='new',
+            base_path=config.base_path,
+            workspace=config.connection.workspace,
+            client=config.connection.plugin_client,
+            workspaces=config.connection.get_workspaces()
+            ).encode('UTF-8')
     elif operation == 'checkout_project':
         template = env.get_template('/project/new.html')
         file_body = template.render(user_action='checkout',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
@@ -431,7 +438,8 @@ def generate_ui(operation,params={}):
             base_path=config.base_path,
             name=config.connection.project.project_name,
             project_location=config.connection.project.location,
-            client=config.connection.plugin_client
+            client=config.connection.plugin_client,
+            workspace=config.connection.workspace
         ).encode('UTF-8')
     elif operation == 'edit_project':
         template = env.get_template('/project/edit.html')
@@ -498,6 +506,7 @@ def generate_ui(operation,params={}):
             base_path=config.base_path,
             project_name=project_name,
             directory=params['directory'],
+            workspaces=config.connection.get_workspaces(),
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'debug_log':
         template = env.get_template('/debug_log/index.html')

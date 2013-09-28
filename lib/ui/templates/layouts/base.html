@@ -73,9 +73,10 @@
                         dataType : "json",
                         url      : baseLocalServerURL+"/project/get_index",
                         data     : JSON.stringify({
-                            "project_name"  : project_name,
-                            keyword         : filter,
-                            ids             : $("#tree").dynatree("getTree").selectedIds
+                            "project_name"      : project_name,
+                            keyword             : filter,
+                            ids                 : $("#tree").dynatree("getTree").selectedIds,
+                            project_location    : $("#STATIC-project-location").val()
                         })
                     }
                 );
@@ -92,8 +93,9 @@
                     dataType : "json",
                     url      : baseLocalServerURL+"/project/get_index",
                     data     : JSON.stringify({
-                        "project_name"  : project_name,
-                        ids             : $("#tree").dynatree("getTree").selectedIds
+                        "project_name"      : project_name,
+                        project_location    : $("#STATIC-project-location").val(),
+                        ids                 : $("#tree").dynatree("getTree").selectedIds
                     })
                 }
             );
@@ -107,7 +109,10 @@
             hideLoading()
             showLoading("Loading...")
             tree_store.load({
-                params: {project_name: '{{ name }}'},
+                params: {
+                    project_name        : '{{ name }}',
+                    project_location    : $("#STATIC-project-location").val()
+                },
                 callback:hideLoading
             })
         }
@@ -118,8 +123,9 @@
                 type: "POST",
                 url: baseLocalServerURL+"/project/refresh_index", 
                 data: JSON.stringify({
-                    metadata_types  : mtype,
-                    project_name    : project_name
+                    metadata_types      : mtype,
+                    project_name        : project_name,
+                    project_location    : $("#STATIC-project-location").val()
                 }),
                 beforeSend: function() { showLoading("Refreshing Metadata Type: "+ mtype +"..."); },
                 complete: function(data){
@@ -263,5 +269,8 @@
                 });
             }
         </script>
+
+        <!-- context helpers -->
+        <input type="hidden" id="STATIC-project-location" value="{{ project_location or '' }}"/>
 </body>
 </html>

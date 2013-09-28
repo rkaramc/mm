@@ -324,7 +324,8 @@ function execute_apex() {
 		data: JSON.stringify({
 			 body 				: editor.getValue(),
 			 project_name 		: '{{ name }}',
-			 debug_categories 	: get_log_levels_json()
+			 debug_categories 	: get_log_levels_json(),
+			 project_location	: $("#STATIC-project-location").val()
 		}),
 		beforeSend: function() { 
 			toggleRunningIndicator();

@@ -105,7 +105,7 @@
 			<div class="alert alert-info" id="filter">
 				<input type="text" placeholder="Search for metadata" id="txtFilter" style="width:300px;height:35px;" />
 				<a href="#" class="btn btn-success btn-embossed" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
-				<a href="#" class="btn btn-select" id="select-btn" ><i class="icon-check-empty"></i></a>
+				<a href="#" class="btn btn-select btn-embossed" id="select-btn" ><i class="icon-check-empty"></i></a>
 			</div>
 			<div id="project_wrapper">
 				<div id="treewrapper" style="height:100%;">
@@ -141,7 +141,8 @@
 			    	override_session 	: true,
 			    	defer_connection 	: true,
 			    	project_name 		: '{{ name }}',
-			    	org_url 			: $("#custom-url").val() 
+			    	org_url 			: $("#custom-url").val(), 
+			    	project_location	: $("#STATIC-project-location").val()
 				}),
 				beforeSend: function() { showLoading('Updating project credentials'); },
 				complete: function(data){
@@ -165,6 +166,7 @@
 				url: "{{ base_local_server_url() }}/project/subscription", 
 				data: JSON.stringify({
 			    	project_name 		: '{{ name }}',
+			    	project_location	: $("#STATIC-project-location").val(),
 			    	subscription 		: $("#subscription").val()
 				}),
 				beforeSend: function() { showLoading('Updating project subscription'); },
@@ -190,8 +192,9 @@
 				type: "POST",
 				url: "{{ base_local_server_url() }}/project/edit", 
 				data: JSON.stringify({
-					package 		: get_tree(),
-					project_name 	: '{{ name }}'
+					package 			: get_tree(),
+					project_name 		: '{{ name }}',
+					project_location	: $("#STATIC-project-location").val()
 				}),
 				beforeSend: function() { showLoading('Updating project'); },
 				complete: function(data){
@@ -207,7 +210,8 @@
 				type: "POST",
 				url: "{{ base_local_server_url() }}/project/index", 
 				data: JSON.stringify({
-					project_name 	: '{{ name }}'
+					project_name 		: '{{ name }}',
+					project_location	: $("#STATIC-project-location").val()
 				}),
 				beforeSend: function() { showLoading('Updating the metadata index for this project. This operation can take a few minutes in large orgs.<br/><br/>Thanks for being patient! :)'); },
 				complete: function(data, status, xhr){

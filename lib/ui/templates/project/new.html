@@ -30,6 +30,15 @@
 				<input type="hidden" value="" id="server_url"/>
 				<fieldset>
 					<div class="control-group large">
+						<select id="workspace" class="select-block mbl info" 
+							data-placeholder="Select a workspace" data-size="5">
+							{% for m in workspaces %}
+								<option value="{{ m }}">{{ m }}</option>
+							{% endfor %}
+						</select>
+					</div>  
+
+					<div class="control-group large">
 						<input class="span12" placeholder="Project Name" type="text" id="pn">
 					</div>
 					<div class="control-group large">
@@ -131,6 +140,7 @@
 					 password 		: $("#pw").val(), 
 					 org_type 		: $("#org_type").val(),
 					 package 		: get_tree(),
+					 workspace 		: $("#workspace").val(),
 					 subscription 	: $("#subscription").val(),
 					 action 		: "new",
 					 org_url 		: $("#custom-url").val()
