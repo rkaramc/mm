@@ -37,8 +37,12 @@
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
 							<option value="prerelease">Prerelease</option>
+							<option value="custom">Custom URL</option>
 						</select>
 					</div>  
+					<div class="control-group large">
+						<input class="span12" placeholder="Example: https://na1-blitz01.salesforce.com" type="text" id="custom-url" style="display:none;">
+					</div>
 				</fieldset>
 			</form>
 		</div>
@@ -68,6 +72,7 @@
 			    	org_type 			: $("#org_type").val(),
 			    	override_session	: true,
 			    	defer_connection 	: true,
+			    	org_url 			: $("#custom-url").val(),
 			    	project_name 		: '{{ name }}' 
 				}),
 				beforeSend: function() { showLoading('Upgrading your project'); },
@@ -95,7 +100,16 @@
 			$("#un").val("");
 			$("#pw").val("");
 			$("#org_type").val("");
-			$("#pn").prop('disabled', true); 
+			$("#pn").prop('disabled', true);
+
+			$("#org_type").change(function() {
+				if ($(this).val() == 'custom') {
+					$("#custom-url").show()
+				} else {
+					$("#custom-url").hide()
+					$("#custom-url").val('')
+				}
+			}) 
 
 			window.resizeTo(600, 700)
 			centerWindow()

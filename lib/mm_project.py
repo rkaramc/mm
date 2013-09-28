@@ -37,6 +37,7 @@ class MavensMateProject(object):
         self.username           = params.get('username', None)
         self.password           = params.get('password', None)
         self.org_type           = params.get('org_type', None)
+        self.org_url            = params.get('org_url', None)
         self.package            = params.get('package', None)
         self.ui                 = params.get('ui', False)
         self.directory          = params.get('directory', False)
@@ -91,7 +92,7 @@ class MavensMateProject(object):
                 if os.path.isdir(os.path.join(config.connection.workspace,self.project_name)) and existing_is_in_workspace == False and action == 'existing':
                     raise MMException("A project with this name already exists in your workspace.")   
 
-            self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type})             
+            self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type,"org_url":self.org_url})             
             self.id = mm_util.new_mavensmate_id()
             if action == 'new':
                 project_metadata = self.sfdc_client.retrieve(package=self.package)
@@ -120,7 +121,7 @@ class MavensMateProject(object):
 
     #updates the salesforce.com credentials associated with the project
     def update_credentials(self):
-        self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type}, override_session=True)              
+        self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type,"org_url":self.org_url}, override_session=True)              
         self.id = self.settings['id']
         self.username = self.username
         self.environment = self.org_type
@@ -1612,7 +1613,10 @@ class MavensMateProject(object):
         if 'environment' in settings: 
             #TODO: let's standardize environment vs. org_type (org_type is preferred)
             environment, org_type = settings['environment'], settings['environment']
-            endpoint = mm_util.get_sfdc_endpoint_by_type(environment)
+            if 'org_url' in settings and settings['org_url'] != None and settings['org_url'] != '':
+                endpoint = mm_util.get_soap_url_from_custom_url(settings['org_url'])
+            else:
+                endpoint = mm_util.get_sfdc_endpoint_by_type(environment)
         #get password from id, or name for legacy/backup
         if id:
             password = mm_util.get_password_by_key(id)
@@ -1627,6 +1631,7 @@ class MavensMateProject(object):
         creds['password'] = password
         creds['endpoint'] = endpoint
         creds['org_type'] = org_type
+        creds['org_url']  = settings.get('org_url', None)
         if self.sfdc_session != None:
             creds['user_id']                = self.sfdc_session.get('user_id', None)
             creds['sid']                    = self.sfdc_session.get('sid', None)
@@ -1656,6 +1661,7 @@ class MavensMateProject(object):
                 "environment"           : self.org_type,
                 "namespace"             : self.sfdc_client.get_org_namespace(),
                 "id"                    : self.id,
+                "org_url"               : self.org_url,
                 "subscription"          : self.subscription or config.connection.get_plugin_client_setting('mm_default_subscription')
             }
             if int(float(mm_util.SFDC_API_VERSION)) >= 27:

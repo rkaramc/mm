@@ -36,8 +36,12 @@
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
 							<option value="prerelease">Prerelease</option>
+							<option value="custom">Custom URL</option>
 						</select>
 					</div>  
+					<div class="control-group large">
+						<input class="span12" placeholder="Example: https://na1-blitz01.salesforce.com" type="text" id="custom-url" style="display:none;">
+					</div>
 				</fieldset>
 
 
@@ -75,6 +79,7 @@
 					 password 		: $("#pw").val(), 
 					 org_type 		: $("#org_type").val(),
 					 directory 		: $("#directory").val(),
+					 org_url 		: $("#custom-url").val(),
 					 action 		: "existing"
 				}),
 				beforeSend: function() { showLoading('Creating new MavensMate project'); },
@@ -110,6 +115,15 @@
 			
 		    window.resizeTo(520, 620)
 		    centerWindow()
+
+		    $("#org_type").change(function() {
+		    	if ($(this).val() == 'custom') {
+		    		$("#custom-url").show()
+		    	} else {
+		    		$("#custom-url").hide()
+		    		$("#custom-url").val('')
+		    	}
+		    })
 											
 			//submit form on enter
 			$(".content").bind('keyup', function(e) {

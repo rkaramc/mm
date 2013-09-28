@@ -107,7 +107,9 @@ class MavensMateRequest():
         elif 'username' in self.payload:
             client = MavensMateClient(credentials={
                 "username"              : self.payload.get('username', None),
-                "password"              : self.payload.get('password', None)
+                "password"              : self.payload.get('password', None),
+                "org_type"              : self.payload.get('org_type', None),
+                "org_url"               : self.payload.get('org_url', None)
             })
         print json.dumps(client.list_metadata(self.payload['metadata_type']))
 
@@ -249,11 +251,16 @@ class MavensMateRequest():
                 raise MMException('Please enter a Salesforce.com password')
             if 'org_type' not in self.payload or self.payload['org_type'] == None or self.payload['org_type'] == '':
                 raise MMException('Please select an org type')
+            if 'org_type' in self.payload and self.payload['org_type'] == "custom" and "org_url" not in self.payload:
+                raise MMException('To use a custom org type, please include a org_url parameter') 
+            if 'org_type' in self.payload and self.payload['org_type'] == "custom" and "org_url" in self.payload and self.payload["org_url"] == "":
+                raise MMException('Please specify the org url')    
 
             client = MavensMateClient(credentials={
                 "username" : self.payload['username'],
                 "password" : self.payload['password'],
-                "org_type" : self.payload['org_type']
+                "org_type" : self.payload['org_type'],
+                "org_url"  : self.payload.get('org_url', None)
             }) 
             
             response = {
@@ -282,6 +289,7 @@ class MavensMateRequest():
             config.connection.project.username = self.payload['username']
             config.connection.project.password = self.payload['password']
             config.connection.project.org_type = self.payload['org_type']
+            config.connection.project.org_type = self.payload.get('org_url', None)
             config.connection.project.update_credentials()
             print util.generate_success_response('Your credentials were updated successfully')
         except BaseException, e:

@@ -45,7 +45,11 @@
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
 							<option value="prerelease">Prerelease</option>
+							<option value="custom">Custom URL</option>
 						</select>
+					</div>
+					<div class="control-group large">
+						<input class="span12" placeholder="Example: https://na1-blitz01.salesforce.com" type="text" id="custom-url" style="display:none;">
 					</div>  
 				</fieldset>
 			</form>
@@ -128,7 +132,8 @@
 					 org_type 		: $("#org_type").val(),
 					 package 		: get_tree(),
 					 subscription 	: $("#subscription").val(),
-					 action 		: "new"
+					 action 		: "new",
+					 org_url 		: $("#custom-url").val()
 				}),
 				beforeSend: function() { showLoading('Creating new MavensMate project'); },
 				complete: function(data){
@@ -180,6 +185,15 @@
 				 }
 			});  
 
+			$("#org_type").change(function() {
+				if ($(this).val() == 'custom') {
+					$("#custom-url").show()
+				} else {
+					$("#custom-url").hide()
+					$("#custom-url").val('')
+				}
+			})
+
 			//when user changes tab to metadata selection, use provided creds to login and get session id
 			$('a[data-toggle="tab"]').on('shown', function (e) {
 				//console.log(e.target.href.indexOf("metadata"))
@@ -200,7 +214,8 @@
 					 username 		: $("#un").val(), 
 					 password 		: $("#pw").val(), 
 					 org_type 		: $("#org_type").val(),
-					 subscription 	: $("#subscription").val()
+					 subscription 	: $("#subscription").val(),
+					 org_url 		: $("#custom-url").val()
 				},
 				beforeSend: function() { showLoading(message); },
 				complete: function(data){

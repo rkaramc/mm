@@ -64,6 +64,15 @@ template_path = os.path.join(config.base_path,"lib","templates")
 
 env = Environment(loader=FileSystemLoader(template_path),trim_blocks=True)
 
+def get_soap_url_from_custom_url(custom_url):
+    if "Soap" in custom_url:
+        return custom_url
+    else:
+        if custom_url.endswith("/"):
+            return custom_url+"services/Soap/u/"+SFDC_API_VERSION 
+        else:
+            return custom_url+"/services/Soap/u/"+SFDC_API_VERSION 
+
 def get_timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d-%H:%M:%S')
@@ -107,12 +116,6 @@ def get_sfdc_endpoint(url):
     elif "prerellogin.pre.salesforce.com" in url:
         endpoint = PRERELEASE_ENDPOINT
     return endpoint
-
-def get_endpoint_type_by_url(endpoint):
-    if endpoint in URL_TO_ENDPOINT_TYPE: 
-        return URL_TO_ENDPOINT_TYPE[endpoint] 
-    else: 
-        return ""
 
 def get_sfdc_endpoint_by_type(type):
     if type in ENDPOINTS: 
@@ -439,6 +442,7 @@ def generate_ui(operation,params={}):
             username=creds['username'],
             password=creds['password'],
             org_type=creds['org_type'],
+            org_url=creds.get('org_url', ''),
             has_indexed_metadata=config.connection.project.is_metadata_indexed,
             project_location=config.connection.project.location,
             client=config.connection.plugin_client

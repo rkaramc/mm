@@ -39,12 +39,16 @@
 					</div>
 
 					<div class="clearfix">
-						<select id="org_type" class="info">
+						<select class="org_type info">
 							<option value="production">Production</option>
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
 							<option value="prerelease">Prerelease</option>
+							<option value="custom">Custom URL</option>
 						</select>
+					</div>
+					<div class="control-group large">
+						<input class="span12" placeholder="Example: https://na1-blitz01.salesforce.com" type="text" id="custom-url" style="display:none;">
 					</div>
 					<div class="clearfix" style="margin-top:20px;">
 						<a class="btn btn-success btn-embossed" onclick="updateProjectCreds();">
@@ -133,10 +137,11 @@
 				data: JSON.stringify({
 					username 			: $("#un").val(),
 			    	password 			: $("#pw").val(),
-			    	org_type 			: $("#org_type").val(),
+			    	org_type 			: $(".org_type").val(),
 			    	override_session 	: true,
 			    	defer_connection 	: true,
-			    	project_name 		: '{{ name }}' 
+			    	project_name 		: '{{ name }}',
+			    	org_url 			: $("#custom-url").val() 
 				}),
 				beforeSend: function() { showLoading('Updating project credentials'); },
 				complete: function(data){
@@ -240,8 +245,13 @@
 			$("#pn").val("{{ name }}");  
 			$("#un").val("{{ username }}");
 			$("#pw").val("{{ password }}");
-			$("#org_type").val("{{ org_type }}");
-			
+			$("select.org_type").val("{{ org_type }}");
+			$("select.org_type").change();
+			$("#custom-url").val("{{ org_url }}");
+			if ($("#custom-url").val() != '') {
+				$("#custom-url").show()
+			}
+
 			$("#pn").prop('disabled', true);  
 
 			$(window).resize(function() {
@@ -256,6 +266,15 @@
 					$(this).removeClass("label-success")
 				}
 			)
+
+			$("select.org_type").change(function() {
+				if ($(this).val() == 'custom') {
+					$("#custom-url").show()
+				} else {
+					$("#custom-url").hide()
+					$("#custom-url").val('')
+				}
+			})
 
 			$("#select-btn").click(function() {
 				if ($(this).html().indexOf('icon-check-empty') !== -1) {
