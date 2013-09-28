@@ -539,10 +539,10 @@ class MavensMateProject(object):
             #TESTING: moving to tmp directory in case something goes wrong during clean
             # tmp = mm_util.put_tmp_directory_on_disk()
             # shutil.copytree(self.location, tmp)
-            
-            use_tooling_api = config.connection.get_plugin_client_setting('mm_compile_with_tooling_api', False)
-            if use_tooling_api == True and int(float(mm_util.SFDC_API_VERSION)) >= 27:
-                self.reset_metadata_container()
+            if kwargs.get('reset_metadata_container', False):
+                use_tooling_api = config.connection.get_plugin_client_setting('mm_compile_with_tooling_api', False)
+                if use_tooling_api == True and int(float(mm_util.SFDC_API_VERSION)) >= 27:
+                    self.reset_metadata_container()
 
             project_metadata = self.sfdc_client.retrieve(package=self.package)
             mm_util.extract_base64_encoded_zip(project_metadata.zipFile, self.location)
@@ -680,30 +680,33 @@ class MavensMateProject(object):
     #refreshes file(s) from the server
     def refresh_selected_metadata(self, params):
         try:
-            retrieve_result = self.get_retrieve_result(params)
-            #take this opportunity to freshen the cache
-            self.cache_apex_file_properties(retrieve_result.fileProperties)
-            mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, self.location)
+            if 'directories' in params and len(params['directories']) == 1 and os.path.basename(params['directories'][0]) == "src":
+                return self.clean(reset_metadata_container=False)
+            else:
+                retrieve_result = self.get_retrieve_result(params)
+                #take this opportunity to freshen the cache
+                self.cache_apex_file_properties(retrieve_result.fileProperties)
+                mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, self.location)
 
-            #TODO: handle exception that could render the project unusable bc of lost files
-            #replace project metadata with retrieved metadata
-            for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
-                for filename in filenames:
-                    full_file_path = os.path.join(dirname, filename)
-                    if '/unpackaged/package.xml' in full_file_path or '\\unpackaged\\package.xml' in full_file_path:
-                        continue
-                    if 'win32' in sys.platform:
-                        destination = full_file_path.replace('\\unpackaged\\', '\\src\\')
-                    else:
-                        destination = full_file_path.replace('/unpackaged/', '/src/')
-                    destination_directory = os.path.dirname(destination)
-                    if not os.path.exists(destination_directory):
-                        os.makedirs(destination_directory)
-                    shutil.move(full_file_path, destination)
-            shutil.rmtree(os.path.join(self.location,"unpackaged"))
-            if os.path.exists(os.path.join(self.location,"metadata.zip")):
-                os.remove(os.path.join(self.location,"metadata.zip"))
-            return mm_util.generate_success_response("Refresh Completed Successfully")
+                #TODO: handle exception that could render the project unusable bc of lost files
+                #replace project metadata with retrieved metadata
+                for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
+                    for filename in filenames:
+                        full_file_path = os.path.join(dirname, filename)
+                        if '/unpackaged/package.xml' in full_file_path or '\\unpackaged\\package.xml' in full_file_path:
+                            continue
+                        if 'win32' in sys.platform:
+                            destination = full_file_path.replace('\\unpackaged\\', '\\src\\')
+                        else:
+                            destination = full_file_path.replace('/unpackaged/', '/src/')
+                        destination_directory = os.path.dirname(destination)
+                        if not os.path.exists(destination_directory):
+                            os.makedirs(destination_directory)
+                        shutil.move(full_file_path, destination)
+                shutil.rmtree(os.path.join(self.location,"unpackaged"))
+                if os.path.exists(os.path.join(self.location,"metadata.zip")):
+                    os.remove(os.path.join(self.location,"metadata.zip"))
+                return mm_util.generate_success_response("Refresh Completed Successfully")
         except Exception, e:
             return mm_util.generate_error_response(e.message)
 
