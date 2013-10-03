@@ -18,6 +18,7 @@ from base import SforceBaseClient
 import lib.xmltodict as xmltodict
 import time
 import lib.mm_util as mm_util
+import lib.config as config
 
 class SforceMetadataClient(SforceBaseClient):
   
@@ -181,16 +182,22 @@ class SforceMetadataClient(SforceBaseClient):
             self._waitForRequest(result.id)
             if 'ret_xml' in params and params['ret_xml'] == True:
                 self._sforce.set_options(retxml=True)
-            #self._setHeaders('deploy_response', debug_category='Apex_code', debug_level='DEBUG')
+
             deploy_result = self._getDeployResponse(result.id)
-            #print deploy_result
-            #if 'debug_categories' in params and 'ret_xml' in params and params['ret_xml'] == True:
-            #    deploy_result['log'] = self.getDebugLog()
+
+            try:
+                deploy_result['log'] = self.getDebugLog()
+            except:
+                pass
+
             self._sforce.set_options(retxml=False)  
+
             return deploy_result
         else:
-            if 'debug_categories' in params and 'ret_xml' in params and params['ret_xml'] == True:
-                result['log'] = self.getDebugLog()
+            try:
+                deploy_result['log'] = self.getDebugLog()
+            except:
+                pass
             return result
 
     def getOrgNamespace(self):
