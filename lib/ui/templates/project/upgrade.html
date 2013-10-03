@@ -16,7 +16,7 @@
 	<div class="tab-content" id="main-tab-content">  
 		<div id="form" class="tab-pane active">
 			<div class="alert alert-info">
-				This project was created using an older version of MavensMate. Please re-enter your credentials to upgrade the project.
+				This project was created using an older version of MavensMate. Please re-enter your credentials to upgrade the project. If you believe you are receiving this message in error, please update your MavensMate plugin to the latest version (OSX users: please also update MavensMate.app).
 			</div>
 			<form class="form-stacked">
 				<fieldset>
@@ -32,7 +32,7 @@
 					</div>
 
 					 <div class="control-group large">
-						<select id="org_type" class="info">
+						<select class="org_type select-block mbl info">
 							<option value="production">Production</option>
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
@@ -71,7 +71,7 @@
 				data: JSON.stringify({
 					username 			: $("#un").val(),
 			    	password 			: $("#pw").val(),
-			    	org_type 			: $("#org_type").val(),
+			    	org_type 			: $("select.org_type").val(),
 			    	override_session	: true,
 			    	defer_connection 	: true,
 			    	org_url 			: $("#custom-url").val(),
@@ -100,12 +100,17 @@
 			
 		$(function() {		   
 			$("#pn").val("{{ name }}");  
-			$("#un").val("");
+			$("#un").val("{{username}}");
 			$("#pw").val("");
-			$("#org_type").val("");
+			$("select.org_type").val("{{ org_type }}");
+			$("select.org_type").change();
+			$("#custom-url").val("{{ org_url }}");
+			if ($("select.org_type").val() === 'custom') {
+				$("#custom-url").show()
+			}
 			$("#pn").prop('disabled', true);
 
-			$("#org_type").change(function() {
+			$("select.org_type").change(function() {
 				if ($(this).val() == 'custom') {
 					$("#custom-url").show()
 				} else {
@@ -114,7 +119,7 @@
 				}
 			}) 
 
-			window.resizeTo(600, 700)
+			window.resizeTo(700, 750)
 			centerWindow()
 
 		});	

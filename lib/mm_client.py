@@ -53,7 +53,7 @@ class MavensMateClient(object):
             self.server_url             = self.credentials['server_url']            if 'server_url' in self.credentials else None
             self.org_type               = self.credentials['org_type']              if 'org_type' in self.credentials else 'production'
             
-            if 'org_url' in self.credentials and self.credentials['org_url'] != None:
+            if 'org_url' in self.credentials and self.credentials['org_url'] != None and self.credentials['org_url'] != '':
                 self.endpoint = mm_util.get_soap_url_from_custom_url(self.credentials["org_url"])
             elif 'endpoint' in self.credentials and self.credentials['endpoint'] != None:
                 self.endpoint = self.credentials['endpoint']    

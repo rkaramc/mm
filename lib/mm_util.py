@@ -20,6 +20,7 @@ import traceback
 import plistlib
 import platform
 import itertools
+import subprocess
 if sys.platform == 'linux2':
     import gnomekeyring
 else:
@@ -434,23 +435,33 @@ def generate_ui(operation,params={}):
         file_body = template.render(user_action='checkout',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'upgrade_project':
         template = env.get_template('/project/upgrade.html')
+        creds = config.connection.project.get_creds()
+        org_url = creds.get('org_url', None)
+        if org_url == None:
+            org_url = ''
         file_body = template.render(
             base_path=config.base_path,
             name=config.connection.project.project_name,
             project_location=config.connection.project.location,
             client=config.connection.plugin_client,
+            username=creds['username'],
+            org_type=creds['org_type'],
+            org_url=org_url,
             workspace=config.connection.workspace
         ).encode('UTF-8')
     elif operation == 'edit_project':
         template = env.get_template('/project/edit.html')
         creds = config.connection.project.get_creds()
+        org_url = creds.get('org_url', None)
+        if org_url == None:
+            org_url = ''
         file_body = template.render(
             base_path=config.base_path,
             name=config.connection.project.project_name,
             username=creds['username'],
             password=creds['password'],
             org_type=creds['org_type'],
-            org_url=creds.get('org_url', ''),
+            org_url=org_url,
             has_indexed_metadata=config.connection.project.is_metadata_indexed,
             project_location=config.connection.project.location,
             client=config.connection.plugin_client
@@ -622,14 +633,24 @@ def htmlize(seed):
         return 'Not Available'
 
 def launch_ui(tmp_html_file_location):
-    use_browser_as_ui = config.connection.get_plugin_client_setting('mm_use_browser_as_ui', False)
+    use_browser_as_ui   = config.connection.get_plugin_client_setting('mm_use_browser_as_ui', False)
+    #chrome_setting      = config.connection.get_plugin_client_setting('mm_chrome', None)
     if use_browser_as_ui or sys.platform != 'darwin':
         if 'linux' in sys.platform:
             #webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
             b = lambda : webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
             threading.Thread(target=b).start()
         elif 'darwin' in sys.platform:
-            webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+            if os.path.exists(os.path.join(os.path.expanduser('~'), "Google Chrome.app", "Contents", "MacOS", "Google Chrome")):
+                chrome = os.path.join(os.path.expanduser('~'), "Google Chrome.app", "Contents", "MacOS", "Google Chrome")
+                param1 = '--app=file://%s' % tmp_html_file_location
+                subprocess.Popen([chrome, param1], stdout=subprocess.PIPE)
+            elif os.path.exists(os.path.join("Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome")):
+                chrome = os.path.join("Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome")
+                param1 = '--app=file://%s' % tmp_html_file_location
+                subprocess.Popen([chrome, param1], stdout=subprocess.PIPE)
+            else:
+                webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
         else: 
             webbrowser.get('windows-default').open("{0}{1}".format("file:///",tmp_html_file_location))
     else:

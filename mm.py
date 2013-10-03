@@ -289,7 +289,7 @@ class MavensMateRequest():
             config.connection.project.username = self.payload['username']
             config.connection.project.password = self.payload['password']
             config.connection.project.org_type = self.payload['org_type']
-            config.connection.project.org_type = self.payload.get('org_url', None)
+            config.connection.project.org_url  = self.payload.get('org_url', None)
             config.connection.project.update_credentials()
             print util.generate_success_response('Your credentials were updated successfully')
         except BaseException, e:
