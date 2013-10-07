@@ -138,6 +138,7 @@
 
 		<ul id="maintabs" class="nav nav-tabs nav-append-content">
 			<li class="active"><a href="#tests_content" data-toggle="tab">Apex Tests</a></li>
+			<li><a href="#debug_content" data-toggle="tab">Debug</a></li>
 			<li class="game"><a href="#arcade" data-toggle="tab">Arcade</a></li>
 			
 			<li class="results_hidden dropdown active">
@@ -156,17 +157,41 @@
 		</ul> 
 
 		<div class="tab-content" id="main-tab-content">
-			<div class="tab-pane active" id="tests_content" style="padding-top:10px;">
-				<label for="tests">Apex Unit Tests</label>
-				<select id="tests" class="select-block mbl info" style="display:none;" id="un_list" multiple="multiple" data-placeholder="Select 1 or more unit tests to run..." data-selected-text-format="count>3" data-size="5">
+			<div class="tab-pane active" id="tests_content" style="padding-top:10px;padding-bottom:10px;">
+				<div class="item-search class-list">
+					<div class="control-group large">
+					    <div class="row">
+					    	<div class="span10">
+					    		<input style="height:34px;width:100%" class="" type="text" placeholder="Search">
+					    	</div>
+					    	<div class="span2">
+					    		<button class="btn btn-embossed btn-mini btn-primary" onclick="selectAllTests()">
+					    			All
+					    		</button>
+					    		<button class="btn btn-embossed btn-mini btn-default" onclick="selectNoTests()">
+					    			None
+					    		</button>
+					    	</div>
+					    </div>
+					    
+					</div>
+				</div>
+				<div id="class-list-wrapper">
 					{% for cls in classes %}
-					<option value="{{ cls }}" {% if cls in selected %}selected{% endif %}>{{ cls }}</option>
+						<div class="alert alert-info" style="padding:10px;margin-bottom:5px;">
+							<label class="checkbox" for="chk-{{cls}}" style="margin:0px;">
+							  <input type="checkbox" value="" id="chk-{{cls}}" data-classname="{{cls}}" data-toggle="checkbox" {% if cls in selected %}checked{% endif %}>
+							  {{ cls }}
+							</label>
+						</div>
 					{% endfor %}
-				</select>
+				</div>
+			</div>
 
+			<div class="tab-pane" id="debug_content" style="padding-top:10px;">
 				{% include 'snippets/log_levels.html' %}
 			</div>
-			
+
 			{% include 'snippets/arcade.html' %}
 
 			<div id="tests_results" class="tab-pane active">
@@ -258,7 +283,7 @@
 			dataType: "json",
 			data: JSON.stringify({
 				project_name 		: '{{ name }}',
-				classes 			: $('#tests').val(),
+				classes 			: get_tests_to_run(),
 				debug_categories 	: get_log_levels_json(),
 				project_location	: $("#STATIC-project-location").val()
 			}),
@@ -269,7 +294,19 @@
 		});
 	}
 
+	function get_tests_to_run() {
+		tests_to_run = []
+		$("#class-list-wrapper").find("div.alert label input[type='checkbox']").each(function() {
+			if ($(this).attr('checked') === 'checked') {
+				tests_to_run.push($(this).data("classname"))
+			}
+		});
+		return tests_to_run
+	}
+
 	$(function(){	
+		$('label.checkbox input').checkbox();
+
 		$(".item-search.class input").change(function() {
 			var thevalue = $(this).val().toLowerCase()
 			$("#class_coverage_wrapper").find("div.alert h3").each(function() {
@@ -300,6 +337,21 @@
 	        $(this).change();
 	    });
 
+	    $(".item-search.class-list input").change(function() {
+			var thevalue = $(this).val().toLowerCase()
+			$("#class-list-wrapper").find("div.alert label").each(function() {
+				var metaname = $(this).html().toLowerCase()
+				if (metaname.indexOf(thevalue) == -1) {
+					$(this).parent().hide()
+				} else {
+					$(this).parent().show()
+				}
+			})
+		})
+		.keyup(function() {
+	        $(this).change();
+	    });
+
 		$(window).resize(function() {
 			$("#result_wrapper").height($(window).height() - 210)
 			$("#class_coverage_wrapper").height($(window).height() - 260)   
@@ -313,6 +365,20 @@
 		resize_arcade()
 		centerWindow()
 	});
+
+	function selectAllTests() {
+		$("#class-list-wrapper").find("div.alert label input[type='checkbox']").each(function() {
+			$(this).attr('checked', true);
+			$(this).parent().addClass('checked')
+		});
+	}
+
+	function selectNoTests() {
+		$("#class-list-wrapper").find("div.alert label input[type='checkbox']").each(function() {
+			$(this).attr('checked', false);
+			$(this).parent().removeClass('checked')
+		});
+	}
 
 	function toggleSourceButton(el, index, type) {
 		console.log($(el).html())
