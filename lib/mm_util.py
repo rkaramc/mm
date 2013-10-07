@@ -636,24 +636,14 @@ def htmlize(seed):
         return 'Not Available'
 
 def launch_ui(tmp_html_file_location):
-    use_browser_as_ui   = config.connection.get_plugin_client_setting('mm_use_browser_as_ui', False)
-    #chrome_setting      = config.connection.get_plugin_client_setting('mm_chrome', None)
+    use_browser_as_ui = config.connection.get_plugin_client_setting('mm_use_browser_as_ui', False)
     if use_browser_as_ui or sys.platform != 'darwin':
         if 'linux' in sys.platform:
             #webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
             b = lambda : webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
             threading.Thread(target=b).start()
         elif 'darwin' in sys.platform:
-            if os.path.exists(os.path.join(os.path.expanduser('~'), "Google Chrome.app", "Contents", "MacOS", "Google Chrome")):
-                chrome = os.path.join(os.path.expanduser('~'), "Google Chrome.app", "Contents", "MacOS", "Google Chrome")
-                param1 = '--app=file://%s' % tmp_html_file_location
-                subprocess.Popen([chrome, param1], stdout=subprocess.PIPE)
-            elif os.path.exists(os.path.join("Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome")):
-                chrome = os.path.join("Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome")
-                param1 = '--app=file://%s' % tmp_html_file_location
-                subprocess.Popen([chrome, param1], stdout=subprocess.PIPE)
-            else:
-                webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
+            webbrowser.open("{0}{1}".format("file:///",tmp_html_file_location))
         else: 
             webbrowser.get('windows-default').open("{0}{1}".format("file:///",tmp_html_file_location))
     else:
