@@ -383,10 +383,13 @@ def put_skeleton_files_on_disk(metadata_type, api_name, where, apex_class_type='
             template = env.get_template(template_name)
     else:
         file_name = github_template["file_name"]
-        if 'linux' in sys.platform:
-            template_body = os.popen("wget https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1} -q -O -".format(metadata_type, file_name)).read()
-        else:
-            template_body = urllib2.urlopen("https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1}".format(metadata_type, file_name)).read()
+        try:
+            if 'linux' in sys.platform:
+                template_body = os.popen("wget https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1} -q -O -".format(metadata_type, file_name)).read()
+            else:
+                template_body = urllib2.urlopen("https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1}".format(metadata_type, file_name)).read()
+        except:
+            template_body = get_file_as_string(os.path.join(config.base_path,"lib","templates","github-local",metadata_type,file_name))
         template = env.from_string(template_body)
 
 
