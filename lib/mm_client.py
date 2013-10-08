@@ -193,7 +193,8 @@ class MavensMateClient(object):
     def get_apex_entity_id_by_name(self, **kwargs):
         if self.pclient == None:
             self.pclient = self.__get_partner_client()
-        query_result = self.pclient.query('select Id From '+kwargs['object_type']+' Where Name = \''+kwargs['name']+'\'')
+        query_result = self.pclient.query('select Id From '+kwargs['object_type']+' Where Name = \''+kwargs['name']+'\' AND NamespacePrefix = \''+self.get_org_namespace()+'\'')
+        config.logger.debug(">>>>>> ",query_result)
         record_id = None
         try:
             record_id = query_result.records[0].Id

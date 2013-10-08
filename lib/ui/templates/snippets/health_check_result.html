@@ -14,9 +14,9 @@
                 {% for match in result['matches'] %}
                   <div class="match-item">
                     {% if match is mapping and "lineNumber" in match %}
-                      <pre class="prettyprint mvl linenums:{{match['lineNumber']}}">
+                      <pre class="prettyprint mvl hc linenums:{{match['lineNumber']}}">
                     {% else %}
-                      <pre class="prettyprint mvl">
+                      <pre class="prettyprint mvl hc">
                     {% endif %}
                     {% if match is mapping and "statement" in match %}
                       {% if match["statement"] is mapping and "line_contents" in match %}
@@ -29,6 +29,7 @@
                     {% else %}
                       {{ match}}
                     {% endif %}
+                    <button class="btn btn-mini btn-info btn-show-in-client" onclick="open_file(this, '{{result['file_name']}}', {{match['lineNumber']}})">View</button>
                     </pre>
                   </div>
                 {% endfor %}

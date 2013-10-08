@@ -8,6 +8,7 @@ import sys
 import config
 import logging
 import pipes
+import subprocess
 from enum import enum
 from mm_project import MavensMateProject
 from mm_exceptions import MMException
@@ -224,6 +225,28 @@ class MavensMatePluginConnection(object):
             return result
         except BaseException, e:
             return mm_util.generate_error_response(e.message)
+
+    def run_subl_command(self, command, params):
+        if self.plugin_client != self.PluginClients.SUBLIME_TEXT_3:
+            raise MMException('unsupported operation')
+
+        if self.platform == 'darwin':
+            client_location = self.get_plugin_client_setting('mm_plugin_client_location')
+            if client_location == None:
+                client_location = '/Applications'
+            if os.path.exists(os.path.join('{0}/Sublime Text 3.app'.format(client_location))):
+                os.system("'{0}/Sublime Text 3.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
+            else:
+                os.system("'{0}/Sublime Text.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
+        elif 'linux' in self.platform:
+            subl_location = self.get_plugin_client_setting('mm_subl_location', '/usr/local/bin/subl')
+            os.system("'{0}' --command '{1}' '{2}'".format(subl_location,os.path.join(self.project.location, command, params)))
+        else:
+            subl_location = self.get_plugin_client_setting('mm_windows_subl_location')
+            if not os.path.isfile(subl_location) and "x86" not in subl_location:
+                subl_location = subl_location.replace("Program Files", "Program Files (x86)")
+            cmd = '"{0}" --command "{1}" "{2}"'.format(subl_location,os.path.join(self.project.location, command, params))
+            subprocess.call(cmd)
 
     def get_log_level(self):
         try:

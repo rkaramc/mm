@@ -305,6 +305,19 @@ class MavensMateProject(object):
     def run_health_check(self):
         return HealthCheck(self.location).run()
 
+    def open_file_in_client(self, payload):
+        file_name = payload["file_name"]
+        extension = mm_util.get_file_extension_no_period(file_name)
+        mtype = mm_util.get_meta_type_by_suffix(extension)
+        full_file_path = os.path.join(self.location, "src", mtype["directoryName"], file_name)
+        params = {
+            "project_name"  : self.project_name,
+            "file_name"     : full_file_path,
+            "line_number"   : payload.get("line_number", 0)
+        } 
+        config.connection.run_subl_command("open_file_in_project", json.dumps(params))
+        return mm_util.generate_success_response("ok")
+
     #compiles metadata
     def compile_selected_metadata(self, params):        
         files = params.get('files', None)

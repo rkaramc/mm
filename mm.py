@@ -59,7 +59,8 @@ class MavensMateRequest():
             'update_debug_settings'                 : self.update_debug_settings,
             'eval'                                  : self.eval_function,
             'sign_in_with_github'                   : self.sign_in_with_github,
-            'project_health_check'                  : self.project_health_check
+            'project_health_check'                  : self.project_health_check,
+            'open_file_in_client'                   : self.open_file_in_client
         }
         if self.payload != None and 'operation' in self.payload:
             self.operation = self.payload['operation']
@@ -91,6 +92,7 @@ class MavensMateRequest():
             util.launch_ui(tmp_html_file)
             print util.generate_success_response('UI Generated Successfully')
         else:        
+            config.logger.debug(self.operation)
             if self.operation not in self.operation_dict:
                 raise MMException('Unsupported operation')
             requested_function = self.operation_dict[self.operation]
@@ -307,6 +309,9 @@ class MavensMateRequest():
 
     def sign_in_with_github(self):
         print config.connection.sign_in_with_github(self.payload)
+
+    def open_file_in_client(self):
+        print config.connection.project.open_file_in_client(self.payload)
 
 
 def main():
