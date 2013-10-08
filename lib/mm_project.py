@@ -843,7 +843,7 @@ class MavensMateProject(object):
                                 continue
                             with open(fileabs, 'r') as content_file:
                                 content = content_file.read()
-                                p = re.compile("global\s+class\s", re.I + re.M)
+                                p = re.compile("global\s+(abstract\s+)?class\s", re.I + re.M)
                                 if not p.search(content):
                                     continue
                                 p = re.compile("\swebservice\s", re.I + re.M)
