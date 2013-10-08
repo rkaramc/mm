@@ -452,7 +452,8 @@
 			type: "POST",
 			url: "{{ base_local_server_url() }}/project/index", 
 			data: JSON.stringify({
-				project_name 	: '{{ name }}'
+				project_name 		: '{{ name }}',
+				project_location	: $("#STATIC-project-location").val()
 			}),
 			beforeSend: function() { showLoading('Updating the metadata index for this project. This operation can take a few minutes in large orgs.<br/><br/>Thanks for being patient! :)'); },
 			complete: function(data, status, xhr){
@@ -541,7 +542,8 @@
 			    rollback_on_error 	: isRollbackOnError(),
 			    package 			: get_tree(),
 			    project_name 		: '{{ name }}',
-			    debug_categories 	: get_log_levels_json()
+			    debug_categories 	: get_log_levels_json(),
+			    project_location	: $("#STATIC-project-location").val()
 			}),
 			beforeSend: function() { toggleRunningIndicator(); $("#btnDeploy").hide()  },
 			complete: function(data){
@@ -559,7 +561,8 @@
 			type: "GET",
 			url: "{{ base_local_server_url() }}/project/conns/list", 
 			data: {
-				 project_name	: '{{name}}'
+				 project_name		: '{{name}}',
+				 project_location	: $("#STATIC-project-location").val()
 			},
 			beforeSend: function() { showLoading('Listing connections'); },
 			complete: function(data){
@@ -586,8 +589,9 @@
 			contentType: 'application/json; charset=utf-8',
 			url: "{{ base_local_server_url() }}/project/conns/delete", 
 			data: JSON.stringify({
-				project_name	: '{{name}}',
-				id 				: id
+				project_name		: '{{name}}',
+				id 					: id,
+				project_location	: $("#STATIC-project-location").val()
 			}),
 			beforeSend: function() { showLoading('Removing connection'); },
 			complete: function(data){
@@ -614,10 +618,11 @@
 			contentType: 'application/json; charset=utf-8',
 			url: "{{ base_local_server_url() }}/project/conns/new", 
 			data: JSON.stringify({
-				username 		: $("#connection_un").val(), 
-				password 		: $("#connection_pw").val(), 
-				org_type 		: $("#org_type").val(),
-				project_name 	: '{{name}}'
+				username 		 : $("#connection_un").val(), 
+				password 		 : $("#connection_pw").val(), 
+				org_type 		 : $("#org_type").val(),
+				project_name 	 : '{{name}}',
+				project_location : $("#STATIC-project-location").val()
 			}),
 			beforeSend: function() { showLoading('Adding connection'); },
 			complete: function(data){

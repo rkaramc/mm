@@ -52,7 +52,13 @@ class MavensMateClient(object):
             self.metadata_server_url    = self.credentials['metadata_server_url']   if 'metadata_server_url' in self.credentials else None
             self.server_url             = self.credentials['server_url']            if 'server_url' in self.credentials else None
             self.org_type               = self.credentials['org_type']              if 'org_type' in self.credentials else 'production'
-            self.endpoint               = self.credentials['endpoint']              if 'endpoint' in self.credentials and self.credentials['endpoint'] != None else mm_util.get_sfdc_endpoint_by_type(self.org_type)
+            
+            if 'org_url' in self.credentials and self.credentials['org_url'] != None and self.credentials['org_url'] != '':
+                self.endpoint = mm_util.get_soap_url_from_custom_url(self.credentials["org_url"])
+            elif 'endpoint' in self.credentials and self.credentials['endpoint'] != None:
+                self.endpoint = self.credentials['endpoint']    
+            else:
+                self.endpoint = mm_util.get_sfdc_endpoint_by_type(self.org_type) 
 
         #we do this to prevent an unnecessary "login" call
         #if the getUserInfo call fails, we catch it and reset our class variables 
@@ -187,7 +193,8 @@ class MavensMateClient(object):
     def get_apex_entity_id_by_name(self, **kwargs):
         if self.pclient == None:
             self.pclient = self.__get_partner_client()
-        query_result = self.pclient.query('select Id From '+kwargs['object_type']+' Where Name = \''+kwargs['name']+'\'')
+        query_result = self.pclient.query('select Id From '+kwargs['object_type']+' Where Name = \''+kwargs['name']+'\' AND NamespacePrefix = \''+self.get_org_namespace()+'\'')
+        config.logger.debug(">>>>>> ",query_result)
         record_id = None
         try:
             record_id = query_result.records[0].Id

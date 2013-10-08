@@ -254,6 +254,22 @@ ul.dynatree-container {
 	position: absolute;;
 }
 
+pre.prettyprint.mvl.hc {
+	position: relative;
+}
+
+button.btn-show-in-client {
+	position: absolute;
+	right: 10px;
+	top: 9px;
+	padding: 3px 8px !important;
+	border-radius: 4px;
+}
+
+button.btn-show-in-client span {
+	color:#fff;
+}
+
 .loading_message_wrapper {
 	width: 100%;
 	position: absolute;

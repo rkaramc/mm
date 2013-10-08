@@ -82,8 +82,11 @@
 
 		    {% if 'log' in result %}
 			<div class="deploy-category" onclick="$('#{{ result['id'] }}-log').toggle();"><i class="icon-file-alt"></i>&nbsp;Deploy Log</div>			
-				<div id="{{ result['id'] }}-log" class="log" style="padding:10px;border-bottom:2px solid #ddd">
-					{{ htmlize(result['log']) }}
+				<div id="{{ result['id'] }}-log" style="position:relative;padding:10px;border-bottom:2px solid #ddd">
+					<a href="javascript:void(0)" class="btn btn-success btn-embossed" onclick="$('#log_selector').selectText();" style="padding: 3px 5px;font-size: .9em;top:5px;right:10px;position:absolute;">Select Log Text</a>
+					<div id="log_selector">
+						{{ htmlize(result['log']) }}
+					</div>
 				</div>
 		    {% endif %}
 			

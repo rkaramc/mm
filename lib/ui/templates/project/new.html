@@ -30,6 +30,15 @@
 				<input type="hidden" value="" id="server_url"/>
 				<fieldset>
 					<div class="control-group large">
+						<select id="workspace" class="select-block mbl info" 
+							data-placeholder="Select a workspace" data-size="5">
+							{% for m in workspaces %}
+								<option value="{{ m }}">{{ m }}</option>
+							{% endfor %}
+						</select>
+					</div>  
+
+					<div class="control-group large">
 						<input class="span12" placeholder="Project Name" type="text" id="pn">
 					</div>
 					<div class="control-group large">
@@ -40,12 +49,16 @@
 					</div>
 
 					 <div class="control-group large">
-						<select id="org_type" class="info">
+						<select id="org_type" class="select-block mbl info">
 							<option value="production">Production</option>
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
 							<option value="prerelease">Prerelease</option>
+							<option value="custom">Custom URL</option>
 						</select>
+					</div>
+					<div class="control-group large">
+						<input class="span12" placeholder="Example: https://na1-blitz01.salesforce.com" type="text" id="custom-url" style="display:none;">
 					</div>  
 				</fieldset>
 			</form>
@@ -127,8 +140,10 @@
 					 password 		: $("#pw").val(), 
 					 org_type 		: $("#org_type").val(),
 					 package 		: get_tree(),
+					 workspace 		: $("#workspace").val(),
 					 subscription 	: $("#subscription").val(),
-					 action 		: "new"
+					 action 		: "new",
+					 org_url 		: $("#custom-url").val()
 				}),
 				beforeSend: function() { showLoading('Creating new MavensMate project'); },
 				complete: function(data){
@@ -180,6 +195,15 @@
 				 }
 			});  
 
+			$("#org_type").change(function() {
+				if ($(this).val() == 'custom') {
+					$("#custom-url").show()
+				} else {
+					$("#custom-url").hide()
+					$("#custom-url").val('')
+				}
+			})
+
 			//when user changes tab to metadata selection, use provided creds to login and get session id
 			$('a[data-toggle="tab"]').on('shown', function (e) {
 				//console.log(e.target.href.indexOf("metadata"))
@@ -200,7 +224,8 @@
 					 username 		: $("#un").val(), 
 					 password 		: $("#pw").val(), 
 					 org_type 		: $("#org_type").val(),
-					 subscription 	: $("#subscription").val()
+					 subscription 	: $("#subscription").val(),
+					 org_url 		: $("#custom-url").val()
 				},
 				beforeSend: function() { showLoading(message); },
 				complete: function(data){

@@ -16,7 +16,7 @@
 	<div class="tab-content" id="main-tab-content">  
 		<div id="form" class="tab-pane active">
 			<div class="alert alert-info">
-				This project was created using an older version of MavensMate. Please re-enter your credentials to upgrade the project.
+				This project was created using an older version of MavensMate. Please re-enter your credentials to upgrade the project. If you believe you are receiving this message in error, please update your MavensMate plugin to the latest version (OSX users: please also update MavensMate.app).
 			</div>
 			<form class="form-stacked">
 				<fieldset>
@@ -32,18 +32,24 @@
 					</div>
 
 					 <div class="control-group large">
-						<select id="org_type" class="info">
+						<select class="org_type select-block mbl info">
 							<option value="production">Production</option>
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>
 							<option value="prerelease">Prerelease</option>
+							<option value="custom">Custom URL</option>
 						</select>
 					</div>  
+					<div class="control-group large">
+						<input class="span12" placeholder="Example: https://na1-blitz01.salesforce.com" type="text" id="custom-url" style="display:none;">
+					</div>
 				</fieldset>
 			</form>
 		</div>
 	</div>
 </div>  
+
+<input type="hidden" value="{{workspace}}" id="workspace"/>
 	
 {% endblock %}
 
@@ -65,10 +71,12 @@
 				data: JSON.stringify({
 					username 			: $("#un").val(),
 			    	password 			: $("#pw").val(),
-			    	org_type 			: $("#org_type").val(),
+			    	org_type 			: $("select.org_type").val(),
 			    	override_session	: true,
 			    	defer_connection 	: true,
-			    	project_name 		: '{{ name }}' 
+			    	org_url 			: $("#custom-url").val(),
+			    	project_name 		: '{{ name }}',
+			    	project_location	: $("#STATIC-project-location").val()
 				}),
 				beforeSend: function() { showLoading('Upgrading your project'); },
 				complete: function(data){	
@@ -92,12 +100,26 @@
 			
 		$(function() {		   
 			$("#pn").val("{{ name }}");  
-			$("#un").val("");
+			$("#un").val("{{username}}");
 			$("#pw").val("");
-			$("#org_type").val("");
-			$("#pn").prop('disabled', true); 
+			$("select.org_type").val("{{ org_type }}");
+			$("select.org_type").change();
+			$("#custom-url").val("{{ org_url }}");
+			if ($("select.org_type").val() === 'custom') {
+				$("#custom-url").show()
+			}
+			$("#pn").prop('disabled', true);
 
-			window.resizeTo(600, 700)
+			$("select.org_type").change(function() {
+				if ($(this).val() == 'custom') {
+					$("#custom-url").show()
+				} else {
+					$("#custom-url").hide()
+					$("#custom-url").val('')
+				}
+			}) 
+
+			window.resizeTo(700, 750)
 			centerWindow()
 
 		});	

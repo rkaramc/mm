@@ -8,6 +8,7 @@ import sys
 import config
 import logging
 import pipes
+import subprocess
 from enum import enum
 from mm_project import MavensMateProject
 from mm_exceptions import MMException
@@ -27,10 +28,13 @@ class MavensMatePluginConnection(object):
             self.plugin_client = 'SUBLIME_TEXT_3'
         self.plugin_client_version  = params.get('client_version', '2.0.1') #=> "1.0", "1.1.1", "v1"
         self.plugin_client_settings = self.get_plugin_client_settings()
-        self.workspace              = self.get_workspace()
+        self.project_location       = params.get('project_location', None)
+        if self.project_location == None:
+            self.workspace              = params.get('workspace', self.get_workspace())
+        else:
+            self.workspace              = os.path.dirname(self.project_location)
         self.project_name           = params.get('project_name', None)
-        self.project_location       = None
-        if self.project_name != None:
+        if self.project_name != None and self.project_location == None:
             self.project_location = os.path.join(self.workspace,self.project_name)
         self.project_id             = params.get('project_id', None)
         self.project                = None
@@ -46,7 +50,7 @@ class MavensMatePluginConnection(object):
 
         if self.operation != 'new_project' and self.operation != 'upgrade_project' and self.operation != 'new_project_from_existing_directory' and self.project_location != None:
             if not os.path.exists(os.path.join(self.project_location)):
-                raise MMException('Could not find project in workspace: '+self.workspace)
+               raise MMException('Could not find project in workspace: '+self.workspace)
             if not os.path.exists(os.path.join(self.project_location,"config",".settings")):
                 raise MMException('This does not seem to be a valid MavensMate project, missing config/.settings')
             if not os.path.exists(os.path.join(self.project_location,"src","package.xml")):
@@ -89,15 +93,34 @@ class MavensMatePluginConnection(object):
 
     #returns the workspace for the current connection (/Users/username/Workspaces/MavensMate)
     def get_workspace(self):
+        mm_workspace_path = None
         mm_workspace_setting = self.get_plugin_client_setting('mm_workspace')
-        if mm_workspace_setting == None or mm_workspace_setting == '':
+        if type(mm_workspace_setting) is list and len(mm_workspace_setting) > 0:
+            mm_workspace_path = mm_workspace_setting[0] #grab the first path
+        else:
+            mm_workspace_path = mm_workspace_setting #otherwise, it's a string, set it
+
+        if mm_workspace_path == None or mm_workspace_path == '':
             raise MMException("Please set mm_workspace to the location where you'd like your mavensmate projects to reside")
-        elif not os.path.exists(mm_workspace_setting):
+        elif not os.path.exists(mm_workspace_path):
             try:
-                os.makedirs(mm_workspace_setting)
+                os.makedirs(mm_workspace_path)
             except:
                 raise MMException("Unable to create mm_workspace location")
-        return self.get_plugin_client_setting('mm_workspace')
+        return mm_workspace_path
+
+    #returns the list of workspaces
+    def get_workspaces(self):
+        workspaces = []
+        mm_workspace_setting = self.get_plugin_client_setting('mm_workspace')
+        if type(mm_workspace_setting) is list and len(mm_workspace_setting) == 0:
+            raise MMException("mm_workspace not properly set")
+
+        if type(mm_workspace_setting) is list and len(mm_workspace_setting) > 0:
+            workspaces = mm_workspace_setting
+        else:
+            workspaces = [mm_workspace_setting]
+        return workspaces
 
     #returns the MavensMate settings as a dict for the current plugin
     def get_plugin_client_settings(self):
@@ -203,6 +226,28 @@ class MavensMatePluginConnection(object):
         except BaseException, e:
             return mm_util.generate_error_response(e.message)
 
+    def run_subl_command(self, command, params):
+        if self.plugin_client != self.PluginClients.SUBLIME_TEXT_3:
+            raise MMException('unsupported operation')
+
+        if self.platform == 'darwin':
+            client_location = self.get_plugin_client_setting('mm_plugin_client_location')
+            if client_location == None:
+                client_location = '/Applications'
+            if os.path.exists(os.path.join('{0}/Sublime Text 3.app'.format(client_location))):
+                os.system("'{0}/Sublime Text 3.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
+            else:
+                os.system("'{0}/Sublime Text.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
+        elif 'linux' in self.platform:
+            subl_location = self.get_plugin_client_setting('mm_subl_location', '/usr/local/bin/subl')
+            os.system("'{0}' --command '{1}' '{2}'".format(subl_location,os.path.join(self.project.location, command, params)))
+        else:
+            subl_location = self.get_plugin_client_setting('mm_windows_subl_location')
+            if not os.path.isfile(subl_location) and "x86" not in subl_location:
+                subl_location = subl_location.replace("Program Files", "Program Files (x86)")
+            cmd = '"{0}" --command "{1}" "{2}"'.format(subl_location,os.path.join(self.project.location, command, params))
+            subprocess.call(cmd)
+
     def get_log_level(self):
         try:
             return self.get_plugin_client_setting('mm_log_level')
@@ -221,20 +266,30 @@ class MavensMatePluginConnection(object):
         except:
             return None
 
+    def get_app_settings_directory(self):
+        if self.platform == 'darwin':
+            if not os.path.exists(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')):
+                os.makedirs(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate'))
+            return os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')
+        elif 'linux' in self.platform:
+            if not os.path.exists(os.path.join(os.path.expanduser('~'),'.config','mavensmate')):
+                os.makedirs(os.path.join(os.path.expanduser('~'),'.config','mavensmate'))
+            return os.path.join(os.path.expanduser('~'),'.config','mavensmate')
+        elif self.platform == 'win32':
+            if not os.path.exists(os.path.join(os.environ['APPDATA'], 'MavensMate')):
+                os.makedirs(os.path.join(os.environ['APPDATA'], 'MavensMate'))
+            return os.path.join(os.path.join(os.environ['APPDATA'], 'MavensMate'))
+
     def sign_in_with_github(self, creds):
         try:
             response = mm_github.sign_in(creds)
             if 'message' in response:
                 return mm_util.generate_error_response(response['message'])
             elif 'authentication' in response:
-                if self.platform == 'darwin':
-                    if not os.path.exists(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate')):
-                        os.makedirs(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate'))
-
-                    src = open(os.path.join(os.path.expanduser('~'),'Library','Application Support','MavensMate','.github.json'), "wb")
-                    src.write(json.dumps(response, sort_keys=False, indent=4))
-                    src.close() 
-                    return mm_util.generate_success_response('Connected to GitHub successfully!')
+                src = open(os.path.join(self.get_app_settings_directory(),'.github.json'), "wb")
+                src.write(json.dumps(response, sort_keys=False, indent=4))
+                src.close()
+                return mm_util.generate_success_response('Connected to GitHub successfully!')
             else:
                 return mm_util.generate_error_response(response)
         except Exception, e:

@@ -37,6 +37,7 @@ class MavensMateProject(object):
         self.username           = params.get('username', None)
         self.password           = params.get('password', None)
         self.org_type           = params.get('org_type', None)
+        self.org_url            = params.get('org_url', None)
         self.package            = params.get('package', None)
         self.ui                 = params.get('ui', False)
         self.directory          = params.get('directory', False)
@@ -91,7 +92,7 @@ class MavensMateProject(object):
                 if os.path.isdir(os.path.join(config.connection.workspace,self.project_name)) and existing_is_in_workspace == False and action == 'existing':
                     raise MMException("A project with this name already exists in your workspace.")   
 
-            self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type})             
+            self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type,"org_url":self.org_url})             
             self.id = mm_util.new_mavensmate_id()
             if action == 'new':
                 project_metadata = self.sfdc_client.retrieve(package=self.package)
@@ -120,7 +121,7 @@ class MavensMateProject(object):
 
     #updates the salesforce.com credentials associated with the project
     def update_credentials(self):
-        self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type}, override_session=True)              
+        self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type,"org_url":self.org_url}, override_session=True)              
         self.id = self.settings['id']
         self.username = self.username
         self.environment = self.org_type
@@ -303,6 +304,19 @@ class MavensMateProject(object):
 
     def run_health_check(self):
         return HealthCheck(self.location).run()
+
+    def open_file_in_client(self, payload):
+        file_name = payload["file_name"]
+        extension = mm_util.get_file_extension_no_period(file_name)
+        mtype = mm_util.get_meta_type_by_suffix(extension)
+        full_file_path = os.path.join(self.location, "src", mtype["directoryName"], file_name)
+        params = {
+            "project_name"  : self.project_name,
+            "file_name"     : full_file_path,
+            "line_number"   : payload.get("line_number", 0)
+        } 
+        config.connection.run_subl_command("open_file_in_project", json.dumps(params))
+        return mm_util.generate_success_response("ok")
 
     #compiles metadata
     def compile_selected_metadata(self, params):        
@@ -538,10 +552,10 @@ class MavensMateProject(object):
             #TESTING: moving to tmp directory in case something goes wrong during clean
             # tmp = mm_util.put_tmp_directory_on_disk()
             # shutil.copytree(self.location, tmp)
-            
-            use_tooling_api = config.connection.get_plugin_client_setting('mm_compile_with_tooling_api', False)
-            if use_tooling_api == True and int(float(mm_util.SFDC_API_VERSION)) >= 27:
-                self.reset_metadata_container()
+            if kwargs.get('reset_metadata_container', False):
+                use_tooling_api = config.connection.get_plugin_client_setting('mm_compile_with_tooling_api', False)
+                if use_tooling_api == True and int(float(mm_util.SFDC_API_VERSION)) >= 27:
+                    self.reset_metadata_container()
 
             project_metadata = self.sfdc_client.retrieve(package=self.package)
             mm_util.extract_base64_encoded_zip(project_metadata.zipFile, self.location)
@@ -679,30 +693,33 @@ class MavensMateProject(object):
     #refreshes file(s) from the server
     def refresh_selected_metadata(self, params):
         try:
-            retrieve_result = self.get_retrieve_result(params)
-            #take this opportunity to freshen the cache
-            self.cache_apex_file_properties(retrieve_result.fileProperties)
-            mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, self.location)
+            if 'directories' in params and len(params['directories']) == 1 and os.path.basename(params['directories'][0]) == "src":
+                return self.clean(reset_metadata_container=False)
+            else:
+                retrieve_result = self.get_retrieve_result(params)
+                #take this opportunity to freshen the cache
+                self.cache_apex_file_properties(retrieve_result.fileProperties)
+                mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, self.location)
 
-            #TODO: handle exception that could render the project unusable bc of lost files
-            #replace project metadata with retrieved metadata
-            for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
-                for filename in filenames:
-                    full_file_path = os.path.join(dirname, filename)
-                    if '/unpackaged/package.xml' in full_file_path or '\\unpackaged\\package.xml' in full_file_path:
-                        continue
-                    if 'win32' in sys.platform:
-                        destination = full_file_path.replace('\\unpackaged\\', '\\src\\')
-                    else:
-                        destination = full_file_path.replace('/unpackaged/', '/src/')
-                    destination_directory = os.path.dirname(destination)
-                    if not os.path.exists(destination_directory):
-                        os.makedirs(destination_directory)
-                    shutil.move(full_file_path, destination)
-            shutil.rmtree(os.path.join(self.location,"unpackaged"))
-            if os.path.exists(os.path.join(self.location,"metadata.zip")):
-                os.remove(os.path.join(self.location,"metadata.zip"))
-            return mm_util.generate_success_response("Refresh Completed Successfully")
+                #TODO: handle exception that could render the project unusable bc of lost files
+                #replace project metadata with retrieved metadata
+                for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"unpackaged")):
+                    for filename in filenames:
+                        full_file_path = os.path.join(dirname, filename)
+                        if '/unpackaged/package.xml' in full_file_path or '\\unpackaged\\package.xml' in full_file_path:
+                            continue
+                        if 'win32' in sys.platform:
+                            destination = full_file_path.replace('\\unpackaged\\', '\\src\\')
+                        else:
+                            destination = full_file_path.replace('/unpackaged/', '/src/')
+                        destination_directory = os.path.dirname(destination)
+                        if not os.path.exists(destination_directory):
+                            os.makedirs(destination_directory)
+                        shutil.move(full_file_path, destination)
+                shutil.rmtree(os.path.join(self.location,"unpackaged"))
+                if os.path.exists(os.path.join(self.location,"metadata.zip")):
+                    os.remove(os.path.join(self.location,"metadata.zip"))
+                return mm_util.generate_success_response("Refresh Completed Successfully")
         except Exception, e:
             return mm_util.generate_error_response(e.message)
 
@@ -1612,7 +1629,10 @@ class MavensMateProject(object):
         if 'environment' in settings: 
             #TODO: let's standardize environment vs. org_type (org_type is preferred)
             environment, org_type = settings['environment'], settings['environment']
-            endpoint = mm_util.get_sfdc_endpoint_by_type(environment)
+            if 'org_url' in settings and settings['org_url'] != None and settings['org_url'] != '':
+                endpoint = mm_util.get_soap_url_from_custom_url(settings['org_url'])
+            else:
+                endpoint = mm_util.get_sfdc_endpoint_by_type(environment)
         #get password from id, or name for legacy/backup
         if id:
             password = mm_util.get_password_by_key(id)
@@ -1627,6 +1647,7 @@ class MavensMateProject(object):
         creds['password'] = password
         creds['endpoint'] = endpoint
         creds['org_type'] = org_type
+        creds['org_url']  = settings.get('org_url', None)
         if self.sfdc_session != None:
             creds['user_id']                = self.sfdc_session.get('user_id', None)
             creds['sid']                    = self.sfdc_session.get('sid', None)
@@ -1652,10 +1673,12 @@ class MavensMateProject(object):
         if settings == None:
             settings = {
                 "project_name"          : self.project_name,
+                "workspace"             : config.connection.workspace,
                 "username"              : self.username,
                 "environment"           : self.org_type,
                 "namespace"             : self.sfdc_client.get_org_namespace(),
                 "id"                    : self.id,
+                "org_url"               : self.org_url,
                 "subscription"          : self.subscription or config.connection.get_plugin_client_setting('mm_default_subscription')
             }
             if int(float(mm_util.SFDC_API_VERSION)) >= 27:

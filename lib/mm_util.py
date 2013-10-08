@@ -20,6 +20,7 @@ import traceback
 import plistlib
 import platform
 import itertools
+import subprocess
 if sys.platform == 'linux2':
     import gnomekeyring
 else:
@@ -64,6 +65,15 @@ template_path = os.path.join(config.base_path,"lib","templates")
 
 env = Environment(loader=FileSystemLoader(template_path),trim_blocks=True)
 
+def get_soap_url_from_custom_url(custom_url):
+    if "Soap" in custom_url:
+        return custom_url
+    else:
+        if custom_url.endswith("/"):
+            return custom_url+"services/Soap/u/"+SFDC_API_VERSION 
+        else:
+            return custom_url+"/services/Soap/u/"+SFDC_API_VERSION 
+
 def get_timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d-%H:%M:%S')
@@ -107,12 +117,6 @@ def get_sfdc_endpoint(url):
     elif "prerellogin.pre.salesforce.com" in url:
         endpoint = PRERELEASE_ENDPOINT
     return endpoint
-
-def get_endpoint_type_by_url(endpoint):
-    if endpoint in URL_TO_ENDPOINT_TYPE: 
-        return URL_TO_ENDPOINT_TYPE[endpoint] 
-    else: 
-        return ""
 
 def get_sfdc_endpoint_by_type(type):
     if type in ENDPOINTS: 
@@ -379,10 +383,13 @@ def put_skeleton_files_on_disk(metadata_type, api_name, where, apex_class_type='
             template = env.get_template(template_name)
     else:
         file_name = github_template["file_name"]
-        if 'linux' in sys.platform:
-            template_body = os.popen("wget https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1} -q -O -".format(metadata_type, file_name)).read()
-        else:
-            template_body = urllib2.urlopen("https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1}".format(metadata_type, file_name)).read()
+        try:
+            if 'linux' in sys.platform:
+                template_body = os.popen("wget https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1} -q -O -".format(metadata_type, file_name)).read()
+            else:
+                template_body = urllib2.urlopen("https://raw.github.com/joeferraro/MavensMate-Templates/master/{0}/{1}".format(metadata_type, file_name)).read()
+        except:
+            template_body = get_file_as_string(os.path.join(config.base_path,"lib","templates","github-local",metadata_type,file_name))
         template = env.from_string(template_body)
 
 
@@ -415,30 +422,49 @@ def generate_ui(operation,params={}):
     env.globals['client_subscription_list'] = client_subscription_list
     env.globals['base_local_server_url']    = base_local_server_url
     env.globals['operation']                = operation
+    env.globals['project_location']         = config.connection.project_location
     temp = tempfile.NamedTemporaryFile(delete=False, prefix="mm", suffix=".html")
     if operation == 'new_project':
         template = env.get_template('/project/new.html')
-        file_body = template.render(user_action='new',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
+        file_body = template.render(
+            user_action='new',
+            base_path=config.base_path,
+            workspace=config.connection.workspace,
+            client=config.connection.plugin_client,
+            workspaces=config.connection.get_workspaces()
+            ).encode('UTF-8')
     elif operation == 'checkout_project':
         template = env.get_template('/project/new.html')
         file_body = template.render(user_action='checkout',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'upgrade_project':
         template = env.get_template('/project/upgrade.html')
+        creds = config.connection.project.get_creds()
+        org_url = creds.get('org_url', None)
+        if org_url == None:
+            org_url = ''
         file_body = template.render(
             base_path=config.base_path,
             name=config.connection.project.project_name,
             project_location=config.connection.project.location,
-            client=config.connection.plugin_client
+            client=config.connection.plugin_client,
+            username=creds['username'],
+            org_type=creds['org_type'],
+            org_url=org_url,
+            workspace=config.connection.workspace
         ).encode('UTF-8')
     elif operation == 'edit_project':
         template = env.get_template('/project/edit.html')
         creds = config.connection.project.get_creds()
+        org_url = creds.get('org_url', None)
+        if org_url == None:
+            org_url = ''
         file_body = template.render(
             base_path=config.base_path,
             name=config.connection.project.project_name,
             username=creds['username'],
             password=creds['password'],
             org_type=creds['org_type'],
+            org_url=org_url,
             has_indexed_metadata=config.connection.project.is_metadata_indexed,
             project_location=config.connection.project.location,
             client=config.connection.plugin_client
@@ -494,6 +520,7 @@ def generate_ui(operation,params={}):
             base_path=config.base_path,
             project_name=project_name,
             directory=params['directory'],
+            workspaces=config.connection.get_workspaces(),
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'debug_log':
         template = env.get_template('/debug_log/index.html')
