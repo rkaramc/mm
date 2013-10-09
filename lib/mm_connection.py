@@ -218,7 +218,6 @@ class MavensMatePluginConnection(object):
                         if not os.path.isfile(subl_location) and "x86" not in subl_location:
                             subl_location = subl_location.replace("Program Files", "Program Files (x86)")
                         cmd = '"{0}" --project "{1}"'.format(subl_location,os.path.join(self.project.location,self.project.project_name+".sublime-project"))
-                        import subprocess
                         subprocess.call(cmd)
 
 
@@ -240,12 +239,13 @@ class MavensMatePluginConnection(object):
                 os.system("'{0}/Sublime Text.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
         elif 'linux' in self.platform:
             subl_location = self.get_plugin_client_setting('mm_subl_location', '/usr/local/bin/subl')
-            os.system("'{0}' --command '{1}' '{2}'".format(subl_location,os.path.join(self.project.location, command, params)))
+            os.system("'{0}' --command '{1} {2}'".format(subl_location,os.path.join(self.project.location, command, params)))
         else:
             subl_location = self.get_plugin_client_setting('mm_windows_subl_location')
             if not os.path.isfile(subl_location) and "x86" not in subl_location:
                 subl_location = subl_location.replace("Program Files", "Program Files (x86)")
-            cmd = '"{0}" --command "{1}" "{2}"'.format(subl_location,os.path.join(self.project.location, command, params))
+            params = params.replace('"','\"')
+            cmd = '"{0}" --command "{1} {2}"'.format(subl_location,os.path.join(self.project.location, command, params))
             subprocess.call(cmd)
 
     def get_log_level(self):
