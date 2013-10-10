@@ -60,7 +60,8 @@ class MavensMateRequest():
             'eval'                                  : self.eval_function,
             'sign_in_with_github'                   : self.sign_in_with_github,
             'project_health_check'                  : self.project_health_check,
-            'open_file_in_client'                   : self.open_file_in_client
+            'open_file_in_client'                   : self.open_file_in_client,
+            'run_apex_script'                       : self.run_apex_script,
         }
         if self.payload != None and 'operation' in self.payload:
             self.operation = self.payload['operation']
@@ -216,6 +217,9 @@ class MavensMateRequest():
 
     def update_debug_settings(self):
         print config.connection.project.update_debug_settings(self.payload)
+
+    def run_apex_script(self):
+        print config.connection.project.execute_apex(self.payload)
 
     # echo '{ "project_name" : "bloat", "classes" : [ "MyTester" ] }' | joey2 mavensmate.py -o 'test'
     def run_unit_tests(self):

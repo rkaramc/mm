@@ -879,6 +879,27 @@ class MavensMateProject(object):
     #executes a string of apex
     def execute_apex(self, params):
         try:
+            if 'script_name' in params:
+                params["body"] = mm_util.get_file_as_string(os.path.join(self.location,"apex-scripts",params["script_name"]))
+            if 'debug_categories' not in params and not os.path.isfile(os.path.join(self.location,"config",".apex_script")):
+                params["debug_categories"] = [
+                    {
+                        "category"  : "Apex_code",
+                        "level"     :  "DEBUG"
+                    }
+                ]
+            else:
+                log_settings = mm_util.parse_json_from_file(os.path.join(self.location,"config",".apex_script"))
+                categories = []
+                levels = log_settings["levels"]
+                for category in levels.keys():
+                    categories.append({
+                        "category"  : category,
+                        "level"     : levels[category]
+                    })
+                params["debug_categories"] = categories
+            return_log = params.get("return_log", True)
+
             execute_result = self.sfdc_client.execute_apex(params)
             result = {
                 'column'                : execute_result['column'],
@@ -889,12 +910,13 @@ class MavensMateProject(object):
                 'line'                  : execute_result['line'],
                 'success'               : execute_result['success'],
             }
-            if 'log' in execute_result:
+            if 'log' in execute_result and return_log:
                 result['log'] = execute_result['log']
             if result['success']:
                 log_apex = config.connection.get_plugin_client_setting('mm_log_anonymous_apex', False)
                 if log_apex:
-                    self.__log_anonymous_apex(params['body'])
+                    location = self.__log_anonymous_apex(params['body'], execute_result['log'], params.get("script_name", None))
+                    result["log_location"] = location
             return mm_util.generate_response(result)
         except BaseException, e:
             return mm_util.generate_error_response(e.message)
@@ -1657,12 +1679,27 @@ class MavensMateProject(object):
         return creds
 
 
-    def __log_anonymous_apex(self, apex_body):
-        if not os.path.exists(os.path.join(self.location, "apex-scripts")):
-            os.makedirs(os.path.join(self.location, "apex-scripts"))
-        src = open(os.path.join(self.location, "apex-scripts", mm_util.get_timestamp()), "w")
-        src.write(apex_body)
+    def __log_anonymous_apex(self, apex_body, log, script_name=None):
+        if not os.path.exists(os.path.join(self.location, "apex-scripts", "log")):
+            os.makedirs(os.path.join(self.location, "apex-scripts", "log"))
+        location = os.path.join(self.location, "apex-scripts", "log", mm_util.get_timestamp()+".json")
+        src = open(location, "w")
+        file_body = ""
+        if script_name != None:
+            file_body += script_name
+        else:
+            file_body += "Execute Anonymous"
+        file_body += "\n\n"
+        file_body += "================================"
+        file_body += "\n\n"
+        file_body += apex_body
+        file_body += "\n\n"
+        file_body += "================================"
+        file_body += "\n\n"
+        file_body += log
+        src.write(file_body)
         src.close()
+        return location
 
     def __update_setting(self, setting, value):
         self.settings[setting] = value
@@ -1742,6 +1779,8 @@ class MavensMateProject(object):
         project_path = os.path.join(config.connection.workspace,self.project_name)
         if not os.path.exists(os.path.join(project_path, 'config')):
             os.makedirs(os.path.join(project_path, 'config'))
+        
+        #put .debug
         src = open(os.path.join(project_path, 'config', '.debug'), "w")  
         debug_settings = {}
         default_levels = {
@@ -1756,6 +1795,22 @@ class MavensMateProject(object):
         debug_settings["users"]       = users or [self.sfdc_client.user_id]
         debug_settings["levels"]      = levels or default_levels
         debug_settings["expiration"]  = expiration
+        src.write(json.dumps(debug_settings, sort_keys=False, indent=4))
+        src.close()
+
+        #put .apex_script
+        src = open(os.path.join(project_path, 'config', '.apex_script'), "w")  
+        debug_settings = {}
+        default_levels = {
+            "Db"                : "INFO",
+            "Callout"           : "DEBUG",
+            "Apex_profiling"    : "DEBUG",
+            "Workflow"          : "INFO",
+            "Validation"        : "INFO",
+            "Callout"           : "INFO",
+            "Apex_code"         : "DEBUG"
+        }
+        debug_settings["levels"] = default_levels
         src.write(json.dumps(debug_settings, sort_keys=False, indent=4))
         src.close()
 
