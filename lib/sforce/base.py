@@ -140,7 +140,7 @@ class SforceBaseClient(object):
     # 'Accept-Encoding': 'gzip, deflate'
 
     if kwargs.has_key('environment') and 'sandbox' in kwargs['environment']:
-      self._setEndpoint("https://test.salesforce.com/services/Soap/u/"+mm_util.SFDC_API_VERSION)
+      self._setEndpoint("https://test.salesforce.com/services/Soap/u/"+str(mm_util.SFDC_API_VERSION))
     
 
     self._sforce.set_options(headers = headers)
