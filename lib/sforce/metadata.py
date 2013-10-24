@@ -168,6 +168,7 @@ class SforceMetadataClient(SforceBaseClient):
             deploy_options['checkOnly']         = True
             deploy_options['runAllTests']       = False
             deploy_options['runTests']          = params.get('classes', [])
+            deploy_options['rollbackOnError']   = params.get('rollback_on_error', True)
         else:
             deploy_options['checkOnly']         = params.get('check_only', False)
             deploy_options['rollbackOnError']   = params.get('rollback_on_error', True)
