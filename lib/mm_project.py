@@ -318,6 +318,9 @@ class MavensMateProject(object):
         config.connection.run_subl_command("open_file_in_project", json.dumps(params))
         return mm_util.generate_success_response("ok")
 
+    def sync_with_server(self, params):
+        pass
+
     #compiles metadata
     def compile_selected_metadata(self, params):        
         files = params.get('files', None)
@@ -1697,7 +1700,7 @@ class MavensMateProject(object):
         file_body += "================================"
         file_body += "\n\n"
         file_body += log
-        src.write(file_body)
+        src.write(file_body.encode('utf-8').strip())
         src.close()
         return location
 
