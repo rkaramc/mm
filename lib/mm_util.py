@@ -2,6 +2,7 @@ import os
 import yaml
 import json
 import re
+import types
 import config
 import shutil
 import tempfile 
@@ -326,14 +327,17 @@ def get_child_metadata_data():
     return parse_json_from_file(config.base_path + "/lib/sforce/metadata/default_child_metadata.json")
 
 def get_meta_type_by_suffix(suffix):
-    if '-meta' in suffix:
-        suffix = suffix.split('-meta')[0]
-    data = get_default_metadata_data()
-    if '.' in suffix:
-        suffix = suffix.replace('.','')
-    for item in data["metadataObjects"]: 
-        if 'suffix' in item and item['suffix'] == suffix:
-            return item
+    try:
+        if '-meta' in suffix:
+            suffix = suffix.split('-meta')[0]
+        data = get_default_metadata_data()
+        if '.' in suffix:
+            suffix = suffix.replace('.','')
+        for item in data["metadataObjects"]: 
+            if 'suffix' in item and item['suffix'] == suffix:
+                return item
+    except:
+        return None
 
 def get_meta_type_by_dir(dir_name):
     parent_data = get_default_metadata_data()
@@ -885,8 +889,17 @@ def get_metadata_hash(selected_files=[]):
         name, ext = os.path.splitext(f)
         base_name_no_ext = os.path.basename(f).split(".")[0]
         ext_no_period = ext.replace(".", "")
-        metadata_definition = get_meta_type_by_suffix(ext_no_period)      
-        meta_type = metadata_definition["xmlName"]
+        try:
+            metadata_definition = get_meta_type_by_suffix(ext_no_period)      
+            meta_type = metadata_definition["xmlName"]
+        except:
+            if sys.platform == "win32":
+                dir_parts = f.split("\\")
+            else:
+                dir_parts = f.split("/")
+            if 'documents' in dir_parts:
+                metadata_definition = get_meta_type_by_name("Document") 
+                meta_type = metadata_definition["xmlName"]
 
         if meta_type not in meta_hash: #key isn't there yet, put it in        
             if metadata_definition['inFolder']:
