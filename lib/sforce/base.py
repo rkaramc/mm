@@ -21,6 +21,8 @@ from suds.plugin import MessagePlugin
 from suds.client import Client
 from suds.transport.http import HttpTransport as SudsHttpTransport
 
+debug = config.logger.debug
+
 try:
   # suds 0.3.8 and prior
   from suds.transport.cache import FileCache
@@ -134,8 +136,8 @@ class SforceBaseClient(object):
       self._apiVersion = 27.0
 
     # Set HTTP headers
-    headers = {'User-Agent': 'Salesforce/' + self._product + '/' + '.'.join(str(x) for x in self._version)}
-
+    #headers = {'User-Agent': 'Salesforce/' + self._product + '/' + '.'.join(str(x) for x in self._version)}
+    headers = {u'User-Agent': u'MavensMate'}
     # This HTTP header will not work until Suds gunzips/inflates the content
     # 'Accept-Encoding': 'gzip, deflate'
 
