@@ -683,6 +683,8 @@ def generate_error_response(message):
         stack_trace = ''
         trace = re.sub( r'\"/(.*?\.pyz/)', r'', traceback.format_exc()).strip()
         message = message.strip()
+        if message == None or message == '':
+            message = 'An error has occurred. Please enable plugin logging, retry your operation and paste any relevant log(s) to a new GitHub issue.'
         if trace != None and trace != 'None' and 'MMException' not in trace:
             # if message = e.message just use the trace
             if len(trace):
