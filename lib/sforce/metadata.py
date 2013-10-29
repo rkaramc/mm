@@ -174,6 +174,7 @@ class SforceMetadataClient(SforceBaseClient):
             deploy_options['rollbackOnError']   = params.get('rollback_on_error', True)
             deploy_options['runAllTests']       = params.get('run_tests', False)
             deploy_options['runTests']          = params.get('classes', [])
+            deploy_options['purgeOnDelete']     = params.get('purge_on_delete', False)
 
         result = self._handleResultTyping(self._sforce.service.deploy(params['zip_file'], deploy_options))
         #config.logger.debug('deploy request')

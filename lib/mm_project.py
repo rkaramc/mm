@@ -469,10 +469,11 @@ class MavensMateProject(object):
             empty_package_xml = mm_util.get_empty_package_xml_contents()
             mm_util.put_empty_package_xml_in_directory(tmp_unpackaged, empty_package_xml)
             zip_file = mm_util.zip_directory(tmp, tmp)
+            
             deploy_params = {
                 "zip_file"          : zip_file,
                 "rollback_on_error" : True,
-                "ret_xml"           : True
+                "purge_on_delete"   : config.connection.get_plugin_client_setting("mm_purge_on_delete", False)
             }
             delete_result = self.sfdc_client.delete(deploy_params)
             d = xmltodict.parse(delete_result,postprocessor=mm_util.xmltodict_postprocessor)
