@@ -395,6 +395,13 @@ class MavensMateProject(object):
                         continue
                     file_ext = f.split('.')[-1]
                     metadata_type = mm_util.get_meta_type_by_suffix(file_ext)
+                    if metadata_type == None:
+                        if sys.platform == "win32":
+                            dir_parts = f.split("\\")
+                        else:
+                            dir_parts = f.split("/")
+                        if 'documents' in dir_parts:
+                            metadata_type = mm_util.get_meta_type_by_name("Document") 
                     if metadata_type != None and 'metaFile' in metadata_type and metadata_type['metaFile'] == True:
                         corresponding_file = f + '-meta.xml'
                         if corresponding_file not in files:
@@ -473,6 +480,7 @@ class MavensMateProject(object):
             deploy_params = {
                 "zip_file"          : zip_file,
                 "rollback_on_error" : True,
+                "ret_xml"           : True,
                 "purge_on_delete"   : config.connection.get_plugin_client_setting("mm_purge_on_delete", False)
             }
             delete_result = self.sfdc_client.delete(deploy_params)
