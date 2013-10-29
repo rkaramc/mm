@@ -26,6 +26,8 @@ from operator import itemgetter
 from mm_client import MavensMateClient
 sys.path.append('../')
 
+debug = config.logger.debug
+
 class MavensMateProject(object):
 
     def __init__(self, params={}, **kwargs):
@@ -163,6 +165,8 @@ class MavensMateProject(object):
 
             if api_name == None:
                 return mm_util.generate_error_response("You must provide a name for the new metadata.")
+
+            #debug(type(api_name))
 
             if self.sfdc_client.does_metadata_exist(object_type=metadata_type, name=api_name) == True:
                 mt = mm_util.get_meta_type_by_name(metadata_type)
@@ -408,6 +412,7 @@ class MavensMateProject(object):
                             files.append(corresponding_file)
 
                 metadata_package_dict = mm_util.get_metadata_hash(files)
+                #debug(metadata_package_dict)
                 tmp = mm_util.put_tmp_directory_on_disk()
                 os.makedirs(os.path.join(tmp,"unpackaged"))
                 #copy files from project directory to tmp
