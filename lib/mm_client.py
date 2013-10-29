@@ -256,8 +256,8 @@ class MavensMateClient(object):
             if has_children_metadata == True and len(list_response) > 0: #metadata objects like customobject, workflow, etc.
                 request_names = []
                 for element in list_response:
-                    if element['fullName'] != 'PersonAccount':
-                        request_names.append(element['fullName'])
+                    #if element['fullName'] != 'PersonAccount':
+                    request_names.append(element['fullName'])
                 retrieve_result = self.retrieve(package={
                     metadata_request_type : request_names
                 })
