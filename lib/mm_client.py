@@ -19,6 +19,8 @@ from sforce.metadata import SforceMetadataClient
 from sforce.apex import SforceApexClient
 from sforce.tooling import SforceToolingClient
 
+debug = config.logger.debug
+
 class MavensMateClient(object):
 
     def __init__(self, **kwargs):
