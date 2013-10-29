@@ -55,7 +55,6 @@
 						{% set file_name = message['fileName'] %}
 						{% set fns = message['fileName'].split("/") %}
 						{% set file_name = fns[fns|length - 1] %}
-						{% if file_name != "package.xml" %}
 						<tr>
 							<td style="width:210px;">{{ file_name }}</td>
 							<td style="width:45px;">
@@ -74,7 +73,6 @@
 								{% endif %}
 							</td>
 						</tr>
-						{% endif %}
 					{% endfor %}
 				</tbody>
 			</table>
