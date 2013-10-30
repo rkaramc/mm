@@ -13,6 +13,8 @@ from enum import enum
 from mm_project import MavensMateProject
 from mm_exceptions import MMException
 
+debug = config.logger.debug
+
 class MavensMatePluginConnection(object):
 
     currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3']
@@ -45,6 +47,16 @@ class MavensMatePluginConnection(object):
 
         self.setup_logging()
 
+        debug('')
+        debug('============================================')
+        debug('========== NEW OPERATION REQUESTED =========')
+        debug('============================================')
+        debug('')
+        debug(self.operation)
+        debug(params)
+        debug('')
+        debug('============================================')
+
         if self.sfdc_api_version != None:
             mm_util.SFDC_API_VERSION = self.sfdc_api_version #setting api version based on plugin settings
 
@@ -72,24 +84,30 @@ class MavensMatePluginConnection(object):
                     handler = logging.FileHandler(os.path.join(self.get_log_location(),"mm.log"))
                     config.logger.addHandler(handler)
                     config.suds_logger.addHandler(handler)
+                    config.requests_log.addHandler(handler)
                 except:
                     pass
             log_level = self.get_log_level()
             if log_level == 'CRITICAL':
                 config.logger.setLevel(logging.CRITICAL)
                 config.suds_logger.setLevel(logging.CRITICAL)
+                config.requests_log.setLevel(logging.CRITICAL)
             elif log_level == 'ERROR':
                 config.logger.setLevel(logging.ERROR)
                 config.suds_logger.setLevel(logging.ERROR)
+                config.requests_log.setLevel(logging.ERROR)
             elif log_level == 'WARNING':
                 config.logger.setLevel(logging.WARNING)
                 config.suds_logger.setLevel(logging.WARNING)
+                config.requests_log.setLevel(logging.WARNING)
             elif log_level == 'DEBUG':
                 config.logger.setLevel(logging.DEBUG)
                 config.suds_logger.setLevel(logging.DEBUG)
+                config.requests_log.setLevel(logging.DEBUG)
             elif log_level == 'INFO':
                 config.logger.setLevel(logging.INFO) 
                 config.suds_logger.setLevel(logging.INFO)
+                config.requests_log.setLevel(logging.INFO)
 
     #returns the workspace for the current connection (/Users/username/Workspaces/MavensMate)
     def get_workspace(self):
@@ -132,7 +150,7 @@ class MavensMatePluginConnection(object):
             try:
                 settings['user'] = mm_util.parse_json_from_file(user_path)
             except:
-                config.logger.debug('User settings could not be loaded')
+                debug('User settings could not be loaded')
         if not def_path == None:
             try:
                 settings['default'] = mm_util.parse_json_from_file(def_path)

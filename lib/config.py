@@ -26,6 +26,8 @@ logger.addHandler(logging_handler)
 #request log setup
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.ERROR)
+requests_log.propagate = False 
+requests_log.addHandler(logging_handler)
 
 def __get_base_path():
     if hasattr(sys, 'frozen'):
