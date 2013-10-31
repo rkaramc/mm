@@ -417,9 +417,26 @@ def base_local_server_url():
     port = config.connection.get_plugin_client_setting('mm_server_port', 9876)
     return 'http://127.0.0.1:{0}'.format(port)
 
+def platform():
+    if sys.platform == 'win32':
+        return 'windows'
+    elif 'linux' in sys.platform:
+        return 'linux'
+    elif 'darwin' in sys.platform:
+        return 'osx'
+    else:
+        return 'osx'
+
+def base_path_normal():
+    if sys.platform == 'win32':
+        return config.base_path.replace('\\', '/')
+    else:
+        return config.base_path
+
 def generate_ui(operation,params={}):
     template_path = config.base_path + "/lib/ui/templates"
     env = Environment(loader=FileSystemLoader(template_path),trim_blocks=True)
+    env.globals['platform']                 = platform
     env.globals['play_sounds']              = play_sounds
     env.globals['project_settings']         = project_settings
     env.globals['metadata_types']           = metadata_types
@@ -427,19 +444,19 @@ def generate_ui(operation,params={}):
     env.globals['base_local_server_url']    = base_local_server_url
     env.globals['operation']                = operation
     env.globals['project_location']         = config.connection.project_location
+    env.globals['base_path_normal']         = base_path_normal
     temp = tempfile.NamedTemporaryFile(delete=False, prefix="mm", suffix=".html")
     if operation == 'new_project':
         template = env.get_template('/project/new.html')
         file_body = template.render(
             user_action='new',
-            base_path=config.base_path,
             workspace=config.connection.workspace,
             client=config.connection.plugin_client,
             workspaces=config.connection.get_workspaces()
             ).encode('UTF-8')
     elif operation == 'checkout_project':
         template = env.get_template('/project/new.html')
-        file_body = template.render(user_action='checkout',base_path=config.base_path,workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
+        file_body = template.render(user_action='checkout',workspace=config.connection.workspace,client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'upgrade_project':
         template = env.get_template('/project/upgrade.html')
         creds = config.connection.project.get_creds()
@@ -447,7 +464,6 @@ def generate_ui(operation,params={}):
         if org_url == None:
             org_url = ''
         file_body = template.render(
-            base_path=config.base_path,
             name=config.connection.project.project_name,
             project_location=config.connection.project.location,
             client=config.connection.plugin_client,
@@ -463,7 +479,6 @@ def generate_ui(operation,params={}):
         if org_url == None:
             org_url = ''
         file_body = template.render(
-            base_path=config.base_path,
             name=config.connection.project.project_name,
             username=creds['username'],
             password=creds['password'],
@@ -494,7 +509,6 @@ def generate_ui(operation,params={}):
         else:
             selected = []
         file_body = template.render(
-            base_path=config.base_path,
             name=config.connection.project.project_name,
             classes=apex_classes,
             selected=selected,
@@ -502,7 +516,6 @@ def generate_ui(operation,params={}):
     elif operation == 'deploy':
         template = env.get_template('/deploy/index.html')
         file_body = template.render(
-            base_path=config.base_path,
             name=config.connection.project.project_name,
             has_indexed_metadata=config.connection.project.is_metadata_indexed,
             project_location=config.connection.project.location,
@@ -513,7 +526,6 @@ def generate_ui(operation,params={}):
     elif operation == 'execute_apex':
         template = env.get_template('/execute_apex/index.html')
         file_body = template.render(
-            base_path=config.base_path,
             name=config.connection.project.project_name,
             project_location=config.connection.project.location,
             client=config.connection.plugin_client).encode('UTF-8')
@@ -521,7 +533,6 @@ def generate_ui(operation,params={}):
         project_name = os.path.basename(params['directory'])
         template = env.get_template('/project/new_from_existing.html')
         file_body = template.render(
-            base_path=config.base_path,
             project_name=project_name,
             directory=params['directory'],
             workspaces=config.connection.get_workspaces(),
@@ -529,7 +540,6 @@ def generate_ui(operation,params={}):
     elif operation == 'debug_log':
         template = env.get_template('/debug_log/index.html')
         file_body = template.render(
-            base_path=config.base_path,
             project_name=config.connection.project.project_name,
             users=config.connection.project.get_org_users_list(),
             user_id=config.connection.project.sfdc_client.user_id,
@@ -539,12 +549,10 @@ def generate_ui(operation,params={}):
     elif operation == 'github':
         template = env.get_template('/github/index.html')
         file_body = template.render(
-            base_path=config.base_path,
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'project_health_check':
         template = env.get_template('/project/health_check.html')
         file_body = template.render(
-            base_path=config.base_path,
             client=config.connection.plugin_client,
             name=config.connection.project.project_name
             ).encode('UTF-8')
@@ -697,8 +705,11 @@ def generate_error_response(message):
             # get OS info
             try:
                 if sys.platform == 'darwin':
-                    release, versioninfo, machine = platform.mac_ver()
-                    stack_trace += 'MacOS ' + release
+                    try:
+                        release, versioninfo, machine = platform.mac_ver()
+                        stack_trace += 'MacOS ' + release
+                    except:
+                        stack_trace += 'MacOS '
                 #todo: support windows and linux
             except:
                 pass
