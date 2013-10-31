@@ -896,7 +896,7 @@ class MavensMateProject(object):
     #executes a string of apex
     def execute_apex(self, params):
         try:
-            if 'script_name' in params:
+            if 'script_name' in params: #running an apex script
                 params["body"] = mm_util.get_file_as_string(os.path.join(self.location,"apex-scripts",params["script_name"]))
             if 'debug_categories' not in params and not os.path.isfile(os.path.join(self.location,"config",".apex_script")):
                 params["debug_categories"] = [
@@ -905,7 +905,7 @@ class MavensMateProject(object):
                         "level"     :  "DEBUG"
                     }
                 ]
-            else:
+            elif os.path.isfile(os.path.join(self.location,"config",".apex_script")):
                 log_settings = mm_util.parse_json_from_file(os.path.join(self.location,"config",".apex_script"))
                 categories = []
                 levels = log_settings["levels"]
@@ -915,6 +915,13 @@ class MavensMateProject(object):
                         "level"     : levels[category]
                     })
                 params["debug_categories"] = categories
+            elif 'debug_categories' not in params:
+                params["debug_categories"] = [
+                    {
+                        "category"  : "Apex_code",
+                        "level"     :  "DEBUG"
+                    }
+                ]
             return_log = params.get("return_log", True)
 
             execute_result = self.sfdc_client.execute_apex(params)
