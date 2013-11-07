@@ -1954,11 +1954,14 @@ class DeploymentHandler(threading.Thread):
 
             self.params['zip_file'] = self.deploy_metadata.zipFile      
             deploy_result = deploy_client.deploy(self.params)
+            deploy_result['username'] = self.destination['username']
             #config.logger.debug('>>>>>> DEPLOY RESULT >>>>>>')
             #config.logger.debug(deploy_result)
             self.result = deploy_result
         except BaseException, e:
-            self.result = mm_util.generate_error_response(e.message)
+            result = mm_util.generate_error_response(e.message, False)
+            result['username'] = self.destination['username']
+            self.result = result
 
 class IndexCall(threading.Thread):
     def __init__(self, client, metadata_types):
