@@ -87,14 +87,22 @@
 
 	<div class="alert alert-{{ coverage_class }}">
 	  	
-		<h3>{{ r['name'] }}.{{ extension }} </h3>
+		<h3>
+			<div style="float:left;">
+				{{ r['name'] }}.{{ extension }}
+			</div>
+			<div style="float:right;text-align:right;">
+				({{ coverage }}% covered)
+			</div>
+			<div style="clear:both;"></div>
+		</h3>
 
 		<div class="progress" style="height:22px;margin:10px 0px;">
 			<div class="bar bar-{{ coverage_class }}" style="width: {{ coverage }}%;"></div>
 		</div>
 
-		<p>({{ coverage }}% covered)</p>
-
+		<!-- <p>({{ coverage }}% covered)</p>
+ -->
 		{% if does_file_exist(r['name'], 'ApexClass') == True -%}
 	    	<a href="#" class="btn btn-mini btn-info" onclick="toggleSourceButton(this, {{ loop.index }}, 'class')">Show Coverage</a>
 		{%- endif %}
@@ -149,13 +157,20 @@
 
 	<div class="alert alert-{{ coverage_class }}">
 	  	
-		<h3>{{ r['name'] }}.{{ extension }} </h3>
+		<h3>
+			<div style="float:left;">
+				{{ r['name'] }}.{{ extension }}
+			</div>
+			<div style="float:right;text-align:right;">
+				({{ coverage }}% covered)
+			</div>
+			<div style="clear:both;"></div>
+		</h3>
 
 		<div class="progress" style="height:22px;margin:10px 0px;">
 			<div class="bar bar-{{ coverage_class }}" style="width: {{ coverage }}%;"></div>
 		</div>
 
-		<p>({{ coverage }}% covered)</p>
 		{% if does_file_exist(r['name'], 'ApexTrigger') == True -%}
 	    	<a href="#" class="btn btn-mini btn-info" onclick="toggleSourceButton(this, {{ loop.index }}, 'trigger')">Show Coverage</a>
 		{%- endif %}
