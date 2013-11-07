@@ -690,7 +690,7 @@ def generate_request_for_action_response(message, operation, actions=[], **kwarg
         res['tmp_file_path'] = kwargs['tmp_file_path']
     return json.dumps(res)
 
-def generate_error_response(message):
+def generate_error_response(message, dump_to_json=True):
     try:
         stack_trace = ''
         trace = re.sub( r'\"/(.*?\.pyz/)', r'', traceback.format_exc()).strip()
@@ -705,11 +705,12 @@ def generate_error_response(message):
             # get OS info
             try:
                 if sys.platform == 'darwin':
-                    try:
-                        release, versioninfo, machine = platform.mac_ver()
-                        stack_trace += 'MacOS ' + release
-                    except:
-                        stack_trace += 'MacOS '
+                    # try:
+                    #     release, versioninfo, machine = platform.mac_ver()
+                    #     stack_trace += 'MacOS ' + release
+                    # except:
+                    #     stack_trace += 'MacOS '
+                    pass
                 #todo: support windows and linux
             except:
                 pass
@@ -733,7 +734,10 @@ def generate_error_response(message):
             "body"          : message,
             "stack_trace"   : stack_trace
         }
-        return json.dumps(res)
+        if dump_to_json:
+            return json.dumps(res)
+        else:
+            return res
     except:
         res = {
             "success"       : False,
@@ -741,7 +745,10 @@ def generate_error_response(message):
             "body"          : message,
             "stack_trace"   : stack_trace
         }
-        return json.dumps(res)
+        if dump_to_json:
+            return json.dumps(res)
+        else:
+            return res
 
 def prepare_for_metadata_tree(metadata_list):
     apex_types = ['ApexClass', 'ApexComponent', 'ApexTrigger', 'ApexPage', 'StaticResource']
