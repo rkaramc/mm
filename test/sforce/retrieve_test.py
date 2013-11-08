@@ -13,17 +13,18 @@ params = {
 connection = MavensMatePluginConnection(params)
 
 client = MavensMateClient(credentials={
-    "username" : 'joe@mavensconsulting.com.eventmgmt',
-    "password" : 'Rg3skins',
-    "org_type" : 'sandbox'
+    "username" : 'mm@force.com',
+    "password" : 'force',
+    "org_type" : 'production'
 })
 
 package = {
-	"Workflow" 	: "*"
+	"ApexClass" 	: "*"
 }
 
 #r = client.list_metadata_basic('CustomObject')
 #r = client.retrieve(package=package)
-r = client.list_metadata("Workflow")
+#r = client.list_metadata("Workflow")
+r = client.retrieve(package=package)
 pp = pprint.PrettyPrinter(indent=4)
 pp.pprint(r)

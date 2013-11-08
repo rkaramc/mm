@@ -89,6 +89,7 @@ class ProjectTest(MavensMateTest):
         sys.stdout = self.saved_stdout
         #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
+        print mm_json_response
         self.assertTrue(mm_json_response['success'] == True)
 
     @classmethod    
