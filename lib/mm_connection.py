@@ -17,7 +17,7 @@ debug = config.logger.debug
 
 class MavensMatePluginConnection(object):
 
-    currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3']
+    currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3', 'BRACKETS']
     PluginClients = enum(SUBLIME_TEXT_2='SUBLIME_TEXT_2', SUBLIME_TEXT_3='SUBLIME_TEXT_3', NOTEPAD_PLUS_PLUS='NOTEPAD_PLUS_PLUS', TEXTMATE='TEXTMATE')
     
     def __init__(self, params={}, **kwargs):
@@ -59,6 +59,9 @@ class MavensMatePluginConnection(object):
 
         if self.sfdc_api_version != None:
             mm_util.SFDC_API_VERSION = self.sfdc_api_version #setting api version based on plugin settings
+
+        debug('>>>> getting settings')
+        debug(self.sfdc_api_version)
 
         if self.operation != 'new_project' and self.operation != 'upgrade_project' and self.operation != 'new_project_from_existing_directory' and self.project_location != None:
             if not os.path.exists(os.path.join(self.project_location)):
@@ -144,7 +147,6 @@ class MavensMatePluginConnection(object):
     def get_plugin_client_settings(self):
         user_path = self.get_plugin_settings_path("User")
         def_path = self.get_plugin_settings_path("MavensMate")
-
         settings = {}
         if not user_path == None:
             try:
@@ -163,17 +165,21 @@ class MavensMatePluginConnection(object):
             sublime_ver = "Sublime Text 3"
         elif self.plugin_client == self.PluginClients.SUBLIME_TEXT_2:
             sublime_ver = "Sublime Text 2"
-        else:
-            return None
-
+        
         if self.platform == 'darwin':
-            if sublime_ver == "Sublime Text 3":
-                if os.path.exists(os.path.join(os.path.expanduser('~'),"Library","Application Support",sublime_ver,"Packages",type,obj)):
-                    return os.path.join(os.path.expanduser('~'),"Library","Application Support",sublime_ver,"Packages",type,obj)
+            if 'SUBLIME_TEXT' in self.plugin_client:
+                if sublime_ver == "Sublime Text 3":
+                    if os.path.exists(os.path.join(os.path.expanduser('~'),"Library","Application Support",sublime_ver,"Packages",type,obj)):
+                        return os.path.join(os.path.expanduser('~'),"Library","Application Support",sublime_ver,"Packages",type,obj)
+                    else:
+                        return os.path.join(os.path.expanduser('~'),"Library","Application Support","Sublime Text","Packages",type,obj)
                 else:
-                    return os.path.join(os.path.expanduser('~'),"Library","Application Support","Sublime Text","Packages",type,obj)
-            else:
-                return os.path.join(os.path.expanduser('~'),"Library","Application Support",sublime_ver,"Packages",type,obj)
+                    return os.path.join(os.path.expanduser('~'),"Library","Application Support",sublime_ver,"Packages",type,obj)
+            elif 'BRACKETS' in self.plugin_client:
+                if type == "User":
+                    return os.path.join(os.path.expanduser('~'),"Library","Application Support","Brackets","extensions","user","mavensmate-user-settings.json")
+                else:
+                    return os.path.join(os.path.expanduser('~'),"Library","Application Support","Brackets","extensions","user","mavensmate","settings.json")
         elif self.platform == 'win32' or self.platform == 'cygwin':
             return os.path.join(os.environ['APPDATA'], sublime_ver, 'Packages',type,obj)
         elif self.platform == 'linux2':
