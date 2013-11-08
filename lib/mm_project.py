@@ -13,9 +13,8 @@ import time
 import datetime
 import collections
 import webbrowser
-import tempfile
-import subprocess
 import crawlJson
+from mm_local_store import ConflictManager
 from health_check import HealthCheck
 
 from xml.dom import minidom
@@ -46,7 +45,6 @@ class MavensMateProject(object):
         self.sfdc_client        = None
         self.defer_connection   = params.get('defer_connection', False)
         self.subscription       = params.get('subscription', [])
-
         if 'location' in params and os.path.exists(params['location']): #=> existing project on the disk
             
             self.location                   = params.get('location', None)
@@ -58,6 +56,7 @@ class MavensMateProject(object):
             self.is_metadata_indexed        = self.get_is_metadata_indexed()
             if self.subscription == []:
                 self.subscription           = self.settings.get('subscription', [])
+            self.conflict_manager = ConflictManager(self)
             config.logger.debug(self.sfdc_session)
             config.logger.debug(self.get_creds())
 
@@ -108,6 +107,13 @@ class MavensMateProject(object):
             self.__put_project_file()
             self.__put_base_config()
             self.__set_sfdc_session()
+
+            if action != 'new':
+                project_metadata = self.sfdc_client.retrieve(package=os.path.join(config.connection.workspace,self.project_name,"src","package.xml"))
+            
+            self.conflict_manager = ConflictManager(self)
+            self.conflict_manager.init_local_store(project_metadata)
+
             mm_util.put_password_by_key(self.id, self.password)
             self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
             
@@ -139,6 +145,11 @@ class MavensMateProject(object):
             self.__put_project_file()
             self.__put_base_config()
             self.__set_sfdc_session()
+            if not os.path.exists(os.path.join(self.location,"config",".local_store")):
+                if self.conflict_manager == None:
+                    self.conflict_manager = ConflictManager(self)
+                project_metadata = self.sfdc_client.retrieve(package=os.path.join(self.location,"src","package.xml"))
+                self.conflict_manager.init_local_store(project_metadata)
             mm_util.put_password_by_key(self.id, self.password)
             self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
             if os.path.exists(os.path.join(self.location,"config","settings.yaml")):
@@ -192,7 +203,7 @@ class MavensMateProject(object):
             deploy_result = self.sfdc_client.deploy(deploy_params)
             d = xmltodict.parse(deploy_result,postprocessor=mm_util.xmltodict_postprocessor)
             meta_dir = ""
-            params['files'] = []
+            files = []
             path = None
             for dirname, dirnames, filenames in os.walk(tmp_unpackaged):
                 for filename in filenames:
@@ -209,7 +220,7 @@ class MavensMateProject(object):
                         path = os.path.join(self.location, 'src', meta_dir)
                         if not os.path.exists(path):
                             os.makedirs(path)
-                        params['files'].append(os.path.join(path, filename))
+                        files.append(os.path.join(path, filename))
                     elif extension != "xml":
                         continue;
                     # only apex files and meta.xml files should make it to here
@@ -217,7 +228,7 @@ class MavensMateProject(object):
             shutil.rmtree(tmp)
             
             self.__update_package_xml_with_metadata(metadata_type, api_name)
-            self.refresh_selected_properties(params)
+            self.conflict_manager.refresh_local_store(files=files)
 
             return json.dumps(d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result'])
         except BaseException, e:
@@ -295,7 +306,7 @@ class MavensMateProject(object):
 
             shutil.rmtree(tmp)
 
-            #self.refresh_selected_properties({'project_name':self.project_name, 'directories': [os.path.join(self.location, 'src')]})
+            self.conflict_manager.refresh_local_store(directories=[os.path.join(self.location, 'src')])
 
             return json.dumps(dictionary, sort_keys=True, indent=2, separators=(',', ': '))
             #return json.dumps(d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result'], sort_keys=True, indent=2, separators=(',', ': '))
@@ -341,28 +352,10 @@ class MavensMateProject(object):
         #when compiling apex metadata, check to see if it is newer on the server
         if check_for_conflicts and compiling_apex_metadata:
             if 'action' not in params or params['action'] != 'overwrite':
-                for f in files:
-                    ext = mm_util.get_file_extension_no_period(f)
-                    apex_type = mm_util.get_meta_type_by_suffix(ext)
-                    apex_entity_api_name = mm_util.get_file_name_no_extension(f)
-                    body_field = 'Body'
-                    if apex_type['xmlName'] == 'ApexPage' or apex_type['xmlName'] == 'ApexComponent':
-                        body_field = 'Markup'
-                    qr = self.sfdc_client.query("Select LastModifiedById, LastModifiedDate, LastModifiedBy.Name, {0} From {1} Where Name = '{2}'".format(body_field, apex_type['xmlName'], apex_entity_api_name))
-                    if 'records' in qr and type(qr['records']) is list and len(qr['records']) == 1:
-                        if qr['records'][0]['LastModifiedById'] != self.sfdc_client.user_id:
-                            last_modified_name = qr['records'][0]['LastModifiedBy']['Name']
-                            last_modified_date = qr['records'][0]['LastModifiedDate']
-                            body = qr['records'][0][body_field]
-                            body = body.encode('utf-8')
-                            return mm_util.generate_request_for_action_response(
-                                "{0} was last modified by {1} on {2}."
-                                .format(apex_entity_api_name, last_modified_name, last_modified_date),
-                                'compile',
-                                ["Diff With Server","Operation Canceled"],
-                                tmp_file_path=mm_util.put_tmp_file_on_disk(apex_entity_api_name, body, apex_type.get('suffix', ''))
-                            )
-
+                has_conflict, msg = self.conflict_manager.check_for_conflicts(files)
+                if has_conflict:
+                    return msg
+     
         #use tooling api here, if possible
         if use_tooling_api == True and compiling_apex_metadata and int(float(mm_util.SFDC_API_VERSION)) >= 27:
             if 'metadata_container' not in self.settings or self.settings['metadata_container'] == None:
@@ -383,6 +376,8 @@ class MavensMateProject(object):
                 return self.compile_selected_metadata(params)
 
             if 'Id' in result and 'State' in result:
+                if result['State'] == 'Completed':
+                    self.conflict_manager.refresh_local_store(files=files)
                 return mm_util.generate_response(result)
 
         #the user has either chosen not to use the tooling api, or it's non apex metadata
@@ -444,7 +439,7 @@ class MavensMateProject(object):
 
                 # Get new properties for the files we just compiled
                 if result['success'] == True:
-                    self.refresh_selected_properties(params)
+                    self.conflict_manager.refresh_local_store(files=files)
 
                 return json.dumps(result)
 
@@ -506,7 +501,7 @@ class MavensMateProject(object):
                         os.remove(filepath)
                         os.remove(metapath)
                         # remove the entry in file properties
-                        self.remove_apex_file_property(f)
+                        self.conflict_manager.remove_from_local_store(f)
                         removed.append(f)
                     except Exception, e:
                         print e.message
@@ -636,9 +631,6 @@ class MavensMateProject(object):
             return mm_util.generate_error_response(e.message)
 
     def get_retrieve_result(self, params):
-
-        if self.sfdc_client == None or self.sfdc_client.is_connection_alive() == False:
-            self.sfdc_client = MavensMateClient(credentials=self.get_creds(), override_session=True)  
         
         if 'directories' in params and len(params['directories']) > 0 and 'files' in params and len(params['files']) > 0:
             raise MMException("Please select either directories or files to refresh, not both")
@@ -702,11 +694,6 @@ class MavensMateProject(object):
         retrieve_result = self.sfdc_client.retrieve(package=metadata)
         return retrieve_result
 
-    def refresh_selected_properties(self, params):
-        retrieve_result = self.get_retrieve_result(params)
-        #take this opportunity to freshen the cache
-        self.cache_apex_file_properties(retrieve_result.fileProperties)
-
     #refreshes file(s) from the server
     def refresh_selected_metadata(self, params):
         try:
@@ -715,7 +702,7 @@ class MavensMateProject(object):
             else:
                 retrieve_result = self.get_retrieve_result(params)
                 #take this opportunity to freshen the cache
-                self.cache_apex_file_properties(retrieve_result.fileProperties)
+                self.conflict_manager.refresh_local_store(retrieve_result.fileProperties)
                 mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, self.location)
 
                 #TODO: handle exception that could render the project unusable bc of lost files
@@ -784,7 +771,8 @@ class MavensMateProject(object):
         if apex_file in props:
             del props[apex_file]
         self.write_apex_file_properties(props)    
-        
+    
+    #used for symbol table    
     def cache_apex_file_properties(self, properties, write=True):
         if not len(properties):
             return;
