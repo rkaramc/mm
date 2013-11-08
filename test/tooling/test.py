@@ -1,7 +1,7 @@
 import sys
 import pprint
 import requests
-
+import urllib
 sys.path.append('../')
 sys.path.append('../../')
 from lib.mm_connection import MavensMatePluginConnection
@@ -14,7 +14,7 @@ connection = MavensMatePluginConnection(params)
 client = connection.project.sfdc_client
 
 query_string = "Select Id, Name from MetadataContainer"
-r = requests.get(client.get_tooling_url()+"/query/", params={'q':query_string}, headers=client.get_rest_headers(), verify=False)
+r = requests.get(client.get_tooling_url()+"/query/", params={'q':query_string}, headers=client.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
 pp = pprint.PrettyPrinter(indent=4)
 pp.pprint(r.text)
 

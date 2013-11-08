@@ -8,6 +8,7 @@ import xmltodict
 import requests
 import time
 import datetime
+import urllib
 from operator import itemgetter
 sys.path.append('../')
 
@@ -443,7 +444,7 @@ class MavensMateClient(object):
             payload['Body']                 = open(file_path, 'r').read()
             payload = json.dumps(payload)
             config.logger.debug(payload)
-            r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), verify=False)
+            r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
             response = mm_util.parse_rest_response(r.text)
             
             #if it's a dup (probably bc we failed to delete before, let's delete and retry)
@@ -452,15 +453,15 @@ class MavensMateClient(object):
                     dup_id = response[0]['message'].split(':')[-1]
                     dup_id = dup_id.strip()
                     query_string = "Select Id from "+tooling_type+" Where Id = '"+dup_id+"'"
-                    r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+                    r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
                     r.raise_for_status()
                     query_result = mm_util.parse_rest_response(r.text)
                     
-                    r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, query_result['records'][0]['Id']), headers=self.get_rest_headers(), verify=False)
+                    r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, query_result['records'][0]['Id']), headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
                     r.raise_for_status()
 
                     #retry member request
-                    r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), verify=False)
+                    r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
                     response = mm_util.parse_rest_response(r.text)
                     member_id = response['id']
                 elif response[0]['errorCode'] == 'INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY' or response[0]['errorCode'] == 'MALFORMED_ID':
@@ -477,14 +478,14 @@ class MavensMateClient(object):
         payload['IsRunTests'] = False
         payload = json.dumps(payload)
         config.logger.debug(payload)
-        r = requests.post(self.get_tooling_url()+"/sobjects/ContainerAsyncRequest", data=payload, headers=self.get_rest_headers('POST'), verify=False)
+        r = requests.post(self.get_tooling_url()+"/sobjects/ContainerAsyncRequest", data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
         response = mm_util.parse_rest_response(r.text)
 
         finished = False
         while finished == False:
             time.sleep(1)
             query_string = "Select Id, MetadataContainerId, MetadataContainerMemberId, State, IsCheckOnly, CompilerErrors, ErrorMsg FROM ContainerAsyncRequest WHERE Id='"+response["id"]+"'"
-            r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+            r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             r.raise_for_status()
             query_result = mm_util.parse_rest_response(r.text)
             if query_result["done"] == True and query_result["size"] == 1 and 'records' in query_result:
@@ -495,14 +496,14 @@ class MavensMateClient(object):
         #clean up the apex member
         if 'id' in response:
             #delete member
-            r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, member_id), headers=self.get_rest_headers(), verify=False)
+            r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, member_id), headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             r.raise_for_status()
 
         return response    
 
     def get_metadata_container_id(self):
         query_string = "Select Id from MetadataContainer Where Name = 'MavensMate-"+self.user_id+"'"
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         query_result = mm_util.parse_rest_response(r.text)
         #print query_result
@@ -512,7 +513,7 @@ class MavensMateClient(object):
             payload = {}
             payload['Name'] = "MavensMate-"+self.user_id
             payload = json.dumps(payload)
-            r = requests.post(self.get_tooling_url()+"/sobjects/MetadataContainer", data=payload, headers=self.get_rest_headers('POST'), verify=False)
+            r = requests.post(self.get_tooling_url()+"/sobjects/MetadataContainer", data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
             create_response = mm_util.parse_rest_response(r.text)
             if create_response["success"] == True:
                 return create_response["id"]
@@ -524,13 +525,13 @@ class MavensMateClient(object):
         payload = {}
         payload['Name'] = "MavensMate-"+self.user_id
         payload = json.dumps(payload)
-        r = requests.post(self.get_tooling_url()+"/sobjects/MetadataContainer", data=payload, headers=self.get_rest_headers('POST'), verify=False)
+        r = requests.post(self.get_tooling_url()+"/sobjects/MetadataContainer", data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
         return mm_util.parse_rest_response(r.text)            
 
     #deletes ALL checkpoints in the org
     def delete_mavensmate_metadatacontainers_for_this_user(self):
         query_string = "Select Id from MetadataContainer Where Name = 'MavensMate-"+self.user_id+"'"
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         responses = []
@@ -546,7 +547,7 @@ class MavensMateClient(object):
 
     def get_completions(self, type):
         payload = { 'type' : 'apex' }
-        r = requests.get(self.get_tooling_url()+"/completions", params=payload, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/completions", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         return r.text
 
@@ -561,12 +562,12 @@ class MavensMateClient(object):
                 id = self.get_apex_entity_id_by_name(object_type=mtype['xmlName'], name=api_name)
             query_string = "Select Id, Line, Iteration, ExpirationDate, IsDumpingHeap from ApexExecutionOverlayAction Where ExecutableEntityId = '{0}'".format(id)
             payload = { 'q' : query_string }
-            r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), verify=False)
+            r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             return mm_util.parse_rest_response(r.text)
         else:
             query_string = "Select Id, ScopeId, ExecutableEntityId, Line, Iteration, ExpirationDate, IsDumpingHeap from ApexExecutionOverlayAction limit 5000"
             payload = { 'q' : query_string }
-            r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), verify=False)
+            r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             return mm_util.parse_rest_response(r.text)
 
     #creates a checkpoint at a certain line on an apex class/trigger
@@ -579,7 +580,7 @@ class MavensMateClient(object):
             payload.pop('API_Name', None)
 
         payload = json.dumps(payload)
-        r = requests.post(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction", data=payload, headers=self.get_rest_headers('POST'), verify=False)
+        r = requests.post(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction", data=payload, proxies=urllib.getproxies(), headers=self.get_rest_headers('POST'), verify=False)
         r.raise_for_status()
         
         ##WE ALSO NEED TO CREATE A TRACE FLAG FOR THIS USER
@@ -605,7 +606,7 @@ class MavensMateClient(object):
     #deletes ALL checkpoints in the org
     def delete_apex_checkpoints(self):
         query_string = 'Select Id FROM ApexExecutionOverlayAction'
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, proxies=urllib.getproxies(), headers=self.get_rest_headers(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         for r in qr['records']:
@@ -614,7 +615,7 @@ class MavensMateClient(object):
     #deletes a single checkpoint
     def delete_apex_checkpoint(self, **kwargs):
         if 'overlay_id' in kwargs:
-            r = requests.delete(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction/{0}".format(kwargs['overlay_id']), headers=self.get_rest_headers(), verify=False)
+            r = requests.delete(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction/{0}".format(kwargs['overlay_id']), headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             r.raise_for_status()
             return mm_util.generate_success_response('OK')
         else:
@@ -628,11 +629,11 @@ class MavensMateClient(object):
                 id = self.get_apex_entity_id_by_name(object_type=mtype['xmlName'], name=api_name)
             
             query_string = "Select Id from ApexExecutionOverlayAction Where ExecutableEntityId = '{0}' AND Line = {1}".format(id, line_number)
-            r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+            r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             r.raise_for_status()
             query_result = mm_util.parse_rest_response(r.text)
             overlay_id = query_result['records'][0]['Id']
-            r = requests.delete(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction/{0}".format(overlay_id), headers=self.get_rest_headers(), verify=False)
+            r = requests.delete(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction/{0}".format(overlay_id), headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             r.raise_for_status()
             return mm_util.generate_success_response('OK')
 
@@ -645,12 +646,12 @@ class MavensMateClient(object):
             user_id = self.user_id
         #dont query heapdump, soqlresult, or apexresult here - JF
         query_string = 'Select Id, CreatedDate, ActionScript, ActionScriptType, ExpirationDate, IsDumpingHeap, Iteration, Line, UserId From ApexExecutionOverlayResult order by CreatedDate desc limit '+str(limit)
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         for record in qr['records']:
             heap_query = 'SELECT HeapDump, ApexResult, SOQLResult, ActionScript FROM ApexExecutionOverlayResult WHERE Id = \''+record['Id']+'\''
-            rr = requests.get(self.get_tooling_url()+"/query/", params={'q':heap_query}, headers=self.get_rest_headers(), verify=False)
+            rr = requests.get(self.get_tooling_url()+"/query/", params={'q':heap_query}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
             rr.raise_for_status()
             qrr = mm_util.parse_rest_response(rr.text)
             record["HeapDump"] = qrr['records'][0]['HeapDump']
@@ -661,7 +662,7 @@ class MavensMateClient(object):
 
     def delete_apex_checkpoint_results(self):
         query_string = 'Select Id From ApexExecutionOverlayResult Where UserId = \''+self.user_id+'\' order by CreatedDate'
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         for record in qr['records']:
@@ -677,19 +678,19 @@ class MavensMateClient(object):
         if 'ScopeId' not in payload:
             payload['ScopeId'] = self.user_id
         payload = json.dumps(payload)
-        r = requests.post(self.get_tooling_url()+"/sobjects/TraceFlag", data=payload, headers=self.get_rest_headers('POST'), verify=False)
+        r = requests.post(self.get_tooling_url()+"/sobjects/TraceFlag", data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
         return mm_util.parse_rest_response(r.text)
 
     #get the trace flags that have been set up in the org
     def get_trace_flags(self, delete=False):
         query_string = 'Select Id,ApexCode,ApexProfiling,Callout,Database,System,Validation,Visualforce,Workflow,ExpirationDate,TracedEntityId,ScopeId FROM TraceFlag order by CreatedDate desc'
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         return mm_util.parse_rest_response(r.text)
 
     def delete_trace_flags(self):
         query_string = 'Select Id From TraceFlag'
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         for record in qr['records']:
@@ -707,7 +708,7 @@ class MavensMateClient(object):
             query_string = "Select Id From ApexLog"
         else:
             query_string = "Select Id From ApexLog WHERE LogUserId = '{0}'".format(self.user_id)
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         for record in qr['records']:
@@ -720,7 +721,7 @@ class MavensMateClient(object):
             query_string = "Select Id,Application,Location,LogLength,LogUserId,Operation,Request,StartTime,Status From ApexLog WHERE LogUserId = '{0}' Order By StartTime desc limit {1}".format(self.user_id, limit)
         else:
             query_string = "Select Id,Application,Location,LogLength,LogUserId,Operation,Request,StartTime,Status From ApexLog Order By StartTime desc limit {1}".format(self.user_id, limit)
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         qr = mm_util.parse_rest_response(r.text)
         for record in qr['records']:
@@ -729,7 +730,7 @@ class MavensMateClient(object):
         return qr
 
     def download_log(self, id):
-        r = requests.get(self.get_tooling_url()+"/sobjects/ApexLog/"+id+"/Body", headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/sobjects/ApexLog/"+id+"/Body", headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         return r.text
 
     
@@ -744,7 +745,7 @@ class MavensMateClient(object):
         id_string = "'"+id_string+"'"
         query_string = "Select ContentEntityId, SymbolTable From ApexClassMember Where ContentEntityId IN (" + id_string + ")"
         payload = { 'q' : query_string }
-        r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         return mm_util.parse_rest_response(r.text)
 
     ############################
@@ -758,7 +759,7 @@ class MavensMateClient(object):
                 "ApexClassId" : self.get_apex_entity_id_by_name(object_type="ApexClass", name=c)
             }
             payload = json.dumps(payload)
-            r = requests.post(self.get_tooling_url()+"/sobjects/ApexTestQueueItem", data=payload, headers=self.get_rest_headers('POST'), verify=False)
+            r = requests.post(self.get_tooling_url()+"/sobjects/ApexTestQueueItem", data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
             res = mm_util.parse_rest_response(r.text)
             
             if res["success"] == True:
@@ -812,7 +813,7 @@ class MavensMateClient(object):
     #####
 
     def delete_tooling_entity(self, type, id):
-        r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(type, id), headers=self.get_rest_headers(), verify=False)
+        r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(type, id), headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         r.raise_for_status()
         return r
 
@@ -827,14 +828,14 @@ class MavensMateClient(object):
     ##END TOOLING PLUMBING##
 
     def tooling_query(self, soql):
-        r = requests.get(self.get_tooling_url()+"/query/", params={'q':soql}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_tooling_url()+"/query/", params={'q':soql}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         if r.status_code != 200:
             _exception_handler(r)
         r.raise_for_status()
         return r.json()
 
     def query(self, soql):
-        r = requests.get(self.get_base_url()+"/query/", params={'q':soql}, headers=self.get_rest_headers(), verify=False)
+        r = requests.get(self.get_base_url()+"/query/", params={'q':soql}, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         if r.status_code != 200:
             _exception_handler(r)
         r.raise_for_status()
