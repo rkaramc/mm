@@ -20,6 +20,8 @@ import time
 import lib.mm_util as mm_util
 import lib.config as config
 
+debug = config.logger.debug
+
 class SforceMetadataClient(SforceBaseClient):
   
     def __init__(self, wsdl, *args, **kwargs):
@@ -215,7 +217,10 @@ class SforceMetadataClient(SforceBaseClient):
         return metadata_result
 
     def _getDeployResponse(self, id):
-        return self._handleResultTyping(self._sforce.service.checkDeployStatus(id))
+        if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+            return self._handleResultTyping(self._sforce.service.checkDeployStatus(id, True))
+        else:
+            return self._handleResultTyping(self._sforce.service.checkDeployStatus(id))
 
     def _getRetrieveBody(self, id):
         return self._handleResultTyping(self._sforce.service.checkRetrieveStatus(id))
@@ -225,8 +230,12 @@ class SforceMetadataClient(SforceBaseClient):
         checkStatusResponse = None
         while finished == False:
             time.sleep(1)
-            checkStatusResponse = self._sforce.service.checkStatus(id)
-            finished = checkStatusResponse[0].done
+            if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+                checkStatusResponse = self._sforce.service.checkDeployStatus(id, True)
+                finished = checkStatusResponse.done
+            else:
+                checkStatusResponse = self._sforce.service.checkStatus(id)
+                finished = checkStatusResponse[0].done
 
     # SOAP header-related calls (debug options?)
     def setCallOptions(self, header):

@@ -966,8 +966,13 @@ class MavensMateProject(object):
                     "debug_categories"  : params.get('debug_categories', [])
                 }
                 deploy_result = self.sfdc_client.deploy(deploy_params,is_test=True)
+                #debug(deploy_result)
                 d = xmltodict.parse(deploy_result,postprocessor=mm_util.xmltodict_postprocessor)
-                result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['runTestResult']
+                if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+                    result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['details']['runTestResult']
+                else:
+                    result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['runTestResult']
+
                 try:
                     result['log'] = d["soapenv:Envelope"]["soapenv:Header"]["DebuggingInfo"]["debugLog"]
                 except:
