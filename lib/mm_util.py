@@ -35,19 +35,19 @@ import jinja2.ext
 import jinja2htmlcompress
 from jinja2htmlcompress import HTMLCompress
 
+WSDL_PATH = os.path.join(config.base_path,"lib","wsdl") #this can be overridden by client settings or request parameter
+
 TOOLING_API_EXTENSIONS = ['cls', 'trigger', 'page', 'component']
 
 SFDC_API_VERSION = "28.0" #is overridden upon instantiation of mm_connection if plugin specifies mm_api_version
-
-PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
-SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
-PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
 
 PRODUCTION_ENDPOINT_SHORT = "https://www.salesforce.com"
 SANDBOX_ENDPOINT_SHORT    = "https://test.salesforce.com"
 PRERELEASE_ENDPOINT_SHORT = "https://prerellogin.pre.salesforce.com"
 
-WSDL_PATH = os.path.join(config.base_path,"lib","wsdl") #this can be overridden by client settings or request parameter
+PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
 
 ENDPOINTS = {
     "production" : PRODUCTION_ENDPOINT,
@@ -65,6 +65,21 @@ URL_TO_ENDPOINT_TYPE = {
 template_path = os.path.join(config.base_path,"lib","templates")
 
 env = Environment(loader=FileSystemLoader(template_path),trim_blocks=True)
+
+def set_endpoints():
+    global PRODUCTION_ENDPOINT
+    global SANDBOX_ENDPOINT
+    global PRERELEASE_ENDPOINT
+    global ENDPOINTS
+    PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+    SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+    PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+    ENDPOINTS = {
+        "production" : PRODUCTION_ENDPOINT,
+        "developer"  : PRODUCTION_ENDPOINT,
+        "sandbox"    : SANDBOX_ENDPOINT,
+        "prerelease" : PRERELEASE_ENDPOINT
+    }
 
 def get_soap_url_from_custom_url(custom_url):
     if "Soap" in custom_url:

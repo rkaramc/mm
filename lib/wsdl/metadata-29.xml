@@ -6514,7 +6514,7 @@ Copyright 2006-2013 Salesforce.com, inc. All Rights Reserved
  <service name="MetadataService">
   <documentation>Manage your Salesforce.com metadata</documentation>
   <port binding="tns:MetadataBinding" name="Metadata">
-   <soap:address location="https://na2.salesforce.com/services/Soap/m/29.0"/>
+   <soap:address location="https://na14.salesforce.com/services/Soap/m/29.0"/>
   </port>
  </service>
 </definitions>

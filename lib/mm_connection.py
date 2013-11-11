@@ -59,9 +59,11 @@ class MavensMatePluginConnection(object):
 
         if self.sfdc_api_version != None:
             mm_util.SFDC_API_VERSION = self.sfdc_api_version #setting api version based on plugin settings
+            mm_util.set_endpoints()
 
         debug('>>>> getting settings')
         debug(self.sfdc_api_version)
+        debug(mm_util.SFDC_API_VERSION)
 
         if self.operation != 'new_project' and self.operation != 'upgrade_project' and self.operation != 'new_project_from_existing_directory' and self.project_location != None:
             if not os.path.exists(os.path.join(self.project_location)):

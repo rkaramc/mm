@@ -859,7 +859,10 @@ class MavensMateClient(object):
         return "https://{0}.salesforce.com/services/data/v{1}/tooling".format(pod, mm_util.SFDC_API_VERSION)
 
     def __get_partner_client(self):
-        wsdl_location = os.path.join(mm_util.WSDL_PATH, 'partner.xml')
+        if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'partner-29.xml')
+        else:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'partner.xml')
         try:
             if os.path.exists(os.path.join(config.connection.project.location,'config','partner.xml')):
                 wsdl_location = os.path.join(config.connection.project.location,'config','partner.xml')
@@ -875,7 +878,11 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_metadata_client(self):
-        wsdl_location = os.path.join(mm_util.WSDL_PATH, 'metadata.xml')
+        if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'metadata-29.xml')
+        else:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'metadata.xml')
+
         try:
            if os.path.exists(os.path.join(config.connection.project.location,'config','metadata.xml')):
                wsdl_location = os.path.join(config.connection.project.location,'config','metadata.xml')
@@ -891,7 +898,11 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_apex_client(self):
-        wsdl_location = os.path.join(mm_util.WSDL_PATH, 'apex.xml')
+        if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'apex-29.xml')
+        else:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'apex.xml')
+
         try:
             if os.path.exists(os.path.join(config.connection.project.location,'config','apex.xml')):
                 wsdl_location = os.path.join(config.connection.project.location,'config','apex.xml')
@@ -907,7 +918,11 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_tooling_client(self):
-        wsdl_location = os.path.join(mm_util.WSDL_PATH, 'tooling.xml')
+        if int(float(mm_util.SFDC_API_VERSION)) >= 29:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'tooling-29.xml')
+        else:
+            wsdl_location = os.path.join(mm_util.WSDL_PATH, 'tooling.xml')
+
         try:
             if os.path.exists(os.path.join(config.connection.project.location,'config','tooling.xml')):
                 wsdl_location = os.path.join(config.connection.project.location,'config','tooling.xml')
