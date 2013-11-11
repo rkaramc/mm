@@ -1,5 +1,0 @@
-<apex:page showHeader="true" sidebar="true">
-	<apex:pageBlock title="foo">
-
-	</apex:pageBlock>   
-</apex:page>
