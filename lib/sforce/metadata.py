@@ -154,7 +154,7 @@ class SforceMetadataClient(SforceBaseClient):
         
         result = self._handleResultTyping(self._sforce.service.retrieve(request_payload))
         if result.done == False:
-            self._waitForRequest(result.id)
+            self._waitForRetrieveRequest(result.id)
             return self._getRetrieveBody(result.id)
         else:
             return result
@@ -224,6 +224,14 @@ class SforceMetadataClient(SforceBaseClient):
 
     def _getRetrieveBody(self, id):
         return self._handleResultTyping(self._sforce.service.checkRetrieveStatus(id))
+
+    def _waitForRetrieveRequest(self, id):
+        finished = False
+        checkStatusResponse = None
+        while finished == False:
+            time.sleep(1)
+            checkStatusResponse = self._sforce.service.checkStatus(id)
+            finished = checkStatusResponse[0].done    
 
     def _waitForRequest(self, id):
         finished = False

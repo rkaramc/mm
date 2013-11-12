@@ -594,7 +594,14 @@ def generate_html_response(operation, obj, params=None):
         template = env.get_template('/deploy/result.html')
         deploy_results = []
         for result in obj:
-            if 'messages' in result:
+            if 'details' in result: #metadata api v29 and above
+                #if 'componentFailures' in result['details']:
+                if 'runTestResult' in result['details'] and 'codeCoverage' in result['details']['runTestResult']:
+                    result['parsedTestResults'] = process_unit_test_result(result['details']['runTestResult'])
+                    deploy_results.append(result)
+                else:
+                    deploy_results.append(result)
+            elif 'messages' in result:
                 for m in result['messages']:
                     if m['success'] == False:
                         result['success'] = False
