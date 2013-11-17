@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+import encodings
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 import os.path
 import argparse
 import inspect
