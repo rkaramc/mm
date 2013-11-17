@@ -442,6 +442,7 @@ class MavensMateClient(object):
             payload['MetadataContainerId']  = container_id
             payload['ContentEntityId']      = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
             payload['Body']                 = open(file_path, 'r').read()
+            #payload['LastSyncDate']         = TODO
             payload = json.dumps(payload)
             config.logger.debug(payload)
             r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=urllib.getproxies(), verify=False)
