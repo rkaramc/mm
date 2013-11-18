@@ -58,7 +58,7 @@ class MavensMateClient(object):
             
             if 'org_url' in self.credentials and self.credentials['org_url'] != None and self.credentials['org_url'] != '':
                 self.endpoint = mm_util.get_soap_url_from_custom_url(self.credentials["org_url"])
-            elif 'endpoint' in self.credentials and self.credentials['endpoint'] != None:
+            elif self.override_session == False and 'endpoint' in self.credentials and self.credentials['endpoint'] != None:
                 self.endpoint = self.credentials['endpoint']    
             else:
                 self.endpoint = mm_util.get_sfdc_endpoint_by_type(self.org_type) 

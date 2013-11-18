@@ -61,7 +61,21 @@ class MavensMateProject(object):
             config.logger.debug(self.get_creds())
 
             if self.ui == False and self.defer_connection == False:
-                self.sfdc_client        = MavensMateClient(credentials=self.get_creds())
+                needs_session_override = False
+                if int(float(mm_util.SFDC_API_VERSION)) >= 29 and self.sfdc_session != None:
+                    server_url = self.sfdc_session['server_url']
+                    if '28.0' in server_url:
+                        needs_session_override = True
+                    elif '27.0' in server_url:
+                        needs_session_override = True
+                    elif '26.0' in server_url:
+                        needs_session_override = True
+                    elif '25.0' in server_url:
+                        needs_session_override = True
+                    elif '24.0' in server_url:
+                        needs_session_override = True
+
+                self.sfdc_client        = MavensMateClient(credentials=self.get_creds(),override_session=needs_session_override)
 
                 if self.sfdc_session != None and 'sid' in self.sfdc_session and self.sfdc_client != None and (self.sfdc_session['sid'] != self.sfdc_client.sid): 
                     config.logger.debug('storing updated session information locally')
