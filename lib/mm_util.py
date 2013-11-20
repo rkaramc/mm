@@ -45,9 +45,9 @@ PRODUCTION_ENDPOINT_SHORT = "https://www.salesforce.com"
 SANDBOX_ENDPOINT_SHORT    = "https://test.salesforce.com"
 PRERELEASE_ENDPOINT_SHORT = "https://prerellogin.pre.salesforce.com"
 
-PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
-SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
-PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+str(SFDC_API_VERSION)
+SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+str(SFDC_API_VERSION)
+PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+str(SFDC_API_VERSION)
 
 ENDPOINTS = {
     "production" : PRODUCTION_ENDPOINT,
@@ -71,9 +71,9 @@ def set_endpoints():
     global SANDBOX_ENDPOINT
     global PRERELEASE_ENDPOINT
     global ENDPOINTS
-    PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
-    SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
-    PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+SFDC_API_VERSION
+    PRODUCTION_ENDPOINT = "https://www.salesforce.com/services/Soap/u/"+str(SFDC_API_VERSION)
+    SANDBOX_ENDPOINT    = "https://test.salesforce.com/services/Soap/u/"+str(SFDC_API_VERSION)
+    PRERELEASE_ENDPOINT = "https://prerellogin.pre.salesforce.com/services/Soap/u/"+str(SFDC_API_VERSION)
     ENDPOINTS = {
         "production" : PRODUCTION_ENDPOINT,
         "developer"  : PRODUCTION_ENDPOINT,
@@ -86,9 +86,9 @@ def get_soap_url_from_custom_url(custom_url):
         return custom_url
     else:
         if custom_url.endswith("/"):
-            return custom_url+"services/Soap/u/"+SFDC_API_VERSION 
+            return custom_url+"services/Soap/u/"+str(SFDC_API_VERSION)
         else:
-            return custom_url+"/services/Soap/u/"+SFDC_API_VERSION 
+            return custom_url+"/services/Soap/u/"+str(SFDC_API_VERSION)
 
 def get_timestamp():
     ts = time.time()
