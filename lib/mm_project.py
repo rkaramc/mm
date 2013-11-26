@@ -305,10 +305,20 @@ class MavensMateProject(object):
                     dictionary["runTestResult"] = y
                 if(x == "success"):
                     dictionary["success"] = y
-            for a in result['messages']:
-                for key, value in a.iteritems():
-                    if(key == 'problemType' and value == 'Error'):
-                        dictionary2.append(a)
+            
+            #debug('>>>')
+            #debug(result)
+            if 'messages' in result:
+                for a in result['messages']:
+                    for key, value in a.iteritems():
+                        if(key == 'problemType' and value == 'Error'):
+                            dictionary2.append(a)
+            elif 'details' in result and result['details'] != None and 'componentFailures' in result['details']:
+                if type(result['details']['componentFailures']) is not list:
+                    result['details']['componentFailures'] = [result['details']['componentFailures']]
+                for a in result['details']['componentFailures']:
+                    dictionary2.append(a)
+
             dictionary["Messages"] = dictionary2 
 
             shutil.rmtree(tmp)
@@ -638,7 +648,6 @@ class MavensMateProject(object):
             return mm_util.generate_error_response(e.message)
 
     def get_retrieve_result(self, params):
-        
         if 'directories' in params and len(params['directories']) > 0 and 'files' in params and len(params['files']) > 0:
             raise MMException("Please select either directories or files to refresh, not both")
         elif 'directories' in params and len(params['directories']) > 0:
@@ -648,7 +657,9 @@ class MavensMateProject(object):
                 basename = os.path.basename(d)
                 # refresh all if it's the project base or src directory
                 if basename == config.connection.project_name or basename == "src":
-                    data = mm_util.get_default_metadata_data();
+                    data = mm_util.get_default_metadata_data()
+                    if type(data) is dict and 'metadataObjects' in data:
+                        data = data['metadataObjects']
                     for item in data: 
                         if 'directoryName' in item:
                             types.append(item['xmlName'])

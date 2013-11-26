@@ -37,7 +37,6 @@ class ConflictManager(object):
         self.write_local_store(apex_file_properties)
 
     def get_retrieve_result(self, params):
-        
         if 'directories' in params and len(params['directories']) > 0 and 'files' in params and len(params['files']) > 0:
             raise MMException("Please select either directories or files to refresh, not both")
         elif 'directories' in params and len(params['directories']) > 0:
@@ -48,6 +47,8 @@ class ConflictManager(object):
                 # refresh all if it's the project base or src directory
                 if basename == config.connection.project_name or basename == "src":
                     data = mm_util.get_default_metadata_data();
+                    if type(data) is dict and 'metadataObjects' in data:
+                        data = data['metadataObjects']
                     for item in data: 
                         if 'directoryName' in item:
                             types.append(item['xmlName'])
@@ -177,9 +178,9 @@ class ConflictManager(object):
         for prop in properties:
             if prop.type != "Package":
                 
-                debug('>>>>>> ')
-                debug(prop.lastModifiedDate)
-                debug(str(prop.lastModifiedDate))
+                #debug('>>>>>> ')
+                #debug(prop.lastModifiedDate)
+                #debug(str(prop.lastModifiedDate))
 
                 filename = prop.fileName.split('/')[-1];
                 fileprop = {
