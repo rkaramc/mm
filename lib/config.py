@@ -29,6 +29,9 @@ requests_log.setLevel(logging.ERROR)
 requests_log.propagate = False 
 requests_log.addHandler(logging_handler)
 
+urllib3_logger = logging.getLogger('urllib3')
+urllib3_logger.setLevel(logging.CRITICAL)
+
 def __get_base_path():
     if hasattr(sys, 'frozen'):
         return sys._MEIPASS
