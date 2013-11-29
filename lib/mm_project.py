@@ -587,6 +587,10 @@ class MavensMateProject(object):
                     self.reset_metadata_container()
 
             project_metadata = self.sfdc_client.retrieve(package=self.package)
+            
+            #freshen local store
+            self.conflict_manager.refresh_local_store(project_metadata.fileProperties)
+            
             mm_util.extract_base64_encoded_zip(project_metadata.zipFile, self.location)
 
             #removes all metadata from directories
