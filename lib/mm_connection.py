@@ -226,14 +226,19 @@ class MavensMatePluginConnection(object):
             if json.loads(result)['success'] == True and self.get_plugin_client_setting('mm_open_project_on_create', True):
                 #opens project based on the client
                 client_location = self.get_plugin_client_setting('mm_plugin_client_location')
+                plugin_app_name = self.get_plugin_client_setting('mm_osx_plugin_client_app_name') 
                 if client_location == None:
                     client_location = '/Applications'
+                if plugin_app_name == None:
+                    plugin_app_name = 'Sublime Text 3.app'
                 if self.plugin_client == self.PluginClients.SUBLIME_TEXT_2:
                     if self.platform == 'darwin':
                         os.system("'{0}/Sublime Text 2.app/Contents/SharedSupport/bin/subl' --project '{1}'".format(client_location,self.project.location+"/"+self.project.project_name+".sublime-project"))
                 elif self.plugin_client == self.PluginClients.SUBLIME_TEXT_3:
                     if self.platform == 'darwin':
-                        if os.path.exists(os.path.join('{0}/Sublime Text 3.app'.format(client_location))):
+                        if os.path.exists(os.path.join('{0}/{1}'.format(client_location, plugin_app_name))):
+                            os.system("'{0}/{1}/Contents/SharedSupport/bin/subl' --project '{2}'".format(client_location,plugin_app_name,self.project.location+"/"+self.project.project_name+".sublime-project"))
+                        elif os.path.exists(os.path.join('{0}/Sublime Text 3.app'.format(client_location))):
                             os.system("'{0}/Sublime Text 3.app/Contents/SharedSupport/bin/subl' --project '{1}'".format(client_location,self.project.location+"/"+self.project.project_name+".sublime-project"))
                         else:
                             os.system("'{0}/Sublime Text.app/Contents/SharedSupport/bin/subl' --project '{1}'".format(client_location,self.project.location+"/"+self.project.project_name+".sublime-project"))
@@ -258,9 +263,14 @@ class MavensMatePluginConnection(object):
 
         if self.platform == 'darwin':
             client_location = self.get_plugin_client_setting('mm_plugin_client_location')
+            plugin_app_name = self.get_plugin_client_setting('mm_osx_plugin_client_app_name') 
             if client_location == None:
                 client_location = '/Applications'
-            if os.path.exists(os.path.join('{0}/Sublime Text 3.app'.format(client_location))):
+            if plugin_app_name == None:
+                plugin_app_name = 'Sublime Text 3.app'
+            if os.path.exists(os.path.join('{0}/{1}'.format(client_location, plugin_app_name))):
+                os.system("'{0}/{1}/Contents/SharedSupport/bin/subl' --command '{2} {3}'".format(client_location, plugin_app_name, command, params))
+            elif os.path.exists(os.path.join('{0}/Sublime Text 3.app'.format(client_location))):
                 os.system("'{0}/Sublime Text 3.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
             else:
                 os.system("'{0}/Sublime Text.app/Contents/SharedSupport/bin/subl' --command '{1} {2}'".format(client_location, command, params))
