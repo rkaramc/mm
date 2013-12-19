@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 import os.path
 import sys
 import time
@@ -9,7 +10,7 @@ mm_start = time.time()
 logging.raiseExceptions = False
 logging.basicConfig(level=logging.INFO)
 
-logging_handler = logging.FileHandler(os.path.join(tempfile.gettempdir(),"mm.log"))
+logging_handler = RotatingFileHandler(os.path.join(tempfile.gettempdir(),"mm.log"), maxBytes=10*1024*1024, backupCount=5)
 
 #suds log setup
 suds_logger = logging.getLogger('suds.client')

@@ -7,6 +7,7 @@ import mm_github
 import sys
 import config
 import logging
+from logging.handlers import RotatingFileHandler
 import pipes
 import subprocess
 from enum import enum
@@ -70,8 +71,8 @@ class MavensMatePluginConnection(object):
                raise MMException('Could not find project in workspace: '+self.workspace)
             if not os.path.exists(os.path.join(self.project_location,"config",".settings")):
                 raise MMException('This does not seem to be a valid MavensMate project, missing config/.settings')
-            if not os.path.exists(os.path.join(self.project_location,"src","package.xml")):
-                raise MMException('This does not seem to be a valid MavensMate project, missing package.xml')
+            #if not os.path.exists(os.path.join(self.project_location,"src","package.xml")):
+            #    raise MMException('This does not seem to be a valid MavensMate project, missing package.xml')
 
         if self.project_name != None and self.project_name != '' and not os.path.exists(self.project_location) and self.operation != 'new_project_from_existing_directory' and self.operation != 'new_project':
             raise MMException('The project could not be found')
@@ -86,7 +87,7 @@ class MavensMatePluginConnection(object):
                 try:
                     config.logger.handlers = []
                     config.suds_logger.handlers = []
-                    handler = logging.FileHandler(os.path.join(self.get_log_location(),"mm.log"))
+                    handler = RotatingFileHandler(os.path.join(self.get_log_location(),"mm.log"), maxBytes=10*1024*1024, backupCount=5)
                     config.logger.addHandler(handler)
                     config.suds_logger.addHandler(handler)
                     config.requests_log.addHandler(handler)
