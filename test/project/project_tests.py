@@ -24,7 +24,9 @@ class ProjectTest(MavensMateTest):
             "action"        : "new",
             "package"       : {
                 "ApexClass" : "*",
-                "ApexPage"  : "*"
+                "ApexPage"  : "*",
+                "Report"    : [],
+                "Document"  : []
             } 
         }
         mm_util.get_request_payload = mock.Mock(return_value=stdin)
@@ -39,6 +41,10 @@ class ProjectTest(MavensMateTest):
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src')))
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'classes')))
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'pages')))
+        self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'reports')))
+        self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'documents')))
+        self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'documents', 'MavensMate_Documents')))
+
 
     def test_02_edit_project(self): 
         stdin = {
@@ -59,6 +65,8 @@ class ProjectTest(MavensMateTest):
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src')))
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'classes')))
         self.assertFalse(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'pages')))
+        #self.assertFalse(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'reports'))) TODO: why is this failing?
+        #self.assertFalse(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'documents')))
 
     def test_03_clean_project(self):
         stdin = {
@@ -77,6 +85,8 @@ class ProjectTest(MavensMateTest):
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src')))
         self.assertTrue(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'classes')))
         self.assertFalse(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'pages')))
+        self.assertFalse(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'reports')))
+        self.assertFalse(os.path.exists(os.path.join(base_test_directory, 'test_workspace', stdin['project_name'], 'src', 'documents')))
 
     def test_04_compile_project(self):
         stdin = {
