@@ -43,6 +43,7 @@ class MavensMatePluginConnection(object):
         self.project                = None
         self.sfdc_api_version       = self.get_sfdc_api_version()
         self.ui                     = params.get('ui', False) #=> whether this connection was created for the purposes of generating a UI
+        self.verbose                = params.get('verbose', False)
         if 'wsdl_path' in params:
             mm_util.WSDL_PATH = params.get('wsdl_path')
 

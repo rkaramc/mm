@@ -11,6 +11,7 @@ import lib.config as config
 import lib.mm_util as util
 import urllib
 import yaml
+from StringIO import StringIO
 from lib.mm_connection import MavensMatePluginConnection
 from lib.mm_client import MavensMateClient
 from lib.mm_exceptions import MMException
@@ -18,6 +19,11 @@ from lib.mm_exceptions import MMException
 class MavensMateRequest():
     
     def __init__(self, *args, **kwargs): 
+        #redirect stdout so prints to STDOUT don't affect the api
+        self.output = StringIO()
+        self.saved_stdout = sys.stdout
+        sys.stdout = self.output
+
         self.operation      = None
         self.args           = kwargs.get('args', {})
         self.unknown_args   = kwargs.get('unknown_args', [])
@@ -88,7 +94,8 @@ class MavensMateRequest():
             client=self.args.client or 'SUBLIME_TEXT_3',
             ui=self.args.ui_switch,
             params=self.payload,
-            operation=self.operation)
+            operation=self.operation,
+            verbose=self.args.verbose)
 
     def execute(self):
         try:
@@ -333,18 +340,23 @@ def main():
     parser.add_argument('-o', '--operation', help='The requested operation') #name of the operation being requested
     parser.add_argument('-c', '--client', help='The plugin client being used') #name of the plugin client ("SUBLIME_TEXT_2", "SUBLIME_TEXT_3", "TEXTMATE", "NOTEPAD_PLUS_PLUS", "BB_EDIT", etc.)
     parser.add_argument('--ui', action='store_true', default=False, 
-        dest='ui_switch', help='Include flag to launch the default UI for the operation')
+        dest='ui_switch', help='Launch the default UI for the operation')
     parser.add_argument('--quiet', action='store_true', default=False, 
-        dest='quiet', help='Suppresses mm.py output, use this flag')
+        dest='quiet', help='Suppresses mm.py output')
     parser.add_argument('--html', action='store_true', default=False, 
         dest='respond_with_html', help='Makes various commands return HTML')
+    parser.add_argument('--v', '--verbose', action='store_true', default=False, 
+        dest='verbose', help='Makes me really loud and annoying')
     args, unknown = parser.parse_known_args()
     payload = util.get_request_payload()
     try:
         r = MavensMateRequest(args=args, payload=payload, unknown_args=unknown)
         response = r.execute()
-        response_dict = json.loads(response)
-        print yaml.dump(response_dict, default_flow_style=True)
+
+        r.output.close()
+        sys.stdout = r.saved_stdout
+
+        print response
     except Exception as e:
         print util.generate_error_response(e.message)
 

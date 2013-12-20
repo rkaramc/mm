@@ -699,7 +699,7 @@ def generate_error_response(message, dump_to_json=True):
         message = message.strip()
         if message == None or message == '':
             message = 'An error has occurred. Please enable plugin logging, retry your operation and paste any relevant log(s) to a new GitHub issue.'
-        if trace != None and trace != 'None' and 'MMException' not in trace:
+        if trace != None and trace != 'None' and 'MMException' not in trace and config.connection.verbose == True:
             # if message = e.message just use the trace
             if len(trace):
                 stack_trace += trace
@@ -730,12 +730,19 @@ def generate_error_response(message, dump_to_json=True):
 
         config.logger.exception("[MAVENSMATE CAUGHT ERROR]")
         config.logger.debug(stack_trace)
-        res = {
-            "success"       : False,
-            "body_type"     : "text",
-            "body"          : message,
-            "stack_trace"   : stack_trace
-        }
+        if config.connection.verbose:
+            res = {
+                "success"       : False,
+                "body_type"     : "text",
+                "body"          : message,
+                "stack_trace"   : stack_trace
+            }
+        else:
+            res = {
+                "success"       : False,
+                "body_type"     : "text",
+                "body"          : message
+            }
         if dump_to_json:
             return json.dumps(res)
         else:
