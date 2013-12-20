@@ -19,6 +19,9 @@ import lib.xmltodict as xmltodict
 import time
 import lib.mm_util as mm_util
 import lib.config as config
+import shutil
+import os
+from operator import itemgetter
 
 debug = config.logger.debug
 
@@ -32,24 +35,6 @@ class SforceMetadataClient(SforceBaseClient):
         self.setSessionHeader(header)
         self._setEndpoint(kwargs['url'])
         self._setHeaders('')
-
-    def listMetadata(self, metadata_type, retXml=True, version=26.0):
-        # obj = { 'type': 'ApexClass' }
-        # response = mclient.service.listMetadata(obj, 25.0)
-        self._sforce.set_options(retxml=retXml)
-        if type(metadata_type) is not dict and type(metadata_type) is not list:
-            obj = { 'type' : metadata_type }
-        else:
-            obj = metadata_type
-        list_result = self._handleResultTyping(self._sforce.service.listMetadata(obj, version))
-        self._sforce.set_options(retxml=False)
-        if retXml == True:
-            try:
-                list_result_dict = xmltodict.parse(list_result,postprocessor=mm_util.xmltodict_postprocessor)
-                return list_result_dict['soapenv:Envelope']["soapenv:Body"]["listMetadataResponse"]["result"]
-            except:
-                return []
-        return list_result
 
     def retrieve(self, **kwargs):
         # request = {
@@ -76,6 +61,9 @@ class SforceMetadataClient(SforceBaseClient):
         # }
         package_dict = None
         request_payload = None
+
+        debug('retrieve request: ')
+        debug(kwargs['package'])
         
         if 'package' in kwargs and type(kwargs['package']) is not dict: 
             #if package is location of package.xml, we'll parse the xml and create a request
@@ -106,17 +94,28 @@ class SforceMetadataClient(SforceBaseClient):
 
             #if custom object is asterisked, we need to explictly retrieve standard objects
             for t in package_dict['unpackaged']['types']:
-                if 'name' in t and t['name'] == 'CustomObject':
-                    if 'members' in t and type(t['members']) is not list:
-                        if t['members'] == "*":
-                            mlist = self.listMetadata('CustomObject', False)
-                            objs = []
-                            for obj in mlist:
-                                if ('__c') not in mlist:
+                if 'name' in t:
+                    metadata_type_def = mm_util.get_meta_type_by_name(t['name'])
+                    if metadata_type_def['inFolder']:
+                        if 'members' in t and type(t['members']) is not list:
+                            if t['members'] == "*" or t['members'] == []:
+                                mlist = self.listMetadata(t['name'], False)
+                                objs = []
+                                for obj in mlist:
                                     objs.append(obj['fullName'])
-                            objs.append("*")
-                            objs.sort()
-                            t['members'] = objs
+                                objs.sort()
+                                t['members'] = objs
+                    elif t['name'] == 'CustomObject':
+                        if 'members' in t and type(t['members']) is not list:
+                            if t['members'] == "*":
+                                mlist = self.listMetadata('CustomObject', False)
+                                objs = []
+                                for obj in mlist:
+                                    if ('__c') not in mlist:
+                                        objs.append(obj['fullName'])
+                                objs.append("*")
+                                objs.sort()
+                                t['members'] = objs
 
             request_payload = package_dict
 
@@ -138,20 +137,41 @@ class SforceMetadataClient(SforceBaseClient):
             
             #if custom object is asterisked, we need to explictly retrieve standard objects
             for t in package['unpackaged']['types']:
-                if 'name' in t and t['name'] == 'CustomObject':
-                    if 'members' in t and type(t['members']) is not list:
-                        if t['members'] == "*":
-                            mlist = self.listMetadata('CustomObject', False)
+                debug('----> ')
+                debug(t)
+                if 'name' in t:
+                    metadata_type_def = mm_util.get_meta_type_by_name(t['name'])
+                    debug(metadata_type_def)
+                    if metadata_type_def['inFolder']:
+                        if 'members' in t and (t['members'] == "*" or t['members'] == []):
+                            #list_request_name = self.__transformFolderMetadataNameForListRequest(t['name'])
+                            #mlist = self.listMetadata(list_request_name, False)
+                            mlist = self.listMetadataAdvanced(t['name'])
                             objs = []
                             for obj in mlist:
-                                if ('__c') not in mlist:
-                                    objs.append(obj['fullName'])
-                            objs.append("*")
+                                debug('---obj')
+                                debug(obj)
+                                objs.append(obj['title'])
+                                if 'children' in obj and type(obj['children'] is list):
+                                    for child in obj['children']:
+                                        objs.append(obj['title']+"/"+child['title'])
                             objs.sort()
                             t['members'] = objs
+                    elif t['name'] == 'CustomObject':              
+                        if 'members' in t and type(t['members']) is not list:
+                            if t['members'] == "*":
+                                mlist = self.listMetadata('CustomObject', False)
+                                objs = []
+                                for obj in mlist:
+                                    if ('__c') not in mlist:
+                                        objs.append(obj['fullName'])
+                                objs.append("*")
+                                objs.sort()
+                                t['members'] = objs
             
             request_payload = package
-        
+            debug('---request payload---')
+            debug(request_payload)
         result = self._handleResultTyping(self._sforce.service.retrieve(request_payload))
         if result.done == False:
             self._waitForRetrieveRequest(result.id)
@@ -203,6 +223,213 @@ class SforceMetadataClient(SforceBaseClient):
             except:
                 pass
             return result
+
+    def listMetadata(self, metadata_type, retXml=True, version=26.0):
+        # obj = { 'type': 'ApexClass' }
+        # response = mclient.service.listMetadata(obj, 25.0)
+        self._sforce.set_options(retxml=retXml)
+        if type(metadata_type) is not dict and type(metadata_type) is not list:
+            obj = { 'type' : metadata_type }
+        else:
+            obj = metadata_type
+        list_result = self._handleResultTyping(self._sforce.service.listMetadata(obj, version))
+        debug('list_result ------>')
+        debug(list_result)
+        self._sforce.set_options(retxml=False)
+        if retXml == True:
+            try:
+                list_result_dict = xmltodict.parse(list_result,postprocessor=mm_util.xmltodict_postprocessor)
+                return list_result_dict['soapenv:Envelope']["soapenv:Body"]["listMetadataResponse"]["result"]
+            except:
+                return []
+        return list_result
+
+    def __transformFolderMetadataNameForListRequest(self, metadata_type):
+        metadata_request_type = metadata_type+"Folder"
+        if metadata_request_type == "EmailTemplateFolder":
+            metadata_request_type = "EmailFolder"
+        return metadata_request_type
+
+    def listMetadataAdvanced(self, metadata_type):
+        try:
+            metadata_type_def = mm_util.get_meta_type_by_name(metadata_type)
+            if metadata_type_def == None:
+                return []
+            has_children_metadata = False
+            if 'childXmlNames' in metadata_type_def and type(metadata_type_def['childXmlNames']) is list:
+                has_children_metadata = True
+            is_folder_metadata = metadata_type_def['inFolder']
+            if is_folder_metadata == True:
+                metadata_request_type = self.__transformFolderMetadataNameForListRequest(metadata_type)
+            else:
+                metadata_request_type = metadata_type
+            list_response = self.listMetadata(metadata_request_type, True, mm_util.SFDC_API_VERSION) 
+            debug('--------------->')
+            debug(list_response)
+            if type(list_response) is not list:
+                list_response = [list_response]
+            #print list_response
+            object_hash = {} #=> {"Account" => [ {"fields" => ["foo", "bar"]}, "listviews" => ["foo", "bar"] ], "Contact" => ... }
+
+            if has_children_metadata == True and len(list_response) > 0: #metadata objects like customobject, workflow, etc.
+                request_names = []
+                for element in list_response:
+                    #if element['fullName'] != 'PersonAccount':
+                    request_names.append(element['fullName'])
+                retrieve_result = self.retrieve(package={
+                    metadata_request_type : request_names
+                })
+                #print '>>>> ',retrieve_result
+                tmp = mm_util.put_tmp_directory_on_disk()
+                mm_util.extract_base64_encoded_zip(retrieve_result.zipFile, tmp)
+
+                #iterate extracted directory
+                for dirname, dirnames, filenames in os.walk(os.path.join(tmp,"unpackaged",metadata_type_def['directoryName'])):
+                    for f in filenames:
+                        #f => Account.object
+                        full_file_path = os.path.join(dirname, f)
+                        data = mm_util.parse_xml_from_file(full_file_path)
+                        c_hash = {}
+                        for child_type in metadata_type_def['childXmlNames']:
+                            child_type_def = mm_util.get_meta_type_by_name(child_type)
+                            if child_type_def == None: #TODO handle newer child types
+                                continue
+                            tag_name = child_type_def['tagName']
+                            items = []
+                            try:
+                                if tag_name in data[metadata_request_type]:
+                                    if type(data[metadata_request_type][tag_name]) is not list:
+                                        data[metadata_request_type][tag_name] = [data[metadata_request_type][tag_name]]
+                                    for i, val in enumerate(data[metadata_request_type][tag_name]):
+                                        items.append(val['fullName'])
+                            except BaseException, e:
+                                #print 'exception >>>> ', e.message
+                                pass
+
+                            c_hash[tag_name] = items
+
+                        base_name = f.split(".")[0]
+                        object_hash[base_name] = c_hash
+
+                shutil.rmtree(tmp)
+            #print '>>> ',object_hash
+            return_elements = []
+            for element in list_response:
+                if config.connection.get_plugin_client_setting('mm_ignore_managed_metadata') == True:
+                    if 'manageableState' in element and element["manageableState"] != "unmanaged":
+                        continue
+
+                children = []
+                full_name = element['fullName']
+                #if full_name == "PersonAccount":
+                #    full_name = "Account" 
+                #print 'processing: ', element
+                if has_children_metadata == True:
+                    if not full_name in object_hash:
+                        continue
+                    object_detail = object_hash[full_name]
+                    if object_detail == None:
+                        continue
+
+                    for child in metadata_type_def['childXmlNames']:
+                        child_type_def = mm_util.get_meta_type_by_name(child)
+                        if child_type_def == None: #TODO: handle more complex types
+                            continue
+                        tag_name = child_type_def['tagName']
+                        if len(object_detail[tag_name]) > 0:
+                            gchildren = []
+                            for gchild_el in object_detail[tag_name]:
+                                gchildren.append({
+                                    "text"      : gchild_el,
+                                    "isFolder"  : False,
+                                    "checked"   : False,
+                                    "level"     : 4,
+                                    "leaf"      : True,
+                                    "id"        : metadata_type_def['xmlName']+"."+full_name+"."+tag_name+"."+gchild_el,
+                                    "select"    : False,
+                                    "title"     : gchild_el
+                                })
+                                children = sorted(children, key=itemgetter('text')) 
+                          
+                            children.append({
+                                "text"      : child_type_def['tagName'],
+                                "isFolder"  : True,
+                                "cls"       : "folder",
+                                "children"  : gchildren,
+                                "checked"   : False,
+                                "level"     : 3,
+                                "id"        : metadata_type_def['xmlName']+"."+full_name+"."+tag_name,
+                                "select"    : False,
+                                "title"     : child_type_def['tagName']
+                            })
+                                            
+                #if this type has folders, run queries to grab all metadata in the folders
+                if is_folder_metadata == True:
+                    if element["manageableState"] != "unmanaged":
+                        continue
+                    #print element["fullName"]
+                    list_request = {
+                        "type"      : metadata_type,
+                        "folder"    : element["fullName"]
+                    }
+                    list_basic_response = self.listMetadata(list_request, True, config.connection.sfdc_api_version) 
+
+                    if type(list_basic_response) is not list:
+                        list_basic_response = [list_basic_response]
+
+                    for folder_element in list_basic_response:
+                        children.append({
+                            "text"      : folder_element['fullName'].split("/")[1],
+                            "leaf"      : True,
+                            "isFolder"  : False,
+                            "checked"   : False,
+                            "level"     : 3,
+                            "id"        : folder_element['fullName'].replace('/', '.'),
+                            "select"    : False,
+                            "title"     : folder_element['fullName'].split("/")[1]
+
+                        })
+                    
+                children = sorted(children, key=itemgetter('text')) 
+                is_leaf = True
+                cls = ''
+                if is_folder_metadata:
+                    is_leaf = False
+                    cls = 'folder'
+                if has_children_metadata:
+                    is_leaf = False
+                    cls = 'folder'
+                if metadata_type_def['xmlName'] == 'Workflow':
+                    is_leaf = True
+                    cls = ''
+                #print '>>> ',element
+                return_elements.append({
+                    "text"      : element['fullName'],
+                    "isFolder"  : is_folder_metadata or has_children_metadata,
+                    "cls"       : cls,
+                    "leaf"      : is_leaf,
+                    "children"  : children,
+                    "checked"   : False,
+                    "level"     : 2,
+                    "id"        : metadata_type_def['xmlName']+'.'+full_name.replace(' ', ''),
+                    "select"    : False,
+                    "title"     : element['fullName']
+                })
+
+            return_elements = sorted(return_elements, key=itemgetter('text')) 
+            # if list_response == []:
+            #     return list_response
+
+            # return list_response
+            return return_elements
+        except BaseException, e:
+            debug('exception')
+            debug(e)
+            if 'INVALID_TYPE: Unknown type' in e.message:
+                return None
+            else:
+                raise e
+
 
     def getOrgNamespace(self):
         describe_result = self.describeMetadata(retXml=False)
