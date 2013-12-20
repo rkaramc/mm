@@ -10,6 +10,7 @@ import json
 import lib.config as config
 import lib.mm_util as util
 import urllib
+import yaml
 from lib.mm_connection import MavensMatePluginConnection
 from lib.mm_client import MavensMateClient
 from lib.mm_exceptions import MMException
@@ -17,8 +18,10 @@ from lib.mm_exceptions import MMException
 class MavensMateRequest():
     
     def __init__(self, *args, **kwargs): 
-        self.args       = kwargs.get('args', {})
-        self.payload    = kwargs.get('payload', {})
+        self.operation      = None
+        self.args           = kwargs.get('args', {})
+        self.unknown_args   = kwargs.get('unknown_args', [])
+        self.payload        = kwargs.get('payload', {})
         self.operation_dict = {
             'new_project'                           : self.new_project,
             'edit_project'                          : self.edit_project,
@@ -66,11 +69,17 @@ class MavensMateRequest():
             'open_file_in_client'                   : self.open_file_in_client,
             'run_apex_script'                       : self.run_apex_script,
         }
+        
+        #determine operation
         if self.payload != None and 'operation' in self.payload:
             self.operation = self.payload['operation']
-        else:
+        elif self.args.operation != None:
             self.operation = self.args.operation
-        
+        elif self.unknown_args != [] and self.unknown_args[0] in self.operation_dict:
+            self.operation = self.unknown_args[0]
+        if self.operation == None:
+            raise MMException('Unsupported operation')
+
     # each operation sets up a single connection
     # the connection holds information about the plugin running it
     # and establishes a project object
@@ -85,8 +94,7 @@ class MavensMateRequest():
         try:
             self.setup_connection()
         except Exception as e:
-            print util.generate_error_response(e.message)
-            return
+            return util.generate_error_response(e.message)
 
         #if the arg switch argument is included, the request is to launch the out of box
         #MavensMate UI, so we generate the HTML for the UI and launch the process
@@ -94,13 +102,13 @@ class MavensMateRequest():
         if self.args.ui_switch == True:
             tmp_html_file = util.generate_ui(self.operation,self.payload)
             util.launch_ui(tmp_html_file)
-            print util.generate_success_response('UI Generated Successfully')
+            return util.generate_success_response('UI Generated Successfully')
         else:        
             config.logger.debug(self.operation)
             if self.operation not in self.operation_dict:
                 raise MMException('Unsupported operation')
             requested_function = self.operation_dict[self.operation]
-            requested_function()
+            return requested_function()
 
     # echo '{ "username" : "", "password" : "", "metadata_type" : "ApexClass" ' | joey2 mavensmate.py -o 'list_metadata'
     def list_metadata(self):
@@ -117,33 +125,33 @@ class MavensMateRequest():
                 "org_type"              : self.payload.get('org_type', None),
                 "org_url"               : self.payload.get('org_url', None)
             })
-        print json.dumps(client.list_metadata(self.payload['metadata_type']))
+        return json.dumps(client.list_metadata(self.payload['metadata_type']))
 
     def open_sfdc_url(self):
-        print config.connection.project.open_selected_metadata(self.payload);
+        return config.connection.project.open_selected_metadata(self.payload);
 
     def project_health_check(self):
         if self.args.respond_with_html == True:
             health_check_dict = config.connection.project.run_health_check();
             html = util.generate_html_response(self.operation, health_check_dict)
-            print util.generate_success_response(html, "html")
+            return util.generate_success_response(html, "html")
         else:
-            print json.dumps(config.connection.project.run_health_check(),indent=4);
+            return json.dumps(config.connection.project.run_health_check(),indent=4);
 
     def list_connections(self):
-        print config.connection.project.get_org_connections()
+        return config.connection.project.get_org_connections()
 
     def new_connection(self):
-        print config.connection.project.new_org_connection(self.payload)
+        return config.connection.project.new_org_connection(self.payload)
 
     def delete_connection(self):
-        print config.connection.project.delete_org_connection(self.payload)
+        return config.connection.project.delete_org_connection(self.payload)
 
     def compile_selected_metadata(self):
-        print config.connection.project.compile_selected_metadata(self.payload)
+        return config.connection.project.compile_selected_metadata(self.payload)
 
     def delete_selected_metadata(self):
-        print config.connection.project.delete_selected_metadata(self.payload)
+        return config.connection.project.delete_selected_metadata(self.payload)
 
     def index_metadata(self):
         if 'metadata_type' in self.payload:
@@ -162,79 +170,79 @@ class MavensMateRequest():
 
     def get_metadata_index(self):
         if 'keyword' in self.payload or 'ids' in self.payload:
-            print config.connection.project.filter_indexed_metadata(self.payload)
+            return config.connection.project.filter_indexed_metadata(self.payload)
         elif 'package_name' in self.payload:
-            print config.connection.project.get_org_metadata(True, True, package_name=self.payload["package_name"])
+            return config.connection.project.get_org_metadata(True, True, package_name=self.payload["package_name"])
         else:
-            #print config.connection.project.get_org_metadata(True, True)
-            print config.connection.project.get_org_metadata(True, True)
+            #return config.connection.project.get_org_metadata(True, True)
+            return config.connection.project.get_org_metadata(True, True)
 
     def new_project(self):
-        print config.connection.new_project(self.payload,action='new')
+        return config.connection.new_project(self.payload,action='new')
 
     def new_project_from_existing_directory(self):
-        print config.connection.new_project(self.payload,action='existing')
+        return config.connection.new_project(self.payload,action='existing')
 
     def edit_project(self):
-        print config.connection.project.edit(self.payload)
+        return config.connection.project.edit(self.payload)
 
     def update_subscription(self):
-        print config.connection.project.update_subscription(self.payload)
+        return config.connection.project.update_subscription(self.payload)
 
     def upgrade_project(self):
-        print config.connection.project.upgrade()
+        return config.connection.project.upgrade()
         
     def checkout_project(self):
-        print config.connection.new_project(self.payload,action='checkout')
+        return config.connection.new_project(self.payload,action='checkout')
 
     def compile_project(self):
-        print config.connection.project.compile()
+        return config.connection.project.compile()
 
     def clean_project(self):
-        print config.connection.project.clean()
+        return config.connection.project.clean()
 
     def refresh(self):
-        print config.connection.project.refresh_selected_metadata(self.payload)
+        return config.connection.project.refresh_selected_metadata(self.payload)
 
     def refresh_properties(self):
         config.connection.project.refresh_selected_properties(self.payload)
         print util.generate_success_response("Refreshed Apex file properties.")
 
     def new_metadata(self):
-        print config.connection.project.new_metadata(self.payload)
+        return config.connection.project.new_metadata(self.payload)
 
     def execute_apex(self):
-        print config.connection.project.execute_apex(self.payload)
+        return config.connection.project.execute_apex(self.payload)
 
     def fetch_checkpoints(self):
-        print config.connection.project.fetch_checkpoints(self.payload)
+        return config.connection.project.fetch_checkpoints(self.payload)
 
     def fetch_logs(self):
-        print config.connection.project.fetch_logs(self.payload)
+        return config.connection.project.fetch_logs(self.payload)
 
     def new_trace_flag(self):
-        print config.connection.project.new_trace_flag(self.payload)
+        return config.connection.project.new_trace_flag(self.payload)
 
     def new_quick_trace_flag(self):
-        print config.connection.project.new_quick_trace_flag()
+        return config.connection.project.new_quick_trace_flag()
 
     def update_debug_settings(self):
-        print config.connection.project.update_debug_settings(self.payload)
+        return config.connection.project.update_debug_settings(self.payload)
 
     def run_apex_script(self):
-        print config.connection.project.execute_apex(self.payload)
+        return config.connection.project.execute_apex(self.payload)
 
     # echo '{ "project_name" : "bloat", "classes" : [ "MyTester" ] }' | joey2 mavensmate.py -o 'test'
     def run_unit_tests(self):
         test_result = config.connection.project.run_unit_tests(self.payload)
         if self.args.respond_with_html ==  True:
             html = util.generate_html_response(self.operation, test_result, self.payload)
-            print util.generate_success_response(html, "html")
+            return util.generate_success_response(html, "html")
         else:
-            print test_result
+            return test_result
 
     def run_async_tests(self):
-        print config.connection.project.sfdc_client.run_async_apex_tests(self.payload)
+        return config.connection.project.sfdc_client.run_async_apex_tests(self.payload)
 
     def deploy_to_server(self):
         deploy_result = config.connection.project.deploy_to_server(self.payload)
@@ -280,18 +288,18 @@ class MavensMateRequest():
                 "metadata"              : client.get_org_metadata(subscription=self.payload.get('subscription', None)),
                 "success"               : True
             }
-            print util.generate_response(response)
+            return util.generate_response(response)
         except BaseException, e:
-            print util.generate_error_response(e.message)
+            return util.generate_error_response(e.message)
 
     def index_apex_overlays(self):
-        print config.connection.project.index_apex_overlays(self.payload)
+        return config.connection.project.index_apex_overlays(self.payload)
 
     def new_apex_overlay(self):
-        print config.connection.project.new_apex_overlay(self.payload)
+        return config.connection.project.new_apex_overlay(self.payload)
 
     def delete_apex_overlay(self):
-        print config.connection.project.delete_apex_overlay(self.payload)
+        return config.connection.project.delete_apex_overlay(self.payload)
 
     def update_credentials(self):
         try:
@@ -300,43 +308,43 @@ class MavensMateRequest():
             config.connection.project.org_type = self.payload['org_type']
             config.connection.project.org_url  = self.payload.get('org_url', None)
             config.connection.project.update_credentials()
-            print util.generate_success_response('Your credentials were updated successfully')
+            return util.generate_success_response('Your credentials were updated successfully')
         except BaseException, e:
-            print util.generate_error_response(e.message)
+            return util.generate_error_response(e.message)
 
     def get_symbol_table(self):
-        print config.connection.project.get_symbol_table(self.payload)
+        return config.connection.project.get_symbol_table(self.payload)
 
     def index_apex_file_properties(self):
-        print config.connection.project.index_apex_file_properties()
+        return config.connection.project.index_apex_file_properties()
 
     def eval_function(self):
         python_request = self.payload['python']
-        print eval(python_request)
+        return eval(python_request)
 
     def sign_in_with_github(self):
-        print config.connection.sign_in_with_github(self.payload)
+        return config.connection.sign_in_with_github(self.payload)
 
     def open_file_in_client(self):
-        print config.connection.project.open_file_in_client(self.payload)
-
+        return config.connection.project.open_file_in_client(self.payload)
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--operation') #name of the operation being requested
-    parser.add_argument('-c', '--client') #name of the plugin client ("SUBLIME_TEXT_2", "SUBLIME_TEXT_3", "TEXTMATE", "NOTEPAD_PLUS_PLUS", "BB_EDIT", etc.)
+    parser.add_argument('-o', '--operation', help='The requested operation') #name of the operation being requested
+    parser.add_argument('-c', '--client', help='The plugin client being used') #name of the plugin client ("SUBLIME_TEXT_2", "SUBLIME_TEXT_3", "TEXTMATE", "NOTEPAD_PLUS_PLUS", "BB_EDIT", etc.)
     parser.add_argument('--ui', action='store_true', default=False, 
         dest='ui_switch', help='Include flag to launch the default UI for the operation')
     parser.add_argument('--quiet', action='store_true', default=False, 
-        dest='quiet', help='To suppress mm.py output, use this flag')
+        dest='quiet', help='Suppresses mm.py output, use this flag')
     parser.add_argument('--html', action='store_true', default=False, 
-        dest='respond_with_html', help='Include flag if you want the response in HTML')
-    args = parser.parse_args()
+        dest='respond_with_html', help='Makes various commands return HTML')
+    args, unknown = parser.parse_known_args()
     payload = util.get_request_payload()
-    
     try:
-        r = MavensMateRequest(args=args, payload=payload)
-        r.execute()
+        r = MavensMateRequest(args=args, payload=payload, unknown_args=unknown)
+        response = r.execute()
+        response_dict = json.loads(response)
+        print yaml.dump(response_dict, default_flow_style=True)
     except Exception as e:
         print util.generate_error_response(e.message)
 

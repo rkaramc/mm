@@ -37,7 +37,7 @@ class MavensMateProject(object):
         self.project_name       = params.get('project_name', None)
         self.username           = params.get('username', None)
         self.password           = params.get('password', None)
-        self.org_type           = params.get('org_type', None)
+        self.org_type           = params.get('org_type', 'Developer')
         self.org_url            = params.get('org_url', None)
         self.package            = params.get('package', None)
         self.ui                 = params.get('ui', False)
