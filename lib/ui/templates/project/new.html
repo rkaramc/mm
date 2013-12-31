@@ -30,7 +30,7 @@
 				<input type="hidden" value="" id="server_url"/>
 				<fieldset>
 					<div class="control-group large">
-						<select id="workspace" class="select-block mbl info" 
+						<select id="workspace" class="select-block mbl info span12" 
 							data-placeholder="Select a workspace" data-size="5">
 							{% for m in workspaces %}
 								<option value="{{ m }}">{{ m }}</option>
@@ -49,7 +49,7 @@
 					</div>
 
 					 <div class="control-group large">
-						<select id="org_type" class="select-block mbl info">
+						<select id="org_type" class="select-block mbl info span12">
 							<option value="production">Production</option>
 							<option value="developer">Developer</option>
 							<option value="sandbox">Sandbox</option>

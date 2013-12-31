@@ -469,6 +469,11 @@ div.x-panel-body .x-tree-checkbox-checked-disabled input.x-tree-checkbox {
 	border-top: solid 1px #CCC;
 }
 
+.btn-group.select.select-block.mbl.info.span12 {
+	max-width:1156px !important;
+	margin-bottom: 10px !important;
+}
+
 /*
 	Adding Icons
 
