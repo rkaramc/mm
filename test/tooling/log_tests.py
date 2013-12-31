@@ -15,7 +15,7 @@ import lib.mm_client as sfdc
 
 base_test_directory = os.path.dirname(os.path.dirname(__file__))
 
-class ToolingTests(MavensMateTest):
+class StackTraceAndLogsTest(MavensMateTest):
     
     def test_01_new_debug_log(self): 
         test_helper.create_project("unit test tooling project")
@@ -33,7 +33,7 @@ class ToolingTests(MavensMateTest):
         mm.main()
         mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
-        print mm_response
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
         self.assertTrue(mm_json_response['success'] == True)
         self.assertTrue('id' in mm_json_response and len(mm_json_response['id']) is 18)
@@ -53,7 +53,7 @@ class ToolingTests(MavensMateTest):
         mm.main()
         mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
-        print mm_response
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
         self.assertTrue(mm_json_response['success'] == True)
         self.assertTrue('1 Log(s) created successfully' in mm_json_response['body'])
@@ -78,7 +78,7 @@ class ToolingTests(MavensMateTest):
         mm.main()
         mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
-        print mm_response
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
         new_debug_settings = util.parse_json_file(os.path.join(base_test_directory, "test_workspace", stdin["project_name"], "config", ".debug"))
         self.assertTrue(new_debug_settings['expiration'] == stdin["expiration"])

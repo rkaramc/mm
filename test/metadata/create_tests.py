@@ -15,7 +15,7 @@ import lib.mm_client as sfdc
 
 base_test_directory = os.path.dirname(os.path.dirname(__file__))
 
-class MetadataTests(MavensMateTest):
+class MetadataOperationTest(MavensMateTest):
     
     def test_01_new_apex_class(self): 
         test_helper.create_project("unit test metadata project")
@@ -43,7 +43,25 @@ class MetadataTests(MavensMateTest):
         self.assertTrue(mm_json_response['success'] == True)
         self.assertTrue('id' in mm_json_response and len(mm_json_response['id']) is 18)
 
-    def test_02_delete_apex_class(self): 
+    def test_02_compile_apex_class(self): 
+        test_helper.create_project("unit test metadata project")
+        commandOut = self.redirectStdOut()
+        client_settings = mm_util.parse_json_from_file(os.path.join(base_test_directory, "user_client_settings.json"))
+        stdin = {
+            "project_name": "unit test metadata project", 
+            "files": [os.path.join(client_settings["mm_workspace"],"unit test metadata project","src","classes","unittestapexclass.cls")] 
+        }
+        mm_util.get_request_payload = mock.Mock(return_value=stdin)
+        sys.argv = ['mm.py', '-o', 'compile']
+        mm.main()
+        mm_response = commandOut.getvalue()
+        sys.stdout = self.saved_stdout
+        print mm_response
+        mm_json_response = util.parse_mm_response(mm_response)
+        self.assertTrue(mm_json_response['State'] == "Completed")
+        self.assertTrue(mm_json_response['ErrorMsg'] == None)
+
+    def test_03_delete_apex_class(self): 
         commandOut = self.redirectStdOut()
         client_settings = mm_util.parse_json_from_file(os.path.join(base_test_directory, "user_client_settings.json"))
         stdin = {

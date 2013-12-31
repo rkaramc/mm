@@ -28,3 +28,9 @@ mm.sublime-project
 tools/*
 
 test/test_workspace/*
+
+test/.coverage
+
+test/htmlcov
+
+test.htmlcov/*
