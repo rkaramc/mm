@@ -50,14 +50,14 @@ class MavensMatePluginConnection(object):
         self.setup_logging()
 
         debug('')
-        debug('============================================')
-        debug('========== NEW OPERATION REQUESTED =========')
-        debug('============================================')
+        debug('--------------------------------------------')
+        debug('---------- NEW OPERATION REQUESTED ---------')
+        debug('--------------------------------------------')
         debug('')
         debug(self.operation)
         debug(params)
         debug('')
-        debug('============================================')
+        debug('--------------------------------------------')
 
         if self.sfdc_api_version != None:
             mm_util.SFDC_API_VERSION = self.sfdc_api_version #setting api version based on plugin settings
