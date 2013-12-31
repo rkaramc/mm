@@ -32,12 +32,10 @@ class MavensMateRequest():
             'new_project'                           : self.new_project,
             'edit_project'                          : self.edit_project,
             'upgrade_project'                       : self.upgrade_project,
-            'checkout_project'                      : self.checkout_project,
             'compile_project'                       : self.compile_project,
+            'clean_project'                         : self.clean_project,
             'new_metadata'                          : self.new_metadata,
             'refresh'                               : self.refresh,
-            'clean_project'                         : self.clean_project,
-            'refresh_properties'                    : self.refresh_properties,
             'compile'                               : self.compile_selected_metadata,
             'delete'                                : self.delete_selected_metadata,
             'get_active_session'                    : self.get_active_session,
@@ -199,9 +197,6 @@ class MavensMateRequest():
     def upgrade_project(self):
         return config.connection.project.upgrade()
         
-    def checkout_project(self):
-        return config.connection.new_project(self.payload,action='checkout')
-
     def compile_project(self):
         return config.connection.project.compile()
 
@@ -210,10 +205,6 @@ class MavensMateRequest():
 
     def refresh(self):
         return config.connection.project.refresh_selected_metadata(self.payload)
-
-    def refresh_properties(self):
-        config.connection.project.refresh_selected_properties(self.payload)
-        print util.generate_success_response("Refreshed Apex file properties.")
 
     def new_metadata(self):
         return config.connection.project.new_metadata(self.payload)
