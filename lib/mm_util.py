@@ -635,6 +635,20 @@ def get_file_lines(api_name, metadata_type_name):
     except:
         return []
 
+def is_project_legacy():
+    if not os.path.exists(os.path.join(config.connection.project.location,"config",".debug")):
+        return True
+    if os.path.exists(os.path.join(config.connection.project.location,"config","settings.yaml")):
+        return True
+    elif os.path.exists(os.path.join(config.connection.project.location,"config",".settings")):
+        current_settings = parse_json_from_file(os.path.join(config.connection.project.location,"config",".settings"))
+        if 'subscription' not in current_settings or 'workspace' not in current_settings:
+            return True
+        else:
+            return False
+    else:
+        return False
+
 def htmlize(seed):
     try:
         seed = seed.decode('utf8')
