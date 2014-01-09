@@ -38,7 +38,7 @@ class MetadataOperationTest(MavensMateTest):
         mm.main()
         mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
-        print mm_response
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
         self.assertTrue(mm_json_response['success'] == True)
         self.assertTrue('id' in mm_json_response and len(mm_json_response['id']) is 18)
@@ -56,7 +56,7 @@ class MetadataOperationTest(MavensMateTest):
         mm.main()
         mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
-        print mm_response
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
         self.assertTrue(mm_json_response['State'] == "Completed")
         self.assertTrue(mm_json_response['ErrorMsg'] == None)
@@ -74,7 +74,7 @@ class MetadataOperationTest(MavensMateTest):
         mm.main()
         mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
-        print mm_response
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
         self.assertTrue(mm_json_response['success'] == True)
 

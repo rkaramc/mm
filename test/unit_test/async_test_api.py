@@ -16,8 +16,8 @@ base_test_directory = os.path.dirname(os.path.dirname(__file__))
 class ApexUnitTestingTest(MavensMateTest):
         
     def test_01_run_tests_async(self): 
-        stdin = test_helper.create_project("unit test project", package={ "ApexClass" : ["CompileAndTest"] })
-        self.resetStdOut(True)
+        test_helper.create_project("unit test project", package={ "ApexClass" : ["CompileAndTest"] })
+        commandOut = self.redirectStdOut()
         stdin = {
             "project_name"  : "unit test project",
             "classes"       : ["CompileAndTest"]
@@ -25,10 +25,10 @@ class ApexUnitTestingTest(MavensMateTest):
         mm_util.get_request_payload = mock.Mock(return_value=stdin)
         sys.argv = ['mm.py', '-o', 'test_async']
         mm.main()
-        mm_response = self.output.getvalue()
+        mm_response = commandOut.getvalue()
         sys.stdout = self.saved_stdout
+        #print mm_response
         mm_json_response = util.parse_mm_response(mm_response)
-        #print mm_json_response
         self.assertTrue(len(mm_json_response) == 1)
         self.assertTrue(mm_json_response[0]['Status'] == 'Completed')
 
