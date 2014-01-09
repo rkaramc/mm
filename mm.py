@@ -72,6 +72,7 @@ class MavensMateRequest():
             'project_health_check'                  : self.project_health_check,
             'open_file_in_client'                   : self.open_file_in_client,
             'run_apex_script'                       : self.run_apex_script,
+            'reset_metadata_container'              : self.reset_metadata_container
         }
         
         #determine operation
@@ -325,6 +326,9 @@ class MavensMateRequest():
 
     def open_file_in_client(self):
         return config.connection.project.open_file_in_client(self.payload)
+
+    def reset_metadata_container(self):
+        return config.connection.project.reset_metadata_container(accept="json")
 
 def main():
     parser = argparse.ArgumentParser()

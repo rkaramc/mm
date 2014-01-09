@@ -563,13 +563,17 @@ class MavensMateProject(object):
         self.__put_settings_file(current_settings)
         return mm_util.generate_success_response('Subscription updated successfully')
 
-    def reset_metadata_container(self):
+    def reset_metadata_container(self, **kwargs):
         self.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
         resp = self.sfdc_client.new_metadatacontainer_for_this_user()
         new_settings = self.settings
         new_settings['metadata_container'] = resp["id"]
         self.__put_settings_file(new_settings)
-        return resp["id"]
+        accept = kwargs.get("accept", None)
+        if accept == None:
+            return resp["id"]
+        else:
+            return mm_util.generate_success_response('Operation completed successfully')
 
     #reverts a project to the server state based on the existing package.xml
     def clean(self, **kwargs):
