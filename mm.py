@@ -165,13 +165,13 @@ class MavensMateRequest():
             index_result = config.connection.project.index_metadata()
         if self.args.respond_with_html == True:
             html = util.generate_html_response(self.args.operation, index_result, self.payload)
-            print util.generate_success_response(html, "html")
+            return util.generate_success_response(html, "html")
         else:
-            print util.generate_success_response("Project metadata indexed successfully")
+            return util.generate_success_response("Project metadata indexed successfully")
 
     def refresh_metadata_index(self):
         config.connection.project.index_metadata(self.payload['metadata_types'])
-        print util.generate_success_response("Metadata refreshed successfully.")
+        return util.generate_success_response("Metadata refreshed successfully.")
 
     def get_metadata_index(self):
         if 'keyword' in self.payload or 'ids' in self.payload:
@@ -253,9 +253,9 @@ class MavensMateRequest():
                 if result['success'] == False:
                     response['deploy_success'] = False
                     break
-            print json.dumps(response)
+            return json.dumps(response)
         else:
-            print deploy_result
+            return deploy_result
 
     # echo '{ "username" : "mm@force.com", "password" : "force", "org_type" : "developer" }' | joey2 mavensmate.py -o 'get_active_session'
     def get_active_session(self):
@@ -346,6 +346,13 @@ def main():
 
         r.output.close()
         sys.stdout = r.saved_stdout
+
+        config.logger.debug('\n\n')
+        config.logger.debug('---------------------')
+        config.logger.debug('RESPONDING TO REQUEST')
+        config.logger.debug('---------------------')
+        config.logger.debug('\n')
+        config.logger.debug(response)
 
         print response
     except Exception as e:
