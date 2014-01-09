@@ -1565,7 +1565,7 @@ class MavensMateProject(object):
                     modstamp = log["modstamp"]
                     if config.is_windows:
                         modstamp = modstamp.replace(':', ' ')
-                    file_name = modstamp+"-"+log["userid"]+".json"
+                    file_name = modstamp+"-"+log["userid"]+".log"
                     src = open(os.path.join(config.connection.workspace,self.project_name,"debug","logs",file_name), "w")
                     src.write(log["log"])
                     src.close() 
@@ -1725,7 +1725,7 @@ class MavensMateProject(object):
     def __log_anonymous_apex(self, apex_body, log, script_name=None):
         if not os.path.exists(os.path.join(self.location, "apex-scripts", "log")):
             os.makedirs(os.path.join(self.location, "apex-scripts", "log"))
-        location = os.path.join(self.location, "apex-scripts", "log", mm_util.get_timestamp()+".json")
+        location = os.path.join(self.location, "apex-scripts", "log", mm_util.get_timestamp()+".log")
         src = open(location, "w")
         file_body = ""
         if script_name != None:
