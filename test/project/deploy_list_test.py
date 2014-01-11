@@ -9,7 +9,7 @@ from lib.mm_connection import MavensMatePluginConnection
 
 
 params = {
-    "project_name"  : "Astellas Event Dev Box",
+    "project_name"  : "myproject",
     "client"        : "SUBLIME_TEXT_3"
 }
 connection = MavensMatePluginConnection(params)
