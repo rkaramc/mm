@@ -9,8 +9,8 @@ import lib.mm_util as mm_util
 import lib.xmltodict as xmltodict
 
 params = {
-	"project_name" 	: "Astellas Event Dev Box",
-	"client" 		: "SUBLIME_TEXT_3"
+	"project_name" 	: "myproject",
+	"client" 	: "SUBLIME_TEXT_3"
 }
 connection = MavensMatePluginConnection(params)
 resp = connection.project.index_metadata()
