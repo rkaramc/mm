@@ -137,6 +137,13 @@ class MavensMateClient(object):
             self.mclient = self.__get_metadata_client()
         return self.mclient.describeMetadata(**kwargs)
 
+    def describeObject(self, object_name):
+        r = requests.get(self.get_base_url()+"/sobjects/"+object_name+"/describe", headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
+        if r.status_code != 200:
+            _exception_handler(r)
+        r.raise_for_status()
+        return r.text
+
     def get_org_metadata(self, as_dict=True, **kwargs):
         describe_result = self.describeMetadata()
         d = xmltodict.parse(describe_result,postprocessor=mm_util.xmltodict_postprocessor)
