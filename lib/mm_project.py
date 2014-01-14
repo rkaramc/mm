@@ -1725,7 +1725,7 @@ class MavensMateProject(object):
     def __log_anonymous_apex(self, apex_body, log, script_name=None):
         if not os.path.exists(os.path.join(self.location, "apex-scripts", "log")):
             os.makedirs(os.path.join(self.location, "apex-scripts", "log"))
-        location = os.path.join(self.location, "apex-scripts", "log", mm_util.get_timestamp()+".log")
+        location = os.path.join(self.location, "apex-scripts", "log", mm_util.get_timestamp().replace(":",".")+".log")
         src = open(location, "w")
         file_body = ""
         if script_name != None:
