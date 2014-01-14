@@ -608,16 +608,12 @@ class MavensMateClient(object):
                                         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
                                     else:
                                         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
-                                    file_name = st+"."+r["ApexLogId"]+".json"
+                                    file_name = st+"."+r["ApexLogId"]+".log"
                                     file_path = os.path.join(config.connection.workspace,config.connection.project.project_name,"debug","test_logs", file_name)
                                     debug_log_body = self.download_log(r["ApexLogId"])
                                     src = open(file_path, "w")
                                     src.write(debug_log_body)
                                     src.close() 
-
-                                    #file_name = mm_util.get_random_string(12) + ".json"
-                                    #log_location = mm_util.put_file_in_tmp_directory(file_name, debug_log_body)
-                                    #r["log_location"] = log_location
                             responses.append(parent_response)
                             finished = True
             else:
