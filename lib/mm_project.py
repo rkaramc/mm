@@ -121,6 +121,8 @@ class MavensMateProject(object):
             self.conflict_manager = ConflictManager(self)
             self.conflict_manager.init_local_store(project_metadata)
 
+            self.index_apex_symbols()
+
             mm_util.put_password_by_key(self.id, self.password)
             self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
             
@@ -753,34 +755,50 @@ class MavensMateProject(object):
         except Exception, e:
             return mm_util.generate_error_response(e.message)
 
-    def index_apex_file_properties(self):
-        directories = []
-        if os.path.exists(os.path.join(self.location, 'src', 'classes')):
-            directories.append(os.path.join(self.location, 'src', 'classes'))
+    def index_apex_symbols(self, apex_class_name_or_names=None):
+        '''
+        Writes out symbol tables to project's config/.symbols directory
+        '''
+        try:
+            if not os.path.exists(os.path.join(self.location,"config",".symbols")):
+                os.makedirs(os.path.join(self.location,"config",".symbols"))
+            
+            if apex_class_name_or_names == None:
+                apex_ids = []
+                classes = self.sfdc_client.list_metadata("ApexClass", True)
+                triggers = self.sfdc_client.list_metadata("ApexTrigger", True)
+                for c in classes:
+                    apex_ids.append(c['id'])
+                for t in triggers:
+                    apex_ids.append(t['id'])
+                symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids)
+            else:
+                class_names = []
+                if type(apex_class_name_or_names) is not list:
+                    apex_class_name_or_names = [apex_class_name_or_names]
 
-        if os.path.exists(os.path.join(self.location, 'src', 'triggers')):
-            directories.append(os.path.join(self.location, 'src', 'triggers'))
+                for class_name in apex_class_name_or_names:
+                    apex_class_name = os.path.basename(class_name)
+                    apex_class_name = apex_class_name.replace(".cls","")
+                    class_names.append(apex_class_name)
+                symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_name(class_names)
 
-        params = {
-            'files'         : [],
-            'directories'   : directories
-        }
-        retrieve_result = self.get_retrieve_result(params)
-        apex_file_properties = self.cache_apex_file_properties(retrieve_result.fileProperties, False)
-        apex_ids = []
-        for p in apex_file_properties.keys():
-            apex_ids.append(apex_file_properties[p]["id"])
-        symbol_table_result = self.sfdc_client.get_symbol_table(apex_ids)
+            if 'records' in symbol_table_result and len(symbol_table_result['records']) > 0:
+                for r in symbol_table_result['records']:
+                    if "SymbolTable" in r and r["SymbolTable"] != None and r["SymbolTable"] != {}:
+                        file_name = ""
+                        if "NamespacePrefix" in r and r["NamespacePrefix"] != None:
+                            file_name = r["NamespacePrefix"]+"."+r["Name"]+".json"
+                        else:
+                            file_name = r["Name"]+".json"
+                        src = open(os.path.join(self.location,"config",".symbols",file_name), "w")
+                        json_data = json.dumps(r["SymbolTable"], indent=4)
+                        src.write(json_data)
+                        src.close()
 
-        if 'records' in symbol_table_result and len(symbol_table_result['records']) > 0:
-            for r in symbol_table_result['records']:
-                for p in apex_file_properties.keys():
-                    if r["ContentEntityId"] == apex_file_properties[p]["id"]:
-                        apex_file_properties[p]["symbolTable"] = r["SymbolTable"]
-                        break
-
-        self.write_apex_file_properties(apex_file_properties)
-        return mm_util.generate_success_response("Apex file properties cached successfully")
+            return mm_util.generate_success_response("Apex symbols indexed successfully")
+        except Exception, e:
+            return mm_util.generate_error_response(e.message, True, True)
 
     def get_apex_file_properties(self):
         apex_file_properties = None
@@ -798,38 +816,6 @@ class MavensMateProject(object):
             del props[apex_file]
         self.write_apex_file_properties(props)    
     
-    #used for symbol table    
-    def cache_apex_file_properties(self, properties, write=True):
-        if not len(properties):
-            return;
-        
-        apex_file_properties = self.get_apex_file_properties()
-
-        for prop in properties:
-            if prop.type != "Package":
-                if config.is_windows:
-                    filename = prop.fileName.split('\\')[-1];
-                else:
-                    filename = prop.fileName.split('/')[-1];
-                fileprop = {
-                    'createdById': prop.createdById,
-                    'createdByName': prop.createdByName,
-                    'createdDate': str(prop.createdDate),
-                    'fileName': prop.fileName,
-                    'fullName': prop.fullName,
-                    'id': prop.id,
-                    'lastModifiedById': prop.lastModifiedById,
-                    'lastModifiedByName': prop.lastModifiedByName,
-                    'lastModifiedDate': str(prop.lastModifiedDate),
-                    'type': prop.type
-                }
-                if 'manageableState' in prop:
-                    fileprop['manageableState'] = prop.manageableState
-                apex_file_properties[filename] = fileprop
-        if write:
-            self.write_apex_file_properties(apex_file_properties)
-        return apex_file_properties
-
     def write_apex_file_properties(self, json_data):
         src = open(self.apex_file_properties_path, "w")
         json_data = json.dumps(json_data, sort_keys=True, indent=4)

@@ -61,8 +61,9 @@ class MavensMateRequest():
             'new_project_from_existing_directory'   : self.new_project_from_existing_directory,
             'open_sfdc_url'                         : self.open_sfdc_url,
             'get_symbols'                           : self.get_symbol_table,
-            'index_apex_file_properties'            : self.index_apex_file_properties,
-            'index_apex'                            : self.index_apex_file_properties,
+            'index_apex_file_properties'            : self.index_apex_symbols,
+            'index_apex'                            : self.index_apex_symbols,
+            'index_apex_symbols'                    : self.index_apex_symbols,
             'update_subscription'                   : self.update_subscription,
             'new_log'                               : self.new_trace_flag,
             'new_quick_log'                         : self.new_quick_trace_flag,
@@ -314,8 +315,12 @@ class MavensMateRequest():
     def get_symbol_table(self):
         return config.connection.project.get_symbol_table(self.payload)
 
-    def index_apex_file_properties(self):
-        return config.connection.project.index_apex_file_properties()
+    def index_apex_symbols(self):
+        files = self.payload.get("files", None)
+        if files == None or files == []:
+            return config.connection.project.index_apex_symbols()
+        else:
+            return config.connection.project.index_apex_symbols(files)
 
     def eval_function(self):
         python_request = self.payload['python']

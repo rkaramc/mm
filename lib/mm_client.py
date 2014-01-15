@@ -177,10 +177,13 @@ class MavensMateClient(object):
             self.mclient = self.__get_metadata_client()
         return self.mclient.deploy(params, **kwargs)
 
-    def list_metadata(self, metadata_type):
+    def list_metadata(self, metadata_type, simple=False):
         if self.mclient == None:
             self.mclient = self.__get_metadata_client()
-        return self.mclient.listMetadataAdvanced(metadata_type)
+        if simple:
+            return self.mclient.listMetadata(metadata_type)
+        else:
+            return self.mclient.listMetadataAdvanced(metadata_type)
 
     def run_tests(self, params):
         if self.aclient == None:
@@ -570,6 +573,24 @@ class MavensMateClient(object):
         id_string = "','".join(ids)
         id_string = "'"+id_string+"'"
         query_string = "Select ContentEntityId, SymbolTable From ApexClassMember Where ContentEntityId IN (" + id_string + ")"
+        payload = { 'q' : query_string }
+        r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
+        return mm_util.parse_rest_response(r.text)
+
+    #pass a list of apex class/trigger ids and return the symbol tables
+    def get_symbol_tables_by_class_name(self, names=[]):        
+        name_string = "','".join(names)
+        name_string = "'"+name_string+"'"
+        query_string = "Select NamespacePrefix, SymbolTable, Name From ApexClass Where Name IN (" + name_string + ")"
+        payload = { 'q' : query_string }
+        r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
+        return mm_util.parse_rest_response(r.text)
+
+    #pass a list of apex class/trigger ids and return the symbol tables
+    def get_symbol_tables_by_class_id(self, ids=[]):        
+        id_string = "','".join(ids)
+        id_string = "'"+id_string+"'"
+        query_string = "Select NamespacePrefix, SymbolTable, Name From ApexClass Where Id IN (" + id_string + ")"
         payload = { 'q' : query_string }
         r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         return mm_util.parse_rest_response(r.text)

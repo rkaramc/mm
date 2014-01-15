@@ -706,14 +706,14 @@ def generate_request_for_action_response(message, operation, actions=[], **kwarg
         res['tmp_file_path'] = kwargs['tmp_file_path']
     return json.dumps(res)
 
-def generate_error_response(message, dump_to_json=True):
+def generate_error_response(message, dump_to_json=True, verbose=False):
     try:
         stack_trace = ''
         trace = re.sub( r'\"/(.*?\.pyz/)', r'', traceback.format_exc()).strip()
         message = message.strip()
         if message == None or message == '':
             message = 'An error has occurred. Please enable plugin logging, retry your operation and paste any relevant log(s) to a new GitHub issue.'
-        if trace != None and trace != 'None' and 'MMException' not in trace and config.connection.verbose == True:
+        if trace != None and trace != 'None' and 'MMException' not in trace and (config.connection.verbose or verbose):
             # if message = e.message just use the trace
             if len(trace):
                 stack_trace += trace
@@ -744,7 +744,7 @@ def generate_error_response(message, dump_to_json=True):
 
         config.logger.exception("[MAVENSMATE CAUGHT ERROR]")
         config.logger.debug(stack_trace)
-        if config.connection.verbose:
+        if config.connection.verbose or verbose:
             res = {
                 "success"       : False,
                 "body_type"     : "text",
