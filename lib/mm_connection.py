@@ -77,6 +77,8 @@ class MavensMatePluginConnection(object):
 
         if self.project_name != None and self.project_name != '' and not os.path.exists(self.project_location) and self.operation != 'new_project_from_existing_directory' and self.operation != 'new_project':
             raise MMException('The project could not be found')
+        elif self.project_name != None and self.project_name != '' and os.path.exists(os.path.join(self.workspace,self.project_name)) and self.operation == 'new_project':
+            raise MMException('A project with this name already exists in your workspace. To create a MavensMate project from an existing non-MavensMate Force.com project, open the project directory in Sublime Text, right click the project name in the sidebar and select "Create MavensMate Project"')
         elif self.project_name != None and self.project_name != '' and os.path.exists(os.path.join(self.workspace,self.project_name)) and self.operation != 'new_project_from_existing_directory':
             params['location'] = self.project_location
             params['ui'] = self.ui

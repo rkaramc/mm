@@ -90,7 +90,7 @@ class MavensMateProject(object):
     def retrieve_and_write_to_disk(self,action='new'):
         try:
             if os.path.isdir(os.path.join(config.connection.workspace,self.project_name)) and action == 'new':
-                return mm_util.generate_error_response("A project with this name already exists in your workspace.")
+                raise MMException('A project with this name already exists in your workspace. To create a MavensMate project from an existing non-MavensMate Force.com project, open the project directory in Sublime Text, right click the project name in the sidebar and select "Create MavensMate Project"')
             
             if action == 'existing':
                 existing_parent_directory = os.path.dirname(self.directory)
