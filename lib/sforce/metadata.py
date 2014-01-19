@@ -96,7 +96,7 @@ class SforceMetadataClient(SforceBaseClient):
             for t in package_dict['unpackaged']['types']:
                 if 'name' in t:
                     metadata_type_def = mm_util.get_meta_type_by_name(t['name'])
-                    if metadata_type_def['inFolder']:
+                    if 'inFolder' in metadata_type_def and metadata_type_def['inFolder']:
                         if 'members' in t and type(t['members']) is not list:
                             if t['members'] == "*" or t['members'] == []:
                                 mlist = self.listMetadata(t['name'], False)
@@ -142,7 +142,7 @@ class SforceMetadataClient(SforceBaseClient):
                 if 'name' in t:
                     metadata_type_def = mm_util.get_meta_type_by_name(t['name'])
                     debug(metadata_type_def)
-                    if metadata_type_def['inFolder']:
+                    if 'inFolder' in metadata_type_def and metadata_type_def['inFolder']:
                         if 'members' in t and (t['members'] == "*" or t['members'] == []):
                             #list_request_name = self.__transformFolderMetadataNameForListRequest(t['name'])
                             #mlist = self.listMetadata(list_request_name, False)
@@ -258,7 +258,7 @@ class SforceMetadataClient(SforceBaseClient):
             has_children_metadata = False
             if 'childXmlNames' in metadata_type_def and type(metadata_type_def['childXmlNames']) is list:
                 has_children_metadata = True
-            is_folder_metadata = metadata_type_def['inFolder']
+            is_folder_metadata = 'inFolder' in metadata_type_def and metadata_type_def['inFolder']
             if is_folder_metadata == True:
                 metadata_request_type = self.__transformFolderMetadataNameForListRequest(metadata_type)
             else:
