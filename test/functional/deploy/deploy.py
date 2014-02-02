@@ -10,9 +10,9 @@ sys.path.append('../../../')
 import test_util as test_util
 import test_helper
 from test_helper import MavensMateTest
-from mm.request import MavensMateRequestHandler
-import mm.request as request
-import mm.util as mmutil
+from lib.request import MavensMateRequestHandler
+import lib.request as request
+import lib.util as mmutil
 
 class MetadataOperationTest(MavensMateTest):
     

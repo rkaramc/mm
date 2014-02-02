@@ -4,7 +4,7 @@ import unittest
 import mock
 sys.path.append('../')
 sys.path.append('../../')
-import mm.util as util
+import lib.util as util
 import test_util as util
 from test_helper import MavensMateTest
 import mm       

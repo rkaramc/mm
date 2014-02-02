@@ -6,12 +6,12 @@ import mock
 import shutil
 sys.path.append('../')
 sys.path.append('../../')
-import mm.util as util
+import lib.util as util
 import test_util as util
 import test_helper
 from test_helper import MavensMateTest
 import mm    
-import mm.sfdc_client as sfdc
+import lib.sfdc_client as sfdc
 
 base_test_directory = os.path.dirname(os.path.dirname(__file__))
 project_name = "unit test health check project"

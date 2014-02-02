@@ -7,13 +7,12 @@ import shutil
 sys.path.append('../')
 sys.path.append('../../')
 sys.path.append('../../../')
-import mm.util as util
-from mm.request import MavensMateRequestHandler
+import lib.util as util
+from lib.request import MavensMateRequestHandler
 import test_util as util
 import test_helper
 from test_helper import MavensMateTest
-import mm    
-import mm.request as request
+import lib.request as request
 
 
 base_test_directory = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))

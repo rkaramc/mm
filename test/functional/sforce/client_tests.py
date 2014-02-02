@@ -10,7 +10,7 @@ import shutil
 
 sys.path.append('../')
 import lib.config as config
-import mm.util as util
+import lib.util as util
 import test_helper as helper
 from lib.mm_client import MavensMateClient
 

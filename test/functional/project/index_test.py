@@ -4,8 +4,8 @@ import json
 sys.path.append('../')
 
 sys.path.append('../../')
-from mm.connection import PluginConnection
-import mm.util as util
+from lib.connection import PluginConnection
+import lib.util as util
 import lib.xmltodict as xmltodict
 
 params = {

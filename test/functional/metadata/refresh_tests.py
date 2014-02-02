@@ -7,10 +7,10 @@ sys.path.append('../')
 sys.path.append('../../')
 sys.path.append('../../../')
 import test_util as util
-from mm.request import MavensMateRequestHandler
+from lib.request import MavensMateRequestHandler
 import test_helper
 from test_helper import MavensMateTest
-import mm.request as request
+import lib.request as request
 
 base_test_directory = os.path.dirname(os.path.dirname(__file__))
 project_name = "unit test metadata refresh project"

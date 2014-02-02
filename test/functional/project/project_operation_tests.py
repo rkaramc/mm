@@ -7,9 +7,9 @@ import shutil
 
 sys.path.append('../')
 import lib.config as config
-import mm.util as util
+import lib.util as util
 import test_helper as helper
-from mm.connection import PluginConnection
+from lib.connection import PluginConnection
 from lib.mm_client import MavensMateClient
 
 class TestProjectOperations(unittest.TestCase):

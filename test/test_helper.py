@@ -6,9 +6,9 @@ import mock
 from StringIO import StringIO
 import test_util as util
 sys.path.append('../')
-import mm.request as request
-from mm.request import MavensMateRequestHandler
-from mm.connection import PluginConnection
+import lib.request as request
+from lib.request import MavensMateRequestHandler
+from lib.connection import PluginConnection
 
 base_test_directory = os.path.dirname(__file__)
 

@@ -2,7 +2,7 @@
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from mm.request import MavensMateRequestHandler
+from lib.request import MavensMateRequestHandler
 
 def main():
     MavensMateRequestHandler().execute()

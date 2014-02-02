@@ -6,12 +6,12 @@ import shutil
 sys.path.append('../')
 sys.path.append('../../')
 sys.path.append('../../../')
-import mm.util as util
+import lib.util as util
 import test_util as test_util
 import test_helper
 from test_helper import MavensMateTest
-from mm.request import MavensMateRequestHandler
-import mm.request as request
+from lib.request import MavensMateRequestHandler
+import lib.request as request
 
 class ApexUnitTestCoverageTest(MavensMateTest):
         

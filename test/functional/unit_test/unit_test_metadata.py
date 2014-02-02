@@ -4,7 +4,7 @@ import json
 sys.path.append('../')
 sys.path.append('../../')
 
-from mm.connection import PluginConnection
+from lib.connection import PluginConnection
 
 params = {
 	"project_name" 		: "rc2",

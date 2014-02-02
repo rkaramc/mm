@@ -1,6 +1,6 @@
 import json
 import os
-import mm.util as util
+import lib.util as util
 import re
 
 def parse_mm_response(json_string):

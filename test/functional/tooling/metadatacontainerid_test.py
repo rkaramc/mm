@@ -6,7 +6,7 @@ import mock
 import shutil
 sys.path.append('../')
 sys.path.append('../../')
-import mm.util as util
+import lib.util as util
 import test_util as util
 import test_helper
 from test_helper import MavensMateTest

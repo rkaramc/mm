@@ -4,7 +4,7 @@ sys.path.append('../')
 sys.path.append('../../')
 sys.path.append('../../../')
 
-from mm.connection import PluginConnection
+from lib.connection import PluginConnection
 
 params = {
     "client"        : "SUBLIME_TEXT_3"
