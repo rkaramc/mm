@@ -2,7 +2,7 @@
 #plugin connection should have a single instance of a mm_client associated
 import os
 import json
-import mm_util
+import util
 import mm_github
 import sys
 import config
@@ -45,7 +45,7 @@ class MavensMatePluginConnection(object):
         self.ui                     = params.get('ui', False) #=> whether this connection was created for the purposes of generating a UI
         self.verbose                = params.get('verbose', False)
         if 'wsdl_path' in params:
-            mm_util.WSDL_PATH = params.get('wsdl_path')
+            util.WSDL_PATH = params.get('wsdl_path')
 
         self.setup_logging()
 
@@ -60,12 +60,12 @@ class MavensMatePluginConnection(object):
         debug('--------------------------------------------')
 
         if self.sfdc_api_version != None:
-            mm_util.SFDC_API_VERSION = self.sfdc_api_version #setting api version based on plugin settings
-            mm_util.set_endpoints()
+            util.SFDC_API_VERSION = self.sfdc_api_version #setting api version based on plugin settings
+            util.set_endpoints()
 
         debug('>>>> getting settings')
         debug(self.sfdc_api_version)
-        debug(mm_util.SFDC_API_VERSION)
+        debug(util.SFDC_API_VERSION)
 
         if self.operation != 'new_project' and self.operation != 'upgrade_project' and self.operation != 'new_project_from_existing_directory' and self.project_location != None:
             if not os.path.exists(os.path.join(self.project_location)):
@@ -156,12 +156,12 @@ class MavensMatePluginConnection(object):
         settings = {}
         if not user_path == None:
             try:
-                settings['user'] = mm_util.parse_json_from_file(user_path)
+                settings['user'] = util.parse_json_from_file(user_path)
             except:
                 debug('User settings could not be loaded')
         if not def_path == None:
             try:
-                settings['default'] = mm_util.parse_json_from_file(def_path)
+                settings['default'] = util.parse_json_from_file(def_path)
             except:
                 raise MMException('Could not load default MavensMate settings.')
         return settings
@@ -205,11 +205,11 @@ class MavensMatePluginConnection(object):
     def new_project(self, params, **kwargs):
         try:
             if 'username' not in params or params['username'] == '':
-                return mm_util.generate_error_response('Please specify a username')
+                return util.generate_error_response('Please specify a username')
             if 'password' not in params or params['password'] == '':
-                return mm_util.generate_error_response('Please specify a password')
+                return util.generate_error_response('Please specify a password')
             if 'project_name' not in params or params['project_name'] == '':
-                return mm_util.generate_error_response('Please specify a project name')
+                return util.generate_error_response('Please specify a project name')
 
             if ('action' in kwargs and kwargs['action'] == 'new') or 'action' not in kwargs:
                 if 'package' not in params or params['package'] == []:
@@ -258,7 +258,7 @@ class MavensMatePluginConnection(object):
 
             return result
         except BaseException, e:
-            return mm_util.generate_error_response(e.message)
+            return util.generate_error_response(e.message)
 
     def run_subl_command(self, command, params):
         if self.plugin_client != self.PluginClients.SUBLIME_TEXT_3:
@@ -324,16 +324,16 @@ class MavensMatePluginConnection(object):
         try:
             response = mm_github.sign_in(creds)
             if 'message' in response:
-                return mm_util.generate_error_response(response['message'])
+                return util.generate_error_response(response['message'])
             elif 'authentication' in response:
                 src = open(os.path.join(self.get_app_settings_directory(),'.github.json'), "wb")
                 src.write(json.dumps(response, sort_keys=False, indent=4))
                 src.close()
-                return mm_util.generate_success_response('Connected to GitHub successfully!')
+                return util.generate_success_response('Connected to GitHub successfully!')
             else:
-                return mm_util.generate_error_response(response)
+                return util.generate_error_response(response)
         except Exception, e:
-            return mm_util.generate_error_response("Error connecting to GitHub: "+e.message)
+            return util.generate_error_response("Error connecting to GitHub: "+e.message)
 
 
 

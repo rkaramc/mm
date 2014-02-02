@@ -1,5 +1,5 @@
 import os
-import mm_util
+import util
 import threading
 import subprocess
 import config
@@ -115,7 +115,7 @@ class HealthCheck(object):
         for dirname, dirnames, filenames in os.walk(os.path.join(self.project_location,"src")):
             for filename in filenames:
                 full_file_path = os.path.join(dirname, filename)
-                ext = mm_util.get_file_extension_no_period(full_file_path)
+                ext = util.get_file_extension_no_period(full_file_path)
                 if ext in apex_extensions_to_check:
                     self.apex_files_to_check.append(full_file_path)
                 elif ext in vf_extensions_to_check:
@@ -124,8 +124,8 @@ class HealthCheck(object):
         apex_parser_threads = []
         vf_parser_threads   = []
 
-        apex_file_chunks    = list(mm_util.grouper(8, self.apex_files_to_check))
-        vf_file_chunks      = list(mm_util.grouper(8, self.vf_files_to_check))
+        apex_file_chunks    = list(util.grouper(8, self.apex_files_to_check))
+        vf_file_chunks      = list(util.grouper(8, self.vf_files_to_check))
 
         for files in apex_file_chunks:                    
             apex_parser_thread = ApexParser(files)
@@ -155,7 +155,7 @@ class HealthCheck(object):
 
             base_name = os.path.basename(file_name)
             self.vf_result[base_name] = {}
-            file_body = mm_util.get_file_as_string(file_name)
+            file_body = util.get_file_as_string(file_name)
 
             ### ACTION POLLERS
             if "actionPollers" not in parser_result:
@@ -249,7 +249,7 @@ class HealthCheck(object):
 
             base_name = os.path.basename(file_name)
             self.apex_result[base_name] = {}
-            file_body = mm_util.get_file_as_string(file_name)
+            file_body = util.get_file_as_string(file_name)
 
             ### WITHOUT SHARING
             without_sharings = re.finditer(without_sharing_pattern, file_body)          

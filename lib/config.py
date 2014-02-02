@@ -35,6 +35,13 @@ urllib3_logger.setLevel(logging.CRITICAL)
 
 def __get_base_path():
     if hasattr(sys, 'frozen'):
+        # print("FROZEN!");
+        # for dirname, dirnames, filenames in os.walk(sys._MEIPASS):
+        #     print dirname
+        #     for d in dirnames:
+        #         print d
+        #     for f in filenames:
+        #         print f
         return sys._MEIPASS
     else:
         return os.path.dirname(os.path.dirname(__file__))
@@ -46,7 +53,10 @@ def __get_is_frozen():
         return False
 frozen = __get_is_frozen()
 base_path = __get_base_path()
+
 connection = None
+project = None
+sfdc_client = None
 
 windows_platforms = ["win32","win64","cygwin"]
 linux_platforms = ["linux2"]
