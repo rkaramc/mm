@@ -119,7 +119,12 @@ class UpdateSubscriptionCommand(Command):
 
 class ProjectHealthCheckCommand(Command):
     def execute(self):
-        return config.project.run_health_check()
+        if self.args.respond_with_html == True:
+           health_check_dict = config.project.run_health_check()
+           html = util.generate_html_response(self.args.operation, health_check_dict)
+           return util.generate_success_response(html, "html")
+        else:
+           return json.dumps(config.project.run_health_check(),indent=4)
 
 class UpdateCredentialsCommand(Command):
     def execute(self):
