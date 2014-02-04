@@ -487,7 +487,11 @@ def generate_ui(operation,params={}):
             client=config.connection.plugin_client
         ).encode('UTF-8')
     elif operation == 'unit_test':
-        template = env.get_template('/unit_test/index.html')
+        if int(float(SFDC_API_VERSION)) < 29:
+            template = env.get_template('/unit_test/index28.html')
+        else:
+            template = env.get_template('/unit_test/index.html')
+            
         istest = re.compile(r"@istest", re.I)
         testmethod = re.compile(r"testmethod", re.I)
 
@@ -517,9 +521,8 @@ def generate_ui(operation,params={}):
             name=config.project.project_name,
             has_indexed_metadata=config.project.is_metadata_indexed,
             project_location=config.project.location,
-            connections=config.project.get_org_connections(False),
+            connections=config.project.get_org_connections(),
             operation=operation,
-            packages=config.project.get_deployment_names(),
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'execute_apex':
         template = env.get_template('/execute_apex/index.html')
@@ -613,7 +616,10 @@ def generate_html_response(operation, obj, params=None):
         config.logger.debug(json.dumps(result, sort_keys=True,indent=4))
         html = template.render(result=result,results_normal={},args=params)
     elif operation == 'unit_test' or operation == 'test':
-        template = env.get_template('/unit_test/result2.html')
+        if int(float(SFDC_API_VERSION)) < 29:
+            template = env.get_template('/unit_test/result28.html')
+        else:
+            template = env.get_template('/unit_test/result.html')
         config.logger.debug(json.dumps(obj, sort_keys=True,indent=4))
         result = process_unit_test_result(obj)
         config.logger.debug('\n\n\n\n\n')

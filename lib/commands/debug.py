@@ -217,10 +217,10 @@ class FetchCheckpointsCommand(Command):
         checkpoint_results = config.sfdc_client.get_apex_checkpoint_results(config.sfdc_client.user_id, limit)
         if 'records' in checkpoint_results:
             number_of_checkpoints = len(checkpoint_results['records'])
-            if os.path.isdir(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints")):
-                shutil.rmtree(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints"))
+            if os.path.isdir(os.path.join(config.project.location,"debug","checkpoints")):
+                shutil.rmtree(os.path.join(config.project.location,"debug","checkpoints"))
 
-            os.makedirs(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints"))
+            os.makedirs(os.path.join(config.project.location,"debug","checkpoints"))
 
             apex_entity_to_lines = {}
             for r in checkpoint_results['records']:
@@ -231,11 +231,11 @@ class FetchCheckpointsCommand(Command):
                         apex_entity_to_lines[r['HeapDump']['className']].append(r['Line'])
 
             for apex_entity_name, lines in apex_entity_to_lines.items():
-                if not os.path.isdir(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints",apex_entity_name)):
-                    os.makedirs(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints",apex_entity_name))
+                if not os.path.isdir(os.path.join(config.project.location,"debug","checkpoints",apex_entity_name)):
+                    os.makedirs(os.path.join(config.project.location,"debug","checkpoints",apex_entity_name))
                 for l in lines:
-                    if not os.path.isdir(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints",apex_entity_name,str(l))):
-                        os.makedirs(os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints",apex_entity_name,str(l)))
+                    if not os.path.isdir(os.path.join(config.project.location,"debug","checkpoints",apex_entity_name,str(l))):
+                        os.makedirs(os.path.join(config.project.location,"debug","checkpoints",apex_entity_name,str(l)))
 
             for r in checkpoint_results['records']:
                 if 'HeapDump' in r and 'className' in r['HeapDump']:
@@ -243,7 +243,7 @@ class FetchCheckpointsCommand(Command):
                     if config.is_windows:
                         modstamp = modstamp.replace(':', ' ')
                     file_name = modstamp+"-"+r["UserId"]+".json"
-                    file_path = os.path.join(config.connection.workspace,config.project_name,"debug","checkpoints",r['HeapDump']['className'],str(r['Line']),file_name)
+                    file_path = os.path.join(config.project.location,"debug","checkpoints",r['HeapDump']['className'],str(r['Line']),file_name)
                     src = open(file_path, "w")
                     src.write(json.dumps(r,sort_keys=True,indent=4))
                     src.close() 

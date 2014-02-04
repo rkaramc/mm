@@ -20,6 +20,10 @@ class RunUnitTestsAsyncCommand(Command):
         (REPLACEMENT API FOR TEST RUNNER, because it updates coverage stats)
     """
     def execute(self):
+        if int(float(util.SFDC_API_VERSION)) <= 28:
+            #raise MMException("This command requires mm_api_version to be set to 29.0 or higher.")
+            return RunUnitTestsCommand(params=self.params,args=self.args).execute()
+
         project = config.project
         sfdc_client = config.sfdc_client
 
@@ -82,55 +86,43 @@ class RunUnitTestsCommand(Command):
     """
     def execute(self):
         sfdc_client = config.sfdc_client
-        api = config.connection.get_plugin_client_setting('mm_test_api', 'metadata')
-        if params.get('api', None) != None:
-            api = params.get('api', 'apex')
-        
-        if api == 'apex':
-            run_tests_result = sfdc_client.run_tests(params)
-            if "soapenv:Envelope" in run_tests_result:
-                result = {}
-                result = run_tests_result["soapenv:Envelope"]["soapenv:Body"]["runTestsResponse"]["result"]
-                try:
-                    result['log'] = run_tests_result["soapenv:Envelope"]["soapenv:Header"]["DebuggingInfo"]["debugLog"]
-                except:
-                    pass
-                return result
-            elif 'log' in run_tests_result:
-                run_tests_result['log'] = run_tests_result['log']
-                return util.generate_response(run_tests_result)
+ 
+        empty_package_xml = util.get_empty_package_xml_contents()
+        tmp, tmp_unpackaged = util.put_tmp_directory_on_disk(True)
+        util.put_empty_package_xml_in_directory(tmp_unpackaged, empty_package_xml)
+        zip_file = util.zip_directory(tmp, tmp)
+        deploy_params = {
+            "zip_file"          : zip_file,
+            "rollback_on_error" : True,
+            "ret_xml"           : True,
+            "classes"           : self.params.get('classes', []),
+            "debug_categories"  : self.params.get('debug_categories', [])
+        }
+        deploy_result = sfdc_client.deploy(deploy_params,is_test=True)
+        #debug(deploy_result)
+        d = xmltodict.parse(deploy_result,postprocessor=util.xmltodict_postprocessor)
+        if int(float(util.SFDC_API_VERSION)) >= 29:
+            result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['details']['runTestResult']
         else:
-            empty_package_xml = util.get_empty_package_xml_contents()
-            tmp, tmp_unpackaged = util.put_tmp_directory_on_disk(True)
-            util.put_empty_package_xml_in_directory(tmp_unpackaged, empty_package_xml)
-            zip_file = util.zip_directory(tmp, tmp)
-            deploy_params = {
-                "zip_file"          : zip_file,
-                "rollback_on_error" : True,
-                "ret_xml"           : True,
-                "classes"           : params.get('classes', []),
-                "debug_categories"  : params.get('debug_categories', [])
-            }
-            deploy_result = sfdc_client.deploy(deploy_params,is_test=True)
-            #debug(deploy_result)
-            d = xmltodict.parse(deploy_result,postprocessor=util.xmltodict_postprocessor)
-            if int(float(util.SFDC_API_VERSION)) >= 29:
-                result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['details']['runTestResult']
-            else:
-                result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['runTestResult']
+            result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']['runTestResult']
 
-            try:
-                result['log'] = d["soapenv:Envelope"]["soapenv:Header"]["DebuggingInfo"]["debugLog"]
-            except:
-                result['log'] = 'Log not available.'
+        try:
+            result['log'] = d["soapenv:Envelope"]["soapenv:Header"]["DebuggingInfo"]["debugLog"]
+        except:
+            result['log'] = 'Log not available.'
 
-            shutil.rmtree(tmp)
-            return result 
+        shutil.rmtree(tmp)
+
+        if self.args.respond_with_html:
+            html = util.generate_html_response(self.args.operation, result, self.params)
+            return util.generate_success_response(html, "html")
+        else:
+            return result
 
 class RunAsyncApexTestsCommand(Command):
     name="test_async"
     """
-        Pass in Apex tests classes to run (could be replaced)
+        Pass in Apex tests classes to run (currently not used within a UI) (could be replaced)
         run_async_apex_tests
     """
     def execute(self):

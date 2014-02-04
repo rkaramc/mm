@@ -123,11 +123,17 @@ class DeleteSelectedMetadataCommand(Command):
         util.put_empty_package_xml_in_directory(tmp_unpackaged, empty_package_xml)
         zip_file = util.zip_directory(tmp, tmp)
         
+        purge_on_delete_setting = config.connection.get_plugin_client_setting("mm_purge_on_delete", False);
+        if purge_on_delete_setting:
+            describe_result = config.sfdc_client.describeMetadata(retXml=False)
+            if describe_result.testRequired == True:
+                purge_on_delete_setting = False
+
         deploy_params = {
             "zip_file"          : zip_file,
             "rollback_on_error" : True,
             "ret_xml"           : True,
-            "purge_on_delete"   : config.connection.get_plugin_client_setting("mm_purge_on_delete", False)
+            "purge_on_delete"   : purge_on_delete_setting
         }
         delete_result = sfdc_client.delete(deploy_params)
         d = xmltodict.parse(delete_result,postprocessor=util.xmltodict_postprocessor)

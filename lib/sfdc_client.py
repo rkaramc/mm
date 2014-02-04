@@ -419,6 +419,8 @@ class MavensMateClient(object):
             payload['ExecutableEntityId'] = self.get_apex_entity_id_by_name(object_type=payload['Object_Type'], name=payload['API_Name'])
             payload.pop('Object_Type', None)
             payload.pop('API_Name', None)
+        
+        payload.pop('workspace', None)
 
         payload = json.dumps(payload)
         r = requests.post(self.get_tooling_url()+"/sobjects/ApexExecutionOverlayAction", data=payload, proxies=urllib.getproxies(), headers=self.get_rest_headers('POST'), verify=False)
@@ -618,6 +620,9 @@ class MavensMateClient(object):
             return responses
 
     def get_apex_test_coverage(self, params, transform_ids=True):
+        if int(float(util.SFDC_API_VERSION)) < 29:
+            raise MMException('This operation requires mm_api_version 29.0 or later')
+
         sfdc_client = self
 
         classes         = params.get("classes", [])

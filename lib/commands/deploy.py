@@ -63,15 +63,7 @@ class GetOrgConnectionsCommand(Command):
     name="get_org_connections"
     aliases=["list_connections"]
     def execute(self):
-        try:
-            if not os.path.exists(os.path.join(config.project.location,"config",".org_connections")):
-                return []
-            # if json:
-            #     return open(os.path.join(config.project.location,"config",".org_connections"), "r").read()
-            # else:
-            return util.parse_json_from_file(os.path.join(config.project.location,"config",".org_connections"))
-        except:
-            return []
+        return config.project.get_org_connections()
         
 class NewOrgConnectionCommand(Command):
     aliases=["new_connection"]

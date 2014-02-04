@@ -32,7 +32,7 @@ class MavensMateProject(object):
 
     def __init__(self, params={}, **kwargs):
         params = dict(params.items() + kwargs.items())
-        self.deferred_project_commands = ['new_project']
+        self.deferred_project_commands = ['new_project', 'new_project_from_existing_directory']
         self.sfdc_session       = None
         self.id                 = params.get('id', None)
         self.project_name       = params.get('project_name', None)
@@ -58,8 +58,8 @@ class MavensMateProject(object):
             if self.subscription == []:
                 self.subscription           = self.settings.get('subscription', [])
             self.conflict_manager = ConflictManager(self)
-            config.logger.debug(self.sfdc_session)
-            config.logger.debug(self.get_creds())
+            #config.logger.debug(self.sfdc_session)
+            #config.logger.debug(self.get_creds())
 
             if self.ui == False and self.defer_connection == False:
                 needs_session_override = False
@@ -124,7 +124,7 @@ class MavensMateProject(object):
             self.conflict_manager = ConflictManager(self)
             self.conflict_manager.init_local_store(project_metadata)
 
-            util.run_as_daemon(self.index_apex_symbols)
+            self.index_apex_symbols() #todo: daemon??
 
             util.put_password_by_key(self.id, self.password)
             self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
@@ -759,8 +759,6 @@ class MavensMateProject(object):
         #get password from id, or name for legacy/backup
         if id:
             password = util.get_password_by_key(id)
-        else:
-            password = util.get_password_by_project_name(project_name)
         
         if password == None:
             raise MMException("Unable to retrieve password from the keychain store.")
@@ -842,6 +840,36 @@ class MavensMateProject(object):
         src = open(os.path.join(config.connection.workspace,self.project_name,"config",file_name), "w")
         src.write(overlays)
         src.close()   
+
+    def get_org_connections(self):
+        try:
+            if not os.path.exists(os.path.join(self.location,"config",".org_connections")):
+                return []
+            return util.parse_json_from_file(os.path.join(self.location,"config",".org_connections"))
+        except:
+            return []
+
+    #returns a list of all deployment names (FUTURE)
+    # def get_deployment_names(self):
+    #     package_names = ["package.xml"]
+    #     try:
+    #         if not os.path.exists(os.path.join(self.location,"deploy")):
+    #             return package_names
+    #         else:
+    #             for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"deploy")):
+    #                 for filename in filenames:
+    #                     if filename == "package.xml":
+    #                         full_file_path = os.path.join(dirname, filename)
+    #                         if "linux" in sys.platform or "darwin" in sys.platform:
+    #                             directory_parts = full_file_path.split("/");
+    #                         else:
+    #                             directory_parts = full_file_path.split("\\");
+    #                         directory_parts.remove("package.xml")
+    #                         directory_parts.remove("unpackaged")
+    #                         package_names.append(" | ".join(directory_parts[-2:]))
+    #     except:
+    #         return package_names
+    #     return package_names
 
     #returns metadata types for this org, or default types
     def get_org_describe(self):
