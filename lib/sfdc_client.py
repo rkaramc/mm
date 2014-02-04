@@ -11,7 +11,7 @@ import datetime
 from operator import itemgetter
 sys.path.append('../')
 
-from mm_exceptions import *
+from exceptions import *
 from sforce.base import SforceBaseClient
 from suds import WebFault
 from sforce.partner import SforcePartnerClient

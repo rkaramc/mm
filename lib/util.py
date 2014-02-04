@@ -25,7 +25,7 @@ else:
 import urllib2
 import webbrowser
 from operator import itemgetter
-from mm_exceptions import MMException
+from exceptions import MMException
 from jinja2 import Environment, FileSystemLoader
 
 import jinja2.ext
