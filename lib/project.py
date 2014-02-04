@@ -220,8 +220,6 @@ class MavensMateProject(object):
         self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
         if os.path.exists(os.path.join(self.location,"config","settings.yaml")):
             os.remove(os.path.join(self.location,"config","settings.yaml"))
-        if os.path.exists(os.path.join(self.location,"config",".org_metadata")):
-            os.remove(os.path.join(self.location,"config",".org_metadata"))
         if os.path.exists(os.path.join(self.location,"config",".apex_file_properties")):
             os.remove(os.path.join(self.location,"config",".apex_file_properties"))
         return util.generate_success_response("Project Upgraded Successfully")

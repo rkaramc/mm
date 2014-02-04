@@ -731,7 +731,7 @@ def launch_ui(tmp_html_file_location):
             webbrowser.get('windows-default').open("{0}{1}".format("file:///",tmp_html_file_location))
     else:
         os.system("open -n '"+config.base_path+"/bin/MavensMateWindowServer.app' --args -url '"+tmp_html_file_location+"'")
-    time.sleep(2)
+    time.sleep(1)
     #threading.Thread(target=remove_tmp_html_file, args=(tmp_html_file_location,)).start()
 
 def remove_tmp_html_file(tmp_html_file_location):
