@@ -16,7 +16,6 @@ import webbrowser
 import crawlJson
 from local_store import ConflictManager
 from health_check import HealthCheck
-import mm_metadata
 from xml.dom import minidom
 from exceptions import *
 from operator import itemgetter
@@ -496,8 +495,8 @@ class MavensMateProject(object):
 
         return util.generate_success_response("Apex symbols indexed successfully")
         
-    def refresh_index(self, mtypes=[]):
-        mm_metadata.index_metadata(mtypes)
+    # def refresh_index(self, mtypes=[]):
+    #     mm_metadata.index_metadata(mtypes)
 
     def select_metadata_based_on_package_xml(self, return_list, package_name="package.xml"):
         #process package and select only the items the package has specified

@@ -448,7 +448,7 @@ def get_org_metadata(raw=False, selectBasedOnPackageXml=False, selectedIds=[], k
                     crawlJson.setChecked(org_index, selectedIds)
             return org_index
     else:
-        index_metadata()
+        IndexMetadataCommand(params=self.params).execute()
         org_index = util.parse_json_from_file(os.path.join(project.location,"config",".org_metadata"))
         project.select_metadata_based_on_package_xml(org_index)
         return org_index
