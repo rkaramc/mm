@@ -454,46 +454,80 @@ class MavensMateProject(object):
         '''
         Writes out symbol tables to project's config/.symbols directory
         '''
-        if not os.path.exists(os.path.join(self.location,"config",".symbols")):
-            os.makedirs(os.path.join(self.location,"config",".symbols"))
         
-        if apex_class_name_or_names == None:
-            try:
-                apex_ids = []
-                classes = self.sfdc_client.list_metadata("ApexClass", True)
-                triggers = self.sfdc_client.list_metadata("ApexTrigger", True)
-                for c in classes:
-                    apex_ids.append(c['id'])
-                for t in triggers:
-                    apex_ids.append(t['id'])
-                symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids)
-            except:
-                symbol_table_result = {}
-        else:
-            class_names = []
-            if type(apex_class_name_or_names) is not list:
-                apex_class_name_or_names = [apex_class_name_or_names]
+        try:
+            if not os.path.exists(os.path.join(self.location,"config",".symbols")):
+                os.makedirs(os.path.join(self.location,"config",".symbols"))
+            
+            if apex_class_name_or_names == None:
+                try:
+                    apex_ids = []
+                    classes = self.sfdc_client.list_metadata("ApexClass", True)
+                    for c in classes:
+                        apex_ids.append(c['id'])
+                    symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids)
+                except:
+                    symbol_table_result = {}
+            else:
+                class_names = []
+                if type(apex_class_name_or_names) is not list:
+                    apex_class_name_or_names = [apex_class_name_or_names]
 
-            for class_name in apex_class_name_or_names:
-                apex_class_name = os.path.basename(class_name)
-                apex_class_name = apex_class_name.replace(".cls","")
-                class_names.append(apex_class_name)
-            symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_name(class_names)
+                for class_name in apex_class_name_or_names:
+                    apex_class_name = os.path.basename(class_name)
+                    apex_class_name = apex_class_name.replace(".cls","")
+                    class_names.append(apex_class_name)
+                symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_name(class_names)
 
-        if 'records' in symbol_table_result and len(symbol_table_result['records']) > 0:
-            for r in symbol_table_result['records']:
-                if "SymbolTable" in r and r["SymbolTable"] != None and r["SymbolTable"] != {}:
-                    file_name = ""
-                    if "NamespacePrefix" in r and r["NamespacePrefix"] != None:
-                        file_name = r["NamespacePrefix"]+"."+r["Name"]+".json"
-                    else:
-                        file_name = r["Name"]+".json"
-                    src = open(os.path.join(self.location,"config",".symbols",file_name), "w")
-                    json_data = json.dumps(r["SymbolTable"], indent=4)
-                    src.write(json_data)
-                    src.close()
+            if 'records' in symbol_table_result and len(symbol_table_result['records']) > 0:
+                for r in symbol_table_result['records']:
+                    if "SymbolTable" in r and r["SymbolTable"] != None and r["SymbolTable"] != {}:
+                        file_name = ""
+                        if "NamespacePrefix" in r and r["NamespacePrefix"] != None:
+                            file_name = r["NamespacePrefix"]+"."+r["Name"]+".json"
+                        else:
+                            file_name = r["Name"]+".json"
+                        src = open(os.path.join(self.location,"config",".symbols",file_name), "w")
+                        json_data = json.dumps(r["SymbolTable"], indent=4)
+                        src.write(json_data)
+                        src.close()
 
-        return util.generate_success_response("Apex symbols indexed successfully")
+            return util.generate_success_response("Apex symbols indexed successfully")
+        #except (TypeError):
+        except:
+            directories = []
+            if os.path.exists(os.path.join(self.location, 'src', 'classes')):
+                directories.append(os.path.join(self.location, 'src', 'classes'))
+
+            if os.path.exists(os.path.join(self.location, 'src', 'triggers')):
+                directories.append(os.path.join(self.location, 'src', 'triggers'))
+
+            params = {
+                'files'         : [],
+                'directories'   : directories
+            }
+            retrieve_result = self.get_retrieve_result(params)
+            fileProperties = retrieve_result.fileProperties
+            apex_ids = []
+            for prop in fileProperties:
+                if prop.type == "ApexClass":
+                    apex_ids.append(prop.id)   
+            symbol_table_result = self.sfdc_client.get_symbol_table(apex_ids)
+            debug(symbol_table_result)
+            if 'records' in symbol_table_result and len(symbol_table_result['records']) > 0:
+                for r in symbol_table_result['records']:
+                    if "SymbolTable" in r and r["SymbolTable"] != None and r["SymbolTable"] != {}:
+                        file_name = ""
+                        if "NamespacePrefix" in r and r["NamespacePrefix"] != None:
+                            file_name = r["NamespacePrefix"]+"."+r["Name"]+".json"
+                        else:
+                            file_name = r["ContentEntity"]["Name"]+".json"
+                        src = open(os.path.join(self.location,"config",".symbols",file_name), "w")
+                        json_data = json.dumps(r["SymbolTable"], indent=4)
+                        src.write(json_data)
+                        src.close()
+
+            return util.generate_success_response("Apex symbols indexed successfully")
         
     # def refresh_index(self, mtypes=[]):
     #     mm_metadata.index_metadata(mtypes)
