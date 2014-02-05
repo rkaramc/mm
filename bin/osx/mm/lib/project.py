@@ -32,6 +32,7 @@ class MavensMateProject(object):
     def __init__(self, params={}, **kwargs):
         params = dict(params.items() + kwargs.items())
         self.deferred_project_commands = ['new_project', 'new_project_from_existing_directory']
+        self.ui_commands_that_require_client = ['debug_log']
         self.sfdc_session       = None
         self.id                 = params.get('id', None)
         self.project_name       = params.get('project_name', None)
@@ -60,7 +61,7 @@ class MavensMateProject(object):
             #config.logger.debug(self.sfdc_session)
             #config.logger.debug(self.get_creds())
 
-            if self.ui == False and self.defer_connection == False:
+            if (self.ui == False and self.defer_connection == False) or config.connection.operation in self.ui_commands_that_require_client:
                 needs_session_override = False
                 if self.sfdc_session != None and 'endpoint' in self.sfdc_session:
                     endpoint = self.sfdc_session['endpoint']
@@ -140,58 +141,52 @@ class MavensMateProject(object):
             return util.generate_error_response(e.message)
 
     def compile(self, params):
-        try:
-            tmp = util.put_tmp_directory_on_disk()
-            shutil.copytree(os.path.join(config.project.location,"src"), os.path.join(tmp,"src"))
-            util.rename_directory(os.path.join(tmp,"src"), os.path.join(tmp,"unpackaged"))
-            zip_file = util.zip_directory(tmp, tmp)
-            mm_compile_rollback_on_error = config.connection.get_plugin_client_setting("mm_compile_rollback_on_error", False)
-            deploy_params = {
-                "zip_file"          : zip_file,
-                "rollback_on_error" : mm_compile_rollback_on_error,
-                "ret_xml"           : True
-            }
-            deploy_result = config.sfdc_client.deploy(deploy_params)
-            d = xmltodict.parse(deploy_result,postprocessor=util.xmltodict_postprocessor)
+        tmp = util.put_tmp_directory_on_disk()
+        shutil.copytree(os.path.join(config.project.location,"src"), os.path.join(tmp,"src"))
+        util.rename_directory(os.path.join(tmp,"src"), os.path.join(tmp,"unpackaged"))
+        zip_file = util.zip_directory(tmp, tmp)
+        mm_compile_rollback_on_error = config.connection.get_plugin_client_setting("mm_compile_rollback_on_error", False)
+        deploy_params = {
+            "zip_file"          : zip_file,
+            "rollback_on_error" : mm_compile_rollback_on_error,
+            "ret_xml"           : True
+        }
+        deploy_result = config.sfdc_client.deploy(deploy_params)
+        d = xmltodict.parse(deploy_result,postprocessor=util.xmltodict_postprocessor)
 
-            dictionary = collections.OrderedDict()
-            dictionary2 = []
+        dictionary = collections.OrderedDict()
+        dictionary2 = []
 
-            result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']
-            
-            for x, y in result.iteritems():
-                if(x == "id"):
-                    dictionary["id"] = y
-                if(x == "runTestResult"):
-                    dictionary["runTestResult"] = y
-                if(x == "success"):
-                    dictionary["success"] = y
+        result = d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result']
+        
+        for x, y in result.iteritems():
+            if(x == "id"):
+                dictionary["id"] = y
+            if(x == "runTestResult"):
+                dictionary["runTestResult"] = y
+            if(x == "success"):
+                dictionary["success"] = y
 
-            if 'messages' in result:
-                for a in result['messages']:
-                    for key, value in a.iteritems():
-                        if(key == 'problemType' and value == 'Error'):
-                            dictionary2.append(a)
-            elif 'details' in result and result['details'] != None and 'componentFailures' in result['details']:
-                if type(result['details']['componentFailures']) is not list:
-                    result['details']['componentFailures'] = [result['details']['componentFailures']]
-                for a in result['details']['componentFailures']:
-                    dictionary2.append(a)
+        if 'messages' in result:
+            for a in result['messages']:
+                for key, value in a.iteritems():
+                    if(key == 'problemType' and value == 'Error'):
+                        dictionary2.append(a)
+        elif 'details' in result and result['details'] != None and 'componentFailures' in result['details']:
+            if type(result['details']['componentFailures']) is not list:
+                result['details']['componentFailures'] = [result['details']['componentFailures']]
+            for a in result['details']['componentFailures']:
+                dictionary2.append(a)
 
-            dictionary["Messages"] = dictionary2 
+        dictionary["Messages"] = dictionary2 
 
-            shutil.rmtree(tmp)
+        shutil.rmtree(tmp)
 
-            config.project.conflict_manager.refresh_local_store(directories=[os.path.join(config.project.location, 'src')])
+        config.project.conflict_manager.refresh_local_store(directories=[os.path.join(config.project.location, 'src')])
 
-            return json.dumps(dictionary, sort_keys=True, indent=2, separators=(',', ': '))
-            #return json.dumps(d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result'], sort_keys=True, indent=2, separators=(',', ': '))
-        except BaseException:
-            try:
-                shutil.rmtree(tmp)
-            except:
-                pass
-            raise
+        return json.dumps(dictionary, sort_keys=True, indent=2, separators=(',', ': '))
+        #return json.dumps(d["soapenv:Envelope"]["soapenv:Body"]['checkDeployStatusResponse']['result'], sort_keys=True, indent=2, separators=(',', ': '))
+    
 
     #updates the salesforce.com credentials associated with the project
     def update_credentials(self):
@@ -715,6 +710,98 @@ class MavensMateProject(object):
         om = self.get_org_metadata(False, False, payload.get("ids", []), payload.get("keyword", None))
         return json.dumps(om)
 
+    def index_metadata(self, mtypes=None):
+        sfdc_client = config.sfdc_client
+        return_list = []
+        if sfdc_client == None or sfdc_client.is_connection_alive() == False:
+            sfdc_client = MavensMateClient(credentials=self.get_creds(), override_session=True)  
+            self.set_sfdc_session()
+
+        data = self.get_org_describe()
+        threads = []
+        thread_results = []
+        creds = self.get_creds()
+
+        to_be_indexed = []
+
+        if mtypes != None:
+            if type(mtypes) is not list:
+                mtypes = [mtypes]
+            for mt in mtypes:
+                for md in data:
+                    if md['xmlName'] == mt:
+                        to_be_indexed.append(md)
+                        break
+        else:
+            to_be_indexed = data
+
+        metadata_chunks = list(util.grouper(8, to_be_indexed))
+        for chunk in metadata_chunks:                    
+            thread_client = MavensMateClient(credentials=creds)
+            thread = IndexCall(thread_client, chunk)
+            threads.append(thread)
+            thread.start()
+            
+        for thread in threads:
+            thread.join()
+            if len(thread.results) == len(thread.clean_types):
+                thread_results.extend(thread.results)
+        
+        return_list = sorted(thread_results, key=itemgetter('text')) 
+
+        #no specific metadata types were requested, 
+        #so we simply overwirte .org_metadata with the new index 
+        if mtypes == None:
+            file_body = json.dumps(return_list, sort_keys=False, indent=4)
+            src = open(os.path.join(self.location,"config",".org_metadata"), "w")
+            src.write(file_body)
+            src.close()
+            #return file_body
+        #specific metadata types were requested, so update .org_metadata with the result
+        elif type(return_list) is list and len(return_list) > 0:
+            existing_index = self.get_org_metadata()
+            for mt in return_list:
+                for emt in existing_index:
+                    if emt['xmlName'] == mt['xmlName']:
+                        emt['children'] = mt['children']
+                        break
+
+            file_body = json.dumps(existing_index, sort_keys=False, indent=4)
+            src = open(os.path.join(self.location,"config",".org_metadata"), "w")
+            src.write(file_body)
+            src.close()
+        return util.generate_success_response("Org indexed successfully")
+
+    def get_org_metadata(self, raw=False, selectBasedOnPackageXml=False, selectedIds=[], keyword=None, **kwargs):
+        if self.get_is_metadata_indexed():
+            if raw:
+                org_metadata_raw = util.get_file_as_string(os.path.join(self.location,"config",".org_metadata"))
+                org_index = json.loads(org_metadata_raw)
+                if selectBasedOnPackageXml:
+                    self.select_metadata_based_on_package_xml(org_index)
+                elif len(selectedIds) > 0 or keyword != None:
+                    if keyword != None:
+                        crawlJson.setVisibility(org_index, keyword)
+                    if len(selectedIds) > 0:
+                        crawlJson.setChecked(org_index, selectedIds)
+                return json.dumps(org_index)
+            else:
+                org_index = util.parse_json_from_file(os.path.join(self.location,"config",".org_metadata"))
+                if selectBasedOnPackageXml:
+                    self.select_metadata_based_on_package_xml(org_index)
+                elif len(selectedIds) > 0 or keyword != None:
+                    if keyword != None:
+                        crawlJson.setVisibility(org_index, keyword)
+                    if len(selectedIds) > 0:
+                        crawlJson.setChecked(org_index, selectedIds)
+                return org_index
+        else:
+            self.index_metadata()
+            org_index = util.parse_json_from_file(os.path.join(self.location,"config",".org_metadata"))
+            self.select_metadata_based_on_package_xml(org_index)
+            return org_index
+
+
     def __get_settings(self):
         #returns settings for this project (handles legacy yaml format)
         try:
@@ -1026,3 +1113,63 @@ class MavensMateProject(object):
             return debug_settings
         except:
             return None
+
+class IndexCall(threading.Thread):
+    def __init__(self, client, metadata_types):
+        self.metadata_types = metadata_types
+        self.client         = client
+        self.results        = []
+        self.clean_types    = []
+        for mt in self.metadata_types:
+            if mt != None:
+                self.clean_types.append(mt)
+        threading.Thread.__init__(self)
+
+    def run(self):
+        for mtype in self.clean_types:
+            if mtype == None:
+                self.results.append({})
+                continue
+            try:
+                result = self.client.list_metadata(mtype['xmlName'])
+                if result == None:
+                    result = []
+                self.results.append({
+                    "title"         : mtype['xmlName'],
+                    "text"          : mtype['xmlName'],
+                    "xmlName"       : mtype['xmlName'],
+                    "type"          : mtype,
+                    "cls"           : "folder",
+                    "expanded"      : False,
+                    "children"      : result,
+                    "checked"       : False,
+                    "select"        : False,
+                    "level"         : 1,
+                    "id"            : mtype['xmlName'],
+                    "key"           : mtype['xmlName'],
+                    "isFolder"      : True,
+                    "cls"           : "folder",
+                    "inFolder"      : mtype['inFolder'],
+                    "hasChildTypes" : 'childXmlNames' in mtype
+
+                })
+            except:
+                self.results.append({
+                    "title"         : mtype['xmlName'], 
+                    "text"          : mtype['xmlName'],
+                    "xmlName"       : mtype['xmlName'],
+                    "type"          : mtype,
+                    "cls"           : "folder",
+                    "expanded"      : False,
+                    "children"      : [],
+                    "checked"       : False,
+                    "select"        : False,
+                    "level"         : 1,
+                    "id"            : mtype['xmlName'],
+                    "key"           : mtype['xmlName'],
+                    "isFolder"      : True,
+                    "cls"           : "folder",
+                    "inFolder"      : mtype['inFolder'],
+                    "hasChildTypes" : 'childXmlNames' in mtype
+                })
+                continue
