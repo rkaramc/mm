@@ -286,7 +286,7 @@ class MavensMateProject(object):
         if type(new_sub) is not list:
             new_sub = [new_sub]
         current_settings['subscription'] = new_sub
-        self.__put_settings_file(current_settings)
+        self.put_settings_file(current_settings)
         return util.generate_success_response('Subscription updated successfully')
 
     def reset_metadata_container(self, **kwargs):
@@ -294,7 +294,7 @@ class MavensMateProject(object):
         resp = self.sfdc_client.new_metadatacontainer_for_this_user()
         new_settings = self.settings
         new_settings['metadata_container'] = resp["id"]
-        self.__put_settings_file(new_settings)
+        self.put_settings_file(new_settings)
         accept = kwargs.get("accept", None)
         if accept == None:
             return resp["id"]
@@ -804,10 +804,10 @@ class MavensMateProject(object):
 
     def update_setting(self, setting, value):
         self.settings[setting] = value
-        self.__put_settings_file(self.settings)
+        self.put_settings_file(self.settings)
 
     #write a file containing the MavensMate settings for the project
-    def __put_settings_file(self, settings=None):
+    def put_settings_file(self, settings=None):
         if settings == None:
             settings = {
                 "project_name"          : self.project_name,
@@ -895,7 +895,7 @@ class MavensMateProject(object):
     def __put_base_config(self):
         if os.path.isdir(os.path.join(config.connection.workspace,self.project_name,"config")) == False:
             os.makedirs(os.path.join(config.connection.workspace,self.project_name,"config"))
-        self.__put_settings_file()
+        self.put_settings_file()
         self.__put_describe_file()
         self.put_debug_file()
 

@@ -301,7 +301,7 @@ class CompileSelectedMetadataCommand(Command):
                 container_id = project.sfdc_client.get_metadata_container_id()
                 new_settings = project.settings
                 new_settings['metadata_container'] = container_id
-                project.__put_settings_file(new_settings)
+                project.put_settings_file(new_settings)
             else:
                 container_id = project.settings['metadata_container']
             
