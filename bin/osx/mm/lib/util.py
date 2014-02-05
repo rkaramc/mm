@@ -487,7 +487,7 @@ def generate_ui(operation,params={}):
             client=config.connection.plugin_client
         ).encode('UTF-8')
     elif operation == 'unit_test':
-        if int(float(SFDC_API_VERSION)) < 29:
+        if int(float(SFDC_API_VERSION)) < 29 or config.connection.get_plugin_client_setting("mm_use_legacy_test_ui", False):
             template = env.get_template('/unit_test/index28.html')
         else:
             template = env.get_template('/unit_test/index.html')
@@ -616,7 +616,7 @@ def generate_html_response(operation, obj, params=None):
         config.logger.debug(json.dumps(result, sort_keys=True,indent=4))
         html = template.render(result=result,results_normal={},args=params)
     elif operation == 'unit_test' or operation == 'test':
-        if int(float(SFDC_API_VERSION)) < 29:
+        if int(float(SFDC_API_VERSION)) < 29 or config.connection.get_plugin_client_setting("mm_use_legacy_test_ui", False):
             template = env.get_template('/unit_test/result28.html')
         else:
             template = env.get_template('/unit_test/result.html')

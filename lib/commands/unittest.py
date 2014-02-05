@@ -20,7 +20,7 @@ class RunUnitTestsAsyncCommand(Command):
         (REPLACEMENT API FOR TEST RUNNER, because it updates coverage stats)
     """
     def execute(self):
-        if int(float(util.SFDC_API_VERSION)) <= 28:
+        if int(float(util.SFDC_API_VERSION)) <= 28 or config.connection.get_plugin_client_setting("mm_use_legacy_test_ui", False):
             #raise MMException("This command requires mm_api_version to be set to 29.0 or higher.")
             return RunUnitTestsCommand(params=self.params,args=self.args).execute()
 
