@@ -464,7 +464,7 @@ class IndexMetadataCommand(Command):
         return_list = []
         if sfdc_client == None or sfdc_client.is_connection_alive() == False:
             sfdc_client = MavensMateClient(credentials=project.get_creds(), override_session=True)  
-            project.__set_sfdc_session()
+            project.set_sfdc_session()
 
         data = project.get_org_describe()
         threads = []

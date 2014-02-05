@@ -1000,6 +1000,9 @@ class MavensMateProject(object):
         except:
             return None
 
+    def set_sfdc_session(self):
+        self.__set_sfdc_session()
+
     #writes session information to the local cache
     def __set_sfdc_session(self):
         try:
