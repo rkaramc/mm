@@ -311,7 +311,7 @@ class CompileSelectedMetadataCommand(Command):
             except MetadataContainerException as e:
                 project.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
                 response = project.sfdc_client.new_metadatacontainer_for_this_user()
-                project.__update_setting("metadata_container",response["id"])
+                project.update_setting("metadata_container",response["id"])
                 return project.compile_selected_metadata(self.params)
 
             if 'Id' in result and 'State' in result:

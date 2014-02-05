@@ -802,7 +802,7 @@ class MavensMateProject(object):
         src.close()
         return location
 
-    def __update_setting(self, setting, value):
+    def update_setting(self, setting, value):
         self.settings[setting] = value
         self.__put_settings_file(self.settings)
 
