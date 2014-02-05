@@ -123,7 +123,8 @@ class MavensMateProject(object):
             self.conflict_manager = ConflictManager(self)
             self.conflict_manager.init_local_store(project_metadata)
 
-            self.index_apex_symbols() #todo: daemon??
+            if config.connection.get_plugin_client_setting("mm_mass_index_apex_symbols", False):
+                self.index_apex_symbols() #todo: daemon??
 
             util.put_password_by_key(self.id, self.password)
             self.sfdc_session = self.__get_sfdc_session() #hacky...need to fix
@@ -209,7 +210,8 @@ class MavensMateProject(object):
         self.__put_project_file()
         self.__put_base_config()
         self.__set_sfdc_session()
-        self.index_apex_symbols()
+        if config.connection.get_plugin_client_setting("mm_mass_index_apex_symbols", False):
+            self.index_apex_symbols()
         if not os.path.exists(os.path.join(self.location,"config",".local_store")):
             if self.conflict_manager == None:
                 self.conflict_manager = ConflictManager(self)
