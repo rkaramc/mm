@@ -32,6 +32,7 @@ class MavensMateProject(object):
     def __init__(self, params={}, **kwargs):
         params = dict(params.items() + kwargs.items())
         self.deferred_project_commands = ['new_project', 'new_project_from_existing_directory']
+        self.ui_commands_that_require_client = ['debug_log']
         self.sfdc_session       = None
         self.id                 = params.get('id', None)
         self.project_name       = params.get('project_name', None)
@@ -60,7 +61,7 @@ class MavensMateProject(object):
             #config.logger.debug(self.sfdc_session)
             #config.logger.debug(self.get_creds())
 
-            if self.ui == False and self.defer_connection == False:
+            if (self.ui == False and self.defer_connection == False) or config.connection.operation in self.ui_commands_that_require_client:
                 needs_session_override = False
                 if self.sfdc_session != None and 'endpoint' in self.sfdc_session:
                     endpoint = self.sfdc_session['endpoint']
