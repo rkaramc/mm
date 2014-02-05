@@ -746,7 +746,7 @@ class MavensMateClient(object):
     def get_symbol_table(self, ids=[]):        
         id_string = "','".join(ids)
         id_string = "'"+id_string+"'"
-        query_string = "Select ContentEntityId, SymbolTable From ApexClassMember Where ContentEntityId IN (" + id_string + ")"
+        query_string = "Select ContentEntityId, SymbolTable From ApexClassMember Where ContentEntityId IN (" + id_string + ") AND NamespacePrefix = '"+self.get_org_namespace()+"'"
         payload = { 'q' : query_string }
         r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         return util.parse_rest_response(r.text)
@@ -755,7 +755,7 @@ class MavensMateClient(object):
     def get_symbol_tables_by_class_name(self, names=[]):        
         name_string = "','".join(names)
         name_string = "'"+name_string+"'"
-        query_string = "Select NamespacePrefix, SymbolTable, Name From ApexClass Where Name IN (" + name_string + ")"
+        query_string = "Select NamespacePrefix, SymbolTable, Name From ApexClass Where Name IN (" + name_string + ") AND NamespacePrefix = '"+self.get_org_namespace()+"'"
         payload = { 'q' : query_string }
         r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         return util.parse_rest_response(r.text)
@@ -764,7 +764,7 @@ class MavensMateClient(object):
     def get_symbol_tables_by_class_id(self, ids=[]):        
         id_string = "','".join(ids)
         id_string = "'"+id_string+"'"
-        query_string = "Select NamespacePrefix, SymbolTable, Name From ApexClass Where Id IN (" + id_string + ")"
+        query_string = "Select NamespacePrefix, SymbolTable, Name From ApexClass Where Id IN (" + id_string + ") AND NamespacePrefix = '"+self.get_org_namespace()+"'"
         payload = { 'q' : query_string }
         r = requests.get(self.get_tooling_url()+"/query/", params=payload, headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
         return util.parse_rest_response(r.text)
