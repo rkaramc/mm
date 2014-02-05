@@ -682,7 +682,10 @@ class MavensMateClient(object):
             debug('coverage')
             debug(coverage)
             for r in coverage:
-                percent_covered = int(round(100 * ((float((r["NumLinesCovered"] + r["NumLinesUncovered"])) - float(r["NumLinesUncovered"])) / (r["NumLinesCovered"] + r["NumLinesUncovered"]))))
+                try:
+                    percent_covered = int(round(100 * ((float((r["NumLinesCovered"] + r["NumLinesUncovered"])) - float(r["NumLinesUncovered"])) / (r["NumLinesCovered"] + r["NumLinesUncovered"]))))
+                except:
+                    percent_covered = 0
                 r["percentCovered"] = percent_covered
                 if percent_covered < 40:
                     r['coverageLevel'] = 'danger'
