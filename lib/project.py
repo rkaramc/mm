@@ -463,14 +463,17 @@ class MavensMateProject(object):
             os.makedirs(os.path.join(self.location,"config",".symbols"))
         
         if apex_class_name_or_names == None:
-            apex_ids = []
-            classes = self.sfdc_client.list_metadata("ApexClass", True)
-            triggers = self.sfdc_client.list_metadata("ApexTrigger", True)
-            for c in classes:
-                apex_ids.append(c['id'])
-            for t in triggers:
-                apex_ids.append(t['id'])
-            symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids)
+            try:
+                apex_ids = []
+                classes = self.sfdc_client.list_metadata("ApexClass", True)
+                triggers = self.sfdc_client.list_metadata("ApexTrigger", True)
+                for c in classes:
+                    apex_ids.append(c['id'])
+                for t in triggers:
+                    apex_ids.append(t['id'])
+                symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids)
+            except:
+                symbol_table_result = {}
         else:
             class_names = []
             if type(apex_class_name_or_names) is not list:
