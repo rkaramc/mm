@@ -197,6 +197,8 @@ class MavensMateProject(object):
         util.put_password_by_key(self.id, self.password)
         self.__put_base_config()
         self.__set_sfdc_session()
+        if int(float(util.SFDC_API_VERSION)) >= 27:
+            self.reset_metadata_container()
 
     #upgrades project from the legacy format to 2.0+format
     def upgrade(self):
