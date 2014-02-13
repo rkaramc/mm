@@ -365,8 +365,9 @@ class SforceMetadataClient(SforceBaseClient):
                                             
                 #if this type has folders, run queries to grab all metadata in the folders
                 if is_folder_metadata == True:
-                    if element["manageableState"] != "unmanaged":
-                        continue
+                    if config.connection.get_plugin_client_setting('mm_ignore_managed_metadata', True):
+                        if 'manageableState' in element and element["manageableState"] != "unmanaged":
+                            continue
                     #print element["fullName"]
                     list_request = {
                         "type"      : metadata_type,
