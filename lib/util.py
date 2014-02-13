@@ -1105,3 +1105,8 @@ def grouper(n, iterable, fillvalue=None):
     "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n
     return itertools.izip_longest(fillvalue=fillvalue, *args)
+
+def list_grouper(n, iterable):
+    args = [iter(iterable)] * n
+    return ([e for e in t if e != None] for t in itertools.izip_longest(*args))
+     

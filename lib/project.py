@@ -464,22 +464,28 @@ class MavensMateProject(object):
 
     def index_apex_symbols(self, apex_class_name_or_names=None):
         '''
-        Writes out symbol tables to project's config/.symbols directory
+            Writes out symbol tables to project's config/.symbols directory
         '''
         
         try:
             if not os.path.exists(os.path.join(self.location,"config",".symbols")):
                 os.makedirs(os.path.join(self.location,"config",".symbols"))
             
+            symbol_table_result = {
+                "records" : []
+            }
+
             if apex_class_name_or_names == None:
-                try:
-                    apex_ids = []
-                    classes = self.sfdc_client.list_metadata("ApexClass", True)
-                    for c in classes:
-                        apex_ids.append(c['id'])
-                    symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids)
-                except:
-                    symbol_table_result = {}
+                apex_ids = []
+                classes = self.sfdc_client.list_metadata("ApexClass", True)
+                for c in classes:
+                    apex_ids.append(c['id'])
+
+                list_of_apex_id_lists = list(util.list_grouper(20, apex_ids)) #split apex ids into lists of max size 20
+                for apex_ids_list in list_of_apex_id_lists:                    
+                    local_symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_id(apex_ids_list)
+                    if 'records' in local_symbol_table_result and len(local_symbol_table_result['records']) > 0:
+                        symbol_table_result['records'] = symbol_table_result['records'] + local_symbol_table_result['records']
             else:
                 class_names = []
                 if type(apex_class_name_or_names) is not list:
@@ -489,7 +495,12 @@ class MavensMateProject(object):
                     apex_class_name = os.path.basename(class_name)
                     apex_class_name = apex_class_name.replace(".cls","")
                     class_names.append(apex_class_name)
-                symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_name(class_names)
+
+                list_of_apex_class_name_lists = list(util.list_grouper(20, class_names)) #split apex ids into lists of max size 20
+                for apex_class_names_list in list_of_apex_class_name_lists:                    
+                    local_symbol_table_result = self.sfdc_client.get_symbol_tables_by_class_name(apex_class_names_list)
+                    if 'records' in local_symbol_table_result and len(local_symbol_table_result['records']) > 0:
+                        symbol_table_result['records'] = symbol_table_result['records'] + local_symbol_table_result['records']
 
             if 'records' in symbol_table_result and len(symbol_table_result['records']) > 0:
                 for r in symbol_table_result['records']:
@@ -506,7 +517,10 @@ class MavensMateProject(object):
 
             return util.generate_success_response("Apex symbols indexed successfully")
         #except (TypeError):
-        except:
+        except BaseException, e:
+            debug('------> error indexing apex symbols')
+            debug(e.message)
+
             directories = []
             if os.path.exists(os.path.join(self.location, 'src', 'classes')):
                 directories.append(os.path.join(self.location, 'src', 'classes'))
@@ -952,6 +966,7 @@ class MavensMateProject(object):
                 "org_url"               : self.org_url,
                 "subscription"          : self.subscription or config.connection.get_plugin_client_setting('mm_default_subscription')
             }
+
             if int(float(util.SFDC_API_VERSION)) >= 27:
                 settings['metadata_container'] = self.sfdc_client.get_metadata_container_id()
         src = open(os.path.join(config.connection.workspace,self.project_name,"config",".settings"), "w")
