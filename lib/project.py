@@ -189,16 +189,26 @@ class MavensMateProject(object):
     
 
     #updates the salesforce.com credentials associated with the project
-    def update_credentials(self):
-        self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type,"org_url":self.org_url}, override_session=True)              
-        self.id = self.settings['id']
-        self.username = self.username
+    def update_credentials(self, params):
+        username = params['username']
+        password = params['password']
+        org_type = params['org_type']
+        org_url  = params.get('org_url', None)
+        self.sfdc_client = MavensMateClient(credentials={"username":username,"password":password,"org_type":org_type,"org_url":org_url}, override_session=True)              
+        
+        if int(float(util.SFDC_API_VERSION)) >= 27:
+            self.reset_metadata_container()
+
+        self.username = params['username']
+        self.password = params['password']
+        self.org_type = params['org_type']
         self.environment = self.org_type
+        self.org_url  = params.get('org_url', None)
+        self.id = self.settings['id']
+
         util.put_password_by_key(self.id, self.password)
         self.__put_base_config()
         self.__set_sfdc_session()
-        if int(float(util.SFDC_API_VERSION)) >= 27:
-            self.reset_metadata_container()
 
     #upgrades project from the legacy format to 2.0+format
     def upgrade(self):

@@ -128,11 +128,7 @@ class ProjectHealthCheckCommand(Command):
 
 class UpdateCredentialsCommand(Command):
     def execute(self):
-        config.project.username = self.params['username']
-        config.project.password = self.params['password']
-        config.project.org_type = self.params['org_type']
-        config.project.org_url  = self.params.get('org_url', None)
-        config.project.update_credentials()
+        config.project.update_credentials(self.params)
         return util.generate_success_response('Your credentials were updated successfully')
               
 class UpgradeProjectCommand(Command):
