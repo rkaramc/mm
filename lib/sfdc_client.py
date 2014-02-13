@@ -135,7 +135,9 @@ class MavensMateClient(object):
     def describeMetadata(self, **kwargs):
         if self.mclient == None:
             self.mclient = self.__get_metadata_client()
-        return self.mclient.describeMetadata(**kwargs)
+        if config.describe_data == None:
+            config.describe_data = self.mclient.describeMetadata(**kwargs)
+        return config.describe_data
 
     def describeObject(self, object_name):
         r = requests.get(self.get_base_url()+"/sobjects/"+object_name+"/describe", headers=self.get_rest_headers(), proxies=urllib.getproxies(), verify=False)
