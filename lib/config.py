@@ -57,6 +57,7 @@ base_path = __get_base_path()
 connection = None
 project = None
 sfdc_client = None
+describe_data = None
 
 windows_platforms = ["win32","win64","cygwin"]
 linux_platforms = ["linux2"]
