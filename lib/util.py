@@ -982,8 +982,11 @@ def get_metadata_hash(selected_files=[]):
         if '-meta.xml' in f:
             continue
         name, ext = os.path.splitext(f)
-        base_name_no_ext = os.path.basename(f).split(".")[0]
-        ext_no_period = ext.replace(".", "")
+        ext_no_period = ext.replace(".", "")   
+        if os.path.basename(f).count('.') > 1: #fix for weird metadata types like approvalprocess
+            base_name_no_ext = os.path.basename(f).split(".")[0]+"."+os.path.basename(f).split(".")[1]
+        else:
+            base_name_no_ext = os.path.basename(f).split(".")[0]
         try:
             metadata_definition = get_meta_type_by_suffix(ext_no_period)      
             meta_type = metadata_definition["xmlName"]

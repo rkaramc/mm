@@ -54,6 +54,7 @@
             "childXmlNames": [
                 "CustomField", 
                 "BusinessProcess", 
+                "CompactLayout", 
                 "RecordType", 
                 "WebLink", 
                 "ValidationRule", 
@@ -118,11 +119,35 @@
             "xmlName": "CustomPageWebLink"
         }, 
         {
+            "directoryName": "quickActions", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "quickAction", 
+            "xmlName": "QuickAction"
+        }, 
+        {
+            "childXmlNames": {
+                "@xsi:nil": "true"
+            }, 
+            "directoryName": "flexipages", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "flexipage", 
+            "xmlName": "FlexiPage"
+        }, 
+        {
             "directoryName": "tabs", 
             "inFolder": false, 
             "metaFile": false, 
             "suffix": "tab", 
             "xmlName": "CustomTab"
+        }, 
+        {
+            "directoryName": "customApplicationComponents", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "customApplicationComponent", 
+            "xmlName": "CustomApplicationComponent"
         }, 
         {
             "directoryName": "applications", 
@@ -146,13 +171,6 @@
             "xmlName": "EmailTemplate"
         }, 
         {
-            "directoryName": "quickActions", 
-            "inFolder": false, 
-            "metaFile": false, 
-            "suffix": "quickAction", 
-            "xmlName": "QuickAction"
-        }, 
-        {
             "childXmlNames": [
                 "WorkflowFieldUpdate", 
                 "WorkflowKnowledgePublish", 
@@ -163,6 +181,7 @@
                 "WorkflowSend", 
                 "WorkflowOutboundMessage", 
                 "WorkflowActionFlow", 
+                "WorkflowApex", 
                 "WorkflowRule", 
                 {
                     "@xsi:nil": "true"
@@ -206,18 +225,25 @@
             "xmlName": "Role"
         }, 
         {
-            "directoryName": "territories", 
-            "inFolder": false, 
-            "metaFile": false, 
-            "suffix": "territory", 
-            "xmlName": "Territory"
-        }, 
-        {
             "directoryName": "groups", 
             "inFolder": false, 
             "metaFile": false, 
             "suffix": "group", 
             "xmlName": "Group"
+        }, 
+        {
+            "directoryName": "postTemplates", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "postTemplate", 
+            "xmlName": "PostTemplate"
+        }, 
+        {
+            "directoryName": "approvalProcesses", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "approvalProcess", 
+            "xmlName": "ApprovalProcess"
         }, 
         {
             "directoryName": "homePageComponents", 
@@ -239,13 +265,6 @@
             "metaFile": false, 
             "suffix": "objectTranslation", 
             "xmlName": "CustomObjectTranslation"
-        }, 
-        {
-            "directoryName": "translations", 
-            "inFolder": false, 
-            "metaFile": false, 
-            "suffix": "translation", 
-            "xmlName": "Translations"
         }, 
         {
             "directoryName": "flows", 
@@ -302,13 +321,6 @@
             "metaFile": false, 
             "suffix": "authprovider", 
             "xmlName": "AuthProvider"
-        }, 
-        {
-            "directoryName": "sites", 
-            "inFolder": false, 
-            "metaFile": false, 
-            "suffix": "site", 
-            "xmlName": "CustomSite"
         }, 
         {
             "childXmlNames": [
@@ -377,14 +389,6 @@
             "xmlName": "AccountSharingRules"
         }, 
         {
-            "childXmlNames": "AccountTerritorySharingRule", 
-            "directoryName": "accountTerritorySharingRules", 
-            "inFolder": false, 
-            "metaFile": false, 
-            "suffix": "sharingRules", 
-            "xmlName": "AccountTerritorySharingRules"
-        }, 
-        {
             "childXmlNames": [
                 "CustomObjectOwnerSharingRule", 
                 "CustomObjectCriteriaBasedSharingRule"
@@ -408,6 +412,27 @@
             "metaFile": false, 
             "suffix": "callCenter", 
             "xmlName": "CallCenter"
+        }, 
+        {
+            "directoryName": "connectedApps", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "connectedApp", 
+            "xmlName": "ConnectedApp"
+        }, 
+        {
+            "directoryName": "samlssoconfigs", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "samlssoconfig", 
+            "xmlName": "SamlSsoConfig"
+        }, 
+        {
+            "directoryName": "synonymDictionaries", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "synonymDictionary", 
+            "xmlName": "SynonymDictionary"
         }, 
         {
             "directoryName": "settings", 
