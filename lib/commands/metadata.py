@@ -204,12 +204,12 @@ class OpenSelectedMetadataCommand(Command):
     def execute(self):
         project = config.project
         sfdc_client = config.sfdc_client
-        if "files" in params:
-            if "type" in params: 
+        if "files" in self.params:
+            if "type" in self.params: 
                 open_type = params.get("type", None) 
             else:
                 open_type = "edit"
-            files = params.get("files", None)
+            files = self.params.get("files", None)
             if len(files) > 0:
                 apex_file_properties = util.parse_json_from_file(os.path.join(project.location,"config",".local_store"))
                 opened = []
