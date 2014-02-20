@@ -111,9 +111,12 @@ class MavensMateRequestHandler():
                     if hasattr(response, 'message'):
                         json_res = {"body":response.message,"success":False,"stack_trace":util.format_exception()}
                     else:
-                        json_res = {"body":response,"success":False,"stack_trace":util.format_exception()}
-                    response = json.dumps(json_res)
-                    print response
+                        json_res = {"body":str(response),"success":False,"stack_trace":util.format_exception()}
+                    try:
+                        response = json.dumps(json_res)
+                        print response
+                    except:
+                        print json.dumps({"body":str(response),"success":False,"stack_trace":util.format_exception()})
                 else:
                     try:
                         obj = json.loads(response)
