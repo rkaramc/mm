@@ -282,38 +282,37 @@ class MavensMateClient(object):
 
             #create/submit "member"
             payload['MetadataContainerId']  = container_id
-            payload['ContentEntityId']      = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
+            if file_name in config.api_name_to_id_dict:
+                payload['ContentEntityId']      = config.api_name_to_id_dict[file_name]
+            else:
+                payload['ContentEntityId']      = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
             payload['Body']                 = open(file_path, 'r').read()
             #payload['LastSyncDate']         = TODO
             payload = json.dumps(payload)
             config.logger.debug(payload)
             r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
-            if self.__is_failed_request(r):
-                self.__exception_handler(r)
             response = util.parse_rest_response(r.text)
             
-            #if it's a dup (probably bc we failed to delete before, let's delete and retry)
+            #if the member already exists, patch it (TODO: cache member ids and go right to patch, handle exception)
             if type(response) is list and 'errorCode' in response[0]:
+                debug('----> post to tooling member failed')
+                #debug(response[0]['errorCode'])
+
                 if response[0]['errorCode'] == 'DUPLICATE_VALUE':
                     dup_id = response[0]['message'].split(':')[-1]
                     dup_id = dup_id.strip()
-                    query_string = "Select Id from "+tooling_type+" Where Id = '"+dup_id+"'"
-                    r = requests.get(self.get_tooling_url()+"/query/", params={'q':query_string}, headers=self.get_rest_headers(), proxies=self.__get_proxies(), verify=False)
-                    if self.__is_failed_request(r):
-                        self.__exception_handler(r)
-                    query_result = util.parse_rest_response(r.text)
                     
-                    r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, query_result['records'][0]['Id']), headers=self.get_rest_headers(), proxies=self.__get_proxies(), verify=False)
+                    payload = json.loads(payload)
+                    payload.pop("MetadataContainerId", None)
+                    payload.pop("ContentEntityId", None)
+                    payload = json.dumps(payload)
+                    r = requests.patch(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, dup_id), data=payload, headers=self.get_rest_headers('PATCH'), proxies=self.__get_proxies(), verify=False)
                     if self.__is_failed_request(r):
-                        self.__exception_handler(r)
+                       self.__exception_handler(r)
 
-                    #retry member request
-                    r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
-                    if self.__is_failed_request(r):
-                        self.__exception_handler(r)
-                    response = util.parse_rest_response(r.text)
-                    member_id = response['id']
+                    member_id = dup_id
                 elif response[0]['errorCode'] == 'INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY' or response[0]['errorCode'] == 'MALFORMED_ID':
+                    debug('----> bad metadata container')
                     raise MetadataContainerException('Invalid metadata container')
                 else:
                     return util.generate_error_response(response[0]['errorCode'])
@@ -346,10 +345,10 @@ class MavensMateClient(object):
                     finished = True
 
         #clean up the apex member
-        if 'id' in response:
-            #delete member
-            r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, member_id), headers=self.get_rest_headers(), proxies=self.__get_proxies(), verify=False)
-            r.raise_for_status()
+        # if 'id' in response:
+        #     #delete member
+        #     r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, member_id), headers=self.get_rest_headers(), proxies=self.__get_proxies(), verify=False)
+        #     r.raise_for_status()
 
         return response    
 
@@ -851,7 +850,7 @@ class MavensMateClient(object):
     def get_rest_headers(self, method='GET'):
         headers = {}
         headers['Authorization'] = 'Bearer '+self.sid
-        if method == 'POST':
+        if method == 'POST' or method == 'PATCH':
             headers['Content-Type'] = 'application/json'
         return headers
 

@@ -51,6 +51,7 @@ connection = None
 project = None
 sfdc_client = None
 describe_data = None
+api_name_to_id_dict = {}
 
 windows_platforms = ["win32","win64","cygwin"]
 linux_platforms = ["linux2"]

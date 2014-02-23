@@ -117,6 +117,11 @@ class ConflictManager(object):
             for p in properties:
                 if p["fullName"] == apex_entity_api_name:
                     server_property = p
+                    try:
+                        config.api_name_to_id_dict[p["fullName"]] = p["id"]
+                    except:
+                        pass
+                    break
             if api_name_plus_extension in local_store and server_property != None:
                 local_store_entry = local_store[api_name_plus_extension]
                 local_last_modified_date = local_store_entry["lastModifiedDate"]
