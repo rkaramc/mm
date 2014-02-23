@@ -36,8 +36,6 @@ class NewMetadataCommand(Command):
         if api_name == None:
             return util.generate_error_response("You must provide a name for the new metadata.")
 
-        #debug(type(api_name))
-
         if sfdc_client.does_metadata_exist(object_type=metadata_type, name=api_name) == True:
             mt = util.get_meta_type_by_name(metadata_type)
             filepath = os.path.join(project.location, 'src', mt['directoryName'], api_name+'.'+mt['suffix'])

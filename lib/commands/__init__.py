@@ -5,12 +5,13 @@ import metadata
 import project
 import unittest
 import misc
+import server
 import re
 
 command_list = {}
 
 modules = [
-    debug, deploy, metadata, project, unittest, misc
+    debug, deploy, metadata, project, unittest, misc, server
 ]
 
 def camelCaseToUnderscore(name):
