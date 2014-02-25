@@ -127,7 +127,13 @@ class ConflictManager(object):
                 local_last_modified_date = local_store_entry["lastModifiedDate"]
                 server_last_modified_date = server_property['lastModifiedDate']
                 last_modified_name = server_property['lastModifiedByName']
-                qr = self.project.sfdc_client.query("Select LastModifiedById, LastModifiedDate, LastModifiedBy.Name, {0} From {1} Where Name = '{2}'".format(body_field, apex_type['xmlName'], apex_entity_api_name))
+                qr = self.project.sfdc_client.execute_query("Select LastModifiedById, LastModifiedDate, LastModifiedBy.Name, {0} From {1} Where Name = '{2}'".format(body_field, apex_type['xmlName'], apex_entity_api_name))
+                # lets use the soap endpoint here to help the folks being affected by their proxy refusing REST requests bc of Authorization header
+                # https://github.com/joeferraro/MavensMate-SublimeText/issues/315#issuecomment-35996112
+                # try:
+                #     qr = self.project.sfdc_client.query("Select LastModifiedById, LastModifiedDate, LastModifiedBy.Name, {0} From {1} Where Name = '{2}'".format(body_field, apex_type['xmlName'], apex_entity_api_name))
+                # except:
+                #     qr = self.project.sfdc_client.execute_query("Select LastModifiedById, LastModifiedDate, LastModifiedBy.Name, {0} From {1} Where Name = '{2}'".format(body_field, apex_type['xmlName'], apex_entity_api_name))
                 body = qr['records'][0][body_field]
                 body = body.encode('utf-8')
                 if str(local_last_modified_date) != str(server_last_modified_date) or local_store_entry['mmState'] == 'dirty':
