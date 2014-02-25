@@ -325,8 +325,14 @@ class MavensMateProject(object):
                 if use_tooling_api == True and int(float(util.SFDC_API_VERSION)) >= 27:
                     self.reset_metadata_container()
 
-            project_metadata = self.sfdc_client.retrieve(package=self.package)
-            
+            try:
+                project_metadata = self.sfdc_client.retrieve(package=self.package)
+            except Exception, e:
+                if 'not well-formed (invalid token)' in e.message:
+                    raise MMException('Malformed package.xml: '+e.message)
+                else:
+                    raise e
+
             #freshen local store
             self.conflict_manager.refresh_local_store(project_metadata.fileProperties)
             
