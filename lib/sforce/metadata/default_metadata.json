@@ -106,6 +106,13 @@
             "xmlName": "Layout"
         }, 
         {
+            "directoryName": "portals", 
+            "inFolder": false, 
+            "metaFile": false, 
+            "suffix": "portal", 
+            "xmlName": "Portal"
+        }, 
+        {
             "directoryName": "documents", 
             "inFolder": true, 
             "metaFile": true, 
