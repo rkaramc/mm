@@ -379,7 +379,9 @@ def get_meta_type_by_name(name):
     raise MMException('Unknown metadata type: '+name)
 
 def put_skeleton_files_on_disk(metadata_type, api_name, where, apex_class_type='default', apex_trigger_object_api_name='', github_template=None):
-    
+    """
+        Generates file based on jinja2 templates
+    """
     file_name = github_template["file_name"]
     template_source = config.connection.get_plugin_client_setting('mm_template_source', 'joeferraro/MavensMate-Templates/master')
     template_location = config.connection.get_plugin_client_setting('mm_template_location', 'remote')

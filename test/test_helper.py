@@ -75,6 +75,16 @@ def clean_project(name="unit test project"):
     MavensMateRequestHandler().execute()
     return stdin
 
+def compile(name="unit test project", files=[]): 
+    stdin = {
+        "project_name"  : name,
+        "files"         : files
+    }
+    request.get_request_payload = mock.Mock(return_value=stdin)
+    sys.argv = ['mm.py', '-o', 'compile']
+    MavensMateRequestHandler().execute()
+    return stdin
+
 def compile_project(name="unit test project"): 
     stdin = {
         "project_name"  : name

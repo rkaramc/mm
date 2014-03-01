@@ -7,6 +7,8 @@ from functional.tooling.checkpoint_tests import CheckpointTests
 from functional.tooling.log_tests import StackTraceAndLogsTest
 from functional.metadata.refresh_tests import MetadataRefreshTest
 from functional.project.ui_integration_test import ProjectUiIntegrationTest
+from functional.metadata.compilation_tests import CompilationTests
+
 
 def suite():
     test_classes = [
@@ -16,7 +18,8 @@ def suite():
         MetadataRefreshTest, 
         CheckpointTests,
         StackTraceAndLogsTest,
-        ProjectUiIntegrationTest
+        ProjectUiIntegrationTest,
+        CompilationTests
     ]
     suite = unittest.TestSuite()
     for unit_test_class in test_classes:

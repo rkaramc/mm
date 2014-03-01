@@ -204,7 +204,7 @@ class OpenSelectedMetadataCommand(Command):
         sfdc_client = config.sfdc_client
         if "files" in self.params:
             if "type" in self.params: 
-                open_type = params.get("type", None) 
+                open_type = self.params.get("type", None) 
             else:
                 open_type = "edit"
             files = self.params.get("files", None)
