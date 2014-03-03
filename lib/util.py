@@ -376,7 +376,7 @@ def get_meta_type_by_name(name):
     for item in child_data: 
         if 'xmlName' in item and item['xmlName'] == name:
             return item
-    raise MMException('Unknown metadata type: '+name)
+    #raise MMException('Unknown metadata type: '+name)
 
 def put_skeleton_files_on_disk(metadata_type, api_name, where, apex_class_type='default', apex_trigger_object_api_name='', github_template=None):
     """
