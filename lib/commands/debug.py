@@ -114,10 +114,20 @@ class NewTraceFlagCommand(Command):
         for c in self.params['debug_categories']:
             if 'category' in c:
                 request[c['category']] = c['level']
+            else:
+                request[c] = self.params['debug_categories'][c]
         
         request['ExpirationDate'] = util.get_iso_8601_timestamp(int(float(self.params.get('expiration', 30))))
 
+        config.logger.debug(self.params['debug_categories'])
+        config.logger.debug("Log creation reuqest--->")
+        config.logger.debug(request)
+
         create_result = config.sfdc_client.create_trace_flag(request)
+
+        config.logger.debug("Log creation response--->")
+        config.logger.debug(create_result)
+
         if type(create_result) is list:
             create_result = create_result[0]
         if type(create_result) is not str and type(create_result) is not unicode:
