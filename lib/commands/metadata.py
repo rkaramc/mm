@@ -24,17 +24,13 @@ class NewMetadataCommand(Command):
         sfdc_client = config.sfdc_client
 
         metadata_type                   = self.params.get('metadata_type', None)
-        api_name                        = self.params.get('api_name', None)
-        apex_class_type                 = self.params.get('apex_class_type', None)
-        apex_trigger_object_api_name    = self.params.get('apex_trigger_object_api_name', None)
-        apex_trigger_object_api_name    = self.params.get('apex_trigger_object_api_name', None)
         github_template                 = self.params.get('github_template', None)
+        params                          = self.params.get('params', None)
 
-        if metadata_type == 'ApexClass' and apex_class_type == None:
-            apex_class_type = 'default'
-
-        if api_name == None:
+        if "api_name" not in params or params["api_name"] == None:
             return util.generate_error_response("You must provide a name for the new metadata.")
+
+        api_name = params["api_name"]
 
         if sfdc_client.does_metadata_exist(object_type=metadata_type, name=api_name) == True:
             mt = util.get_meta_type_by_name(metadata_type)
@@ -42,13 +38,13 @@ class NewMetadataCommand(Command):
             fetched = ""
             if not os.path.exists(filepath):
                 self.params['files'] = [filepath]
-                refresh_selected_metadata(self.params)
+                RefreshSelectedMetadataCommand(params=self.params,args=self.args).execute()
                 fetched = ", fetched metadata file from server"
             raise MMException("This API name is already in use in your org" + fetched + ".")      
 
         tmp, tmp_unpackaged = util.put_tmp_directory_on_disk(True)
         
-        util.put_skeleton_files_on_disk(metadata_type, api_name, tmp_unpackaged, apex_class_type, apex_trigger_object_api_name, github_template)
+        util.put_skeleton_files_on_disk(metadata_type, tmp_unpackaged, github_template, params)
         package_xml_body = util.get_package_xml_contents({metadata_type : [ api_name ]})
         util.put_package_xml_in_directory(tmp_unpackaged, package_xml_body)
         zip_file = util.zip_directory(tmp, tmp)
