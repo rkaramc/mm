@@ -1053,7 +1053,7 @@ class MavensMateProject(object):
         self.__put_describe_file()
         self.put_debug_file()
 
-    def put_debug_file(self, users=None, levels=None, expiration=60):
+    def put_debug_file(self, users=None, levels=None, expiration=480):
         project_path = os.path.join(config.connection.workspace,self.project_name)
         if not os.path.exists(os.path.join(project_path, 'config')):
             os.makedirs(os.path.join(project_path, 'config'))
