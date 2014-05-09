@@ -8,6 +8,7 @@ import requests
 import time
 import urllib
 import datetime
+import re
 from operator import itemgetter
 sys.path.append('../')
 
@@ -280,15 +281,36 @@ class MavensMateClient(object):
             elif metadata_type == 'ApexTrigger':
                 tooling_type = 'ApexTriggerMember'
 
-            #create/submit "member"
-            payload['MetadataContainerId']  = container_id
+            # get content entity id
+            content_entity_id = None
             if file_name in config.api_name_to_id_dict:
-                payload['ContentEntityId']      = config.api_name_to_id_dict[file_name]
+                content_entity_id = config.api_name_to_id_dict[file_name]
             else:
-                payload['ContentEntityId']      = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
-            payload['Body']                 = open(file_path, 'r').read()
+                content_entity_id = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
+            
+            # create new component if needed
+            if content_entity_id == None:
+                payload['Body']                 = open(file_path, 'r').read()
+                payload['Name']                 = file_name
+                if metadata_type == 'ApexTrigger':
+                    # grab object from body
+                    m = re.search('on (.*?) \(', payload['Body'])
+                    payload['TableEnumOrId']    = m.group(1)
+                payload = json.dumps(payload)
+                config.logger.debug('Creating new member')
+                config.logger.debug(payload)
+                r = requests.post(self.get_tooling_url()+"/sobjects/"+metadata_type, data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
+                response = util.parse_rest_response(r.text)
+                content_entity_id = response['id']
+                payload = {}
+            
+            # create/update member 
             #payload['LastSyncDate']         = TODO
+            payload['Body']                 = open(file_path, 'r').read()
+            payload['MetadataContainerId']  = container_id
+            payload['ContentEntityId']      = content_entity_id
             payload = json.dumps(payload)
+            config.logger.debug('Updating existing member')
             config.logger.debug(payload)
             r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
             response = util.parse_rest_response(r.text)
