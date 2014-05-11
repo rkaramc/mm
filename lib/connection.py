@@ -19,7 +19,7 @@ class PluginConnection(object):
 
     currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3', 'BRACKETS']
     PluginClients = enum(SUBLIME_TEXT_2='SUBLIME_TEXT_2', SUBLIME_TEXT_3='SUBLIME_TEXT_3', BRACKET='BRACKETS', NOTEPAD_PLUS_PLUS='NOTEPAD_PLUS_PLUS', TEXTMATE='TEXTMATE')
-    
+
     def __init__(self, params={}, **kwargs):
         params = dict(params.items() + kwargs.items()) #join params and kwargs
         self.operation              = params.get('operation', None)
@@ -106,7 +106,7 @@ class PluginConnection(object):
                 config.suds_logger.setLevel(logging.DEBUG)
                 config.requests_log.setLevel(logging.DEBUG)
             elif log_level == 'INFO':
-                config.logger.setLevel(logging.INFO) 
+                config.logger.setLevel(logging.INFO)
                 config.suds_logger.setLevel(logging.INFO)
                 config.requests_log.setLevel(logging.INFO)
 
@@ -163,7 +163,7 @@ class PluginConnection(object):
             sublime_ver = "Sublime Text 3"
         elif self.plugin_client == self.PluginClients.SUBLIME_TEXT_2:
             sublime_ver = "Sublime Text 2"
-        
+
         if sys.platform == 'darwin':
             if 'SUBLIME_TEXT' in self.plugin_client:
                 if sublime_ver == "Sublime Text 3":
@@ -179,7 +179,7 @@ class PluginConnection(object):
                 else:
                     return os.path.join(os.path.expanduser('~'),"Library","Application Support","Brackets","extensions","user","mavensmate","settings.json")
         elif sys.platform == 'win32' or sys.platform == 'cygwin':
-            return os.path.join(os.environ['APPDATA'], sublime_ver, 'Packages',type,obj)
+            return os.path.join(os.path.dirname(os.path.realpath(__file__))+"\\..\\..\\..",type,obj)
         elif sys.platform == 'linux2':
             return os.path.join(os.path.expanduser('~'),".config","sublime-text-3","Packages",type,obj)
         else:
@@ -199,7 +199,7 @@ class PluginConnection(object):
 
         if sys.platform == 'darwin':
             client_location = self.get_plugin_client_setting('mm_plugin_client_location')
-            plugin_app_name = self.get_plugin_client_setting('mm_osx_plugin_client_app_name') 
+            plugin_app_name = self.get_plugin_client_setting('mm_osx_plugin_client_app_name')
             if client_location == None:
                 client_location = '/Applications'
             if plugin_app_name == None:
