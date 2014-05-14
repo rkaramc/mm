@@ -894,8 +894,10 @@ class MavensMateClient(object):
             return urllib.getproxies()             
 
     def __get_partner_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'partner-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'partner-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'partner.xml')
         try:
@@ -913,8 +915,10 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_metadata_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'metadata-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'metadata-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'metadata.xml')
 
@@ -933,8 +937,10 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_apex_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'apex-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'apex-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'apex.xml')
 
@@ -953,8 +959,10 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_tooling_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'tooling-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'tooling-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'tooling.xml')
 
