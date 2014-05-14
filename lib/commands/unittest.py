@@ -13,6 +13,11 @@ from debug import NewQuickTraceFlagCommand
 
 debug = config.logger.debug
 
+class RunAllTestsAsyncCommand(Command):
+    aliases=["run_all_tests"]
+    def execute(self):
+        return config.sfdc_client.run_async_apex_tests(None, False, True)
+
 class RunUnitTestsAsyncCommand(Command):
     aliases=["unit_test","test"]
     """
@@ -131,7 +136,7 @@ class RunAsyncApexTestsCommand(Command):
 class CodeCoverageReportCommand(Command):
     aliases=["coverage_report"]
     """
-        Retrieves a test coverage report for all Apex Classes & Apex Triggers in a project
+        Retrieves a test coverage report for each Apex Class & Apex Trigger in a project
     """
     def execute(self):
         project = config.project
@@ -145,8 +150,8 @@ class CodeCoverageReportCommand(Command):
         if os.path.isdir(os.path.join(project.location,"src","triggers")):
             for dirname, dirnames, filenames in os.walk(os.path.join(project.location,"src","triggers")):
                 for filename in filenames:
-                    if "test" not in filename.lower() and "-meta.xml" not in filename:
-                        classes.append(util.get_file_name_no_extension(filename))
+                    if "-meta.xml" not in filename:
+                        triggers.append(util.get_file_name_no_extension(filename))
 
         params = {
             "classes"   : classes,
@@ -163,6 +168,9 @@ class GetApexTestCoverageCommand(Command):
         return config.sfdc_client.get_apex_test_coverage(self.params, transform_ids=True)
 
 class GetOrgWideTestCoverageCommand(Command):
+    """
+        Gets percent coverage on all Apex in the org
+    """
     def execute(self):
         return config.sfdc_client.get_org_wide_test_coverage()
 
