@@ -18,22 +18,23 @@ debug = config.logger.debug
 class PluginConnection(object):
 
     currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3', 'BRACKETS']
-    PluginClients = enum(SUBLIME_TEXT_2='SUBLIME_TEXT_2', SUBLIME_TEXT_3='SUBLIME_TEXT_3', BRACKET='BRACKETS', NOTEPAD_PLUS_PLUS='NOTEPAD_PLUS_PLUS', TEXTMATE='TEXTMATE')
+    PluginClients = enum(SUBLIME_TEXT_2='SUBLIME_TEXT_2', SUBLIME_TEXT_3='SUBLIME_TEXT_3', ATOM='ATOM', BRACKET='BRACKETS', NOTEPAD_PLUS_PLUS='NOTEPAD_PLUS_PLUS', TEXTMATE='TEXTMATE')
     
     def __init__(self, params={}, **kwargs):
         params = dict(params.items() + kwargs.items()) #join params and kwargs
+        self.params                 = params
         self.operation              = params.get('operation', None)
         self.args                   = params.get('args', None)
         self.plugin_client          = params.get('client', 'SUBLIME_TEXT_3') #=> "Sublime Text", "Notepad++", "TextMate"
         if self.plugin_client not in self.currently_supported_clients:
             self.plugin_client = 'SUBLIME_TEXT_3'
-        self.plugin_client_settings = self.get_plugin_client_settings()
+        self.project_name           = params.get('project_name', None)
         self.project_location       = params.get('project_location', None)
+        self.plugin_client_settings = self.get_plugin_client_settings()
         if self.project_location == None:
             self.workspace              = params.get('workspace', self.get_workspace())
         else:
             self.workspace              = os.path.dirname(self.project_location)
-        self.project_name           = params.get('project_name', None)
         if self.project_name != None and self.project_location == None:
             self.project_location = os.path.join(self.workspace,self.project_name)
         self.project_id             = params.get('project_id', None)
@@ -146,6 +147,13 @@ class PluginConnection(object):
         user_path = self.get_plugin_settings_path("User")
         def_path = self.get_plugin_settings_path("MavensMate")
         settings = {}
+
+        workspace = self.params.get('workspace', None)
+        if self.project_name != None and workspace != None:
+            try:
+                settings['project'] = util.parse_json_from_file(os.path.join(workspace,self.project_name,self.project_name+'.sublime-settings'))
+            except:
+                debug('Project settings could not be loaded')
         if not user_path == None:
             try:
                 settings['user'] = util.parse_json_from_file(user_path)
@@ -156,6 +164,8 @@ class PluginConnection(object):
                 settings['default'] = util.parse_json_from_file(def_path)
             except:
                 raise MMException('Could not load default MavensMate settings.')
+        if settings == {}:
+            raise MMException('Could not load MavensMate settings. Please ensure they contain valid JSON')
         return settings
 
     def get_plugin_settings_path(self, type="User", obj="mavensmate.sublime-settings"):
@@ -186,7 +196,11 @@ class PluginConnection(object):
             return None
 
     def get_plugin_client_setting(self, key, default=None):
+        debug('settings---->')
+        debug(self.plugin_client_settings)
         if self.plugin_client_settings != None:
+            if 'project' in self.plugin_client_settings and key in self.plugin_client_settings["project"]:
+                return self.plugin_client_settings["project"][key]
             if 'user' in self.plugin_client_settings and key in self.plugin_client_settings["user"]:
                 return self.plugin_client_settings["user"][key]
             if 'default' in self.plugin_client_settings and key in self.plugin_client_settings["default"]:

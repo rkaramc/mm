@@ -115,6 +115,7 @@ class MavensMateProject(object):
 
             self.location = os.path.join(config.connection.workspace,self.project_name)
             self.__put_project_file()
+            self.__put_project_settings_file()
             self.__put_base_config()
             self.__set_sfdc_session()
 
@@ -215,6 +216,7 @@ class MavensMateProject(object):
         self.sfdc_client = MavensMateClient(credentials={"username":self.username,"password":self.password,"org_type":self.org_type})             
         self.id = util.new_mavensmate_id()
         self.__put_project_file()
+        self.__put_project_settings_file()
         self.__put_base_config()
         self.__set_sfdc_session()
         if config.connection.get_plugin_client_setting("mm_mass_index_apex_symbols", False):
@@ -1126,6 +1128,26 @@ class MavensMateProject(object):
                 }
             }
             src.write(json.dumps(project_file, sort_keys=False, indent=4))
+            src.close()
+
+    def __put_project_settings_file(self):
+        if config.connection.plugin_client == 'SUBLIME_TEXT_2' or config.connection.plugin_client == 'SUBLIME_TEXT_3':
+            body = [
+                '/*',
+                '',
+                'MavensMate Project settings',
+                'NOTE: MavensMate Project settings will override MavensMate default and user settings',
+                '',
+                '*/',
+                '',
+                '{',
+                '   //"mm_api_version" : 29.0',
+                '   //"mm_compile_with_tooling_api" : true',
+                '}'
+            ]
+            path = os.path.join(config.connection.workspace,self.project_name,self.project_name+".sublime-settings")
+            src = open(path, "w")
+            src.write('\n'.join(body))
             src.close()
 
     def get_debug_users(self):
