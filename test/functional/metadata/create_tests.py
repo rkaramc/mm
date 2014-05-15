@@ -19,19 +19,38 @@ class MetadataOperationTest(MavensMateTest):
     def test_01_new_apex_class(self): 
         test_helper.create_project("unit test metadata project")
         commandOut = self.redirectStdOut()
+        # stdin = {
+        #     "github_template": {
+        #         "author": "MavensMate", 
+        #         "description": "The default template for an Apex Class", 
+        #         "name": "Default", 
+        #         "file_name": "ApexClass.cls"
+        #     }, 
+        #     "apex_trigger_object_api_name": None, 
+        #     "apex_class_type": None, 
+        #     "api_name": "unittestapexclass", 
+        #     "project_name": "unit test metadata project", 
+        #     "metadata_type": "ApexClass"
+        # }
         stdin = {
-            "github_template": {
-                "author": "MavensMate", 
-                "description": "The default template for an Apex Class", 
-                "name": "Default", 
-                "file_name": "ApexClass.cls"
-            }, 
-            "apex_trigger_object_api_name": None, 
-            "apex_class_type": None, 
-            "api_name": "unittestapexclass", 
-            "project_name": "unit test metadata project", 
-            "metadata_type": "ApexClass"
+            'project_name' : 'unit test metadata project',
+            'metadata_type': 'ApexClass', 
+            'params': {'api_name': 'unittestapexclass'}, 
+            'github_template': {
+                'author': 'MavensMate', 
+                'name': 'Default', 
+                'description': 'The default template for an Apex Class', 
+                'file_name': 'ApexClass.cls', 
+                'params': [
+                    {
+                        'default': 'MyApexClass', 
+                        'name': 'api_name', 
+                        'description': 'Apex Class API Name'
+                    }
+                ]
+            }
         }
+
         request.get_request_payload = mock.Mock(return_value=stdin)
         sys.argv = ['mm.py', '-o', 'new_metadata']
         MavensMateRequestHandler().execute()
