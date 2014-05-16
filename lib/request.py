@@ -90,6 +90,8 @@ class MavensMateRequestHandler():
         config.logger.debug('result from command execution')
         config.logger.debug(response)
         config.logger.debug(type(response))
+        if hasattr(response, 'message'):
+            config.logger.debug(response.message)
         config.logger.debug('---------------------')
         
         if type(response) is str or type(response) is unicode or is_exception:
@@ -108,7 +110,7 @@ class MavensMateRequestHandler():
             elif self.response_format == "json":
                 if is_exception:
                     #todo: move to generate method
-                    if hasattr(response, 'message'):
+                    if hasattr(response, 'message') and response.message != None and response.message != '':
                         json_res = {"body":response.message,"success":False,"stack_trace":util.format_exception()}
                     else:
                         json_res = {"body":str(response),"success":False,"stack_trace":util.format_exception()}
