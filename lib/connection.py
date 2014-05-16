@@ -7,6 +7,7 @@ import github
 import sys
 import config
 import logging
+import socket
 from logging.handlers import RotatingFileHandler
 import subprocess
 from enum import enum
@@ -46,6 +47,8 @@ class PluginConnection(object):
             util.WSDL_PATH = params.get('wsdl_path')
 
         self.setup_logging()
+        if self.get_plugin_client_setting('mm_timeout', None) != None:
+            socket.setdefaulttimeout(self.get_plugin_client_setting('mm_timeout'))
 
         debug('')
         debug('--------------------------------------------')
@@ -196,8 +199,6 @@ class PluginConnection(object):
             return None
 
     def get_plugin_client_setting(self, key, default=None):
-        debug('settings---->')
-        debug(self.plugin_client_settings)
         if self.plugin_client_settings != None:
             if 'project' in self.plugin_client_settings and key in self.plugin_client_settings["project"]:
                 return self.plugin_client_settings["project"][key]
