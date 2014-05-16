@@ -306,7 +306,9 @@ class CompileSelectedMetadataCommand(Command):
                 project.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
                 response = project.sfdc_client.new_metadatacontainer_for_this_user()
                 project.update_setting("metadata_container",response["id"])
-                return CompileSelectedMetadataCommand(params=self.params,args=self.args).execute()
+                #return CompileSelectedMetadataCommand(params=self.params,args=self.args).execute()
+                #ensure only a single retry
+                result = project.sfdc_client.compile_with_tooling_api(files, response["id"])
 
             if 'Id' in result and 'State' in result:
                 if result['State'] == 'Completed':
