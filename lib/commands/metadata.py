@@ -27,10 +27,13 @@ class NewMetadataCommand(Command):
         github_template                 = self.params.get('github_template', None)
         params                          = self.params.get('params', None)
 
+        if params == None:
+            raise MMException('The payload to create metadata has recently changed. If you are using Sublime Text, you likely need to update your MavensMate plugin to 3.4.8+')
+
         if "api_name" not in params or params["api_name"] == None:
             return util.generate_error_response("You must provide a name for the new metadata.")
 
-        api_name = params["api_name"]
+        api_name = params.get('api_name')
 
         if sfdc_client.does_metadata_exist(object_type=metadata_type, name=api_name) == True:
             mt = util.get_meta_type_by_name(metadata_type)
@@ -306,7 +309,9 @@ class CompileSelectedMetadataCommand(Command):
                 project.sfdc_client.delete_mavensmate_metadatacontainers_for_this_user()
                 response = project.sfdc_client.new_metadatacontainer_for_this_user()
                 project.update_setting("metadata_container",response["id"])
-                return CompileSelectedMetadataCommand(params=self.params,args=self.args).execute()
+                #return CompileSelectedMetadataCommand(params=self.params,args=self.args).execute()
+                #ensure only a single retry
+                result = project.sfdc_client.compile_with_tooling_api(files, response["id"])
 
             if 'Id' in result and 'State' in result:
                 if result['State'] == 'Completed':

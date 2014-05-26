@@ -12,7 +12,7 @@ To override default MavensMate settings, modify user-specific settings (MavensMa
 	"mm_workspace" : "/Users/josephferraro/Development/GitHub/mm/test/test_workspace",
 
 	//set to desired Salesforce.com API version
-	"mm_api_version" : "29.0",
+	"mm_api_version" : "30.0",
 
 	//if true, MavensMate will automatically hide the debug panel upon a successful operation
 	"mm_hide_panel_on_success" : true, 

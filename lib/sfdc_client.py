@@ -8,6 +8,7 @@ import requests
 import time
 import urllib
 import datetime
+import re
 from operator import itemgetter
 sys.path.append('../')
 
@@ -280,15 +281,36 @@ class MavensMateClient(object):
             elif metadata_type == 'ApexTrigger':
                 tooling_type = 'ApexTriggerMember'
 
-            #create/submit "member"
-            payload['MetadataContainerId']  = container_id
+            # get content entity id
+            content_entity_id = None
             if file_name in config.api_name_to_id_dict:
-                payload['ContentEntityId']      = config.api_name_to_id_dict[file_name]
+                content_entity_id = config.api_name_to_id_dict[file_name]
             else:
-                payload['ContentEntityId']      = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
-            payload['Body']                 = open(file_path, 'r').read()
+                content_entity_id = self.get_apex_entity_id_by_name(object_type=metadata_type, name=file_name)
+            
+            # create new component if needed
+            if content_entity_id == None:
+                payload['Body']                 = open(file_path, 'r').read()
+                payload['Name']                 = file_name
+                if metadata_type == 'ApexTrigger':
+                    # grab object from body
+                    m = re.search('on (.*?) \(', payload['Body'])
+                    payload['TableEnumOrId']    = m.group(1)
+                payload = json.dumps(payload)
+                config.logger.debug('Creating new member')
+                config.logger.debug(payload)
+                r = requests.post(self.get_tooling_url()+"/sobjects/"+metadata_type, data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
+                response = util.parse_rest_response(r.text)
+                content_entity_id = response['id']
+                payload = {}
+            
+            # create/update member 
             #payload['LastSyncDate']         = TODO
+            payload['Body']                 = open(file_path, 'r').read()
+            payload['MetadataContainerId']  = container_id
+            payload['ContentEntityId']      = content_entity_id
             payload = json.dumps(payload)
+            config.logger.debug('Updating existing member')
             config.logger.debug(payload)
             r = requests.post(self.get_tooling_url()+"/sobjects/"+tooling_type, data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
             response = util.parse_rest_response(r.text)
@@ -350,7 +372,7 @@ class MavensMateClient(object):
         #     r = requests.delete(self.get_tooling_url()+"/sobjects/{0}/{1}".format(tooling_type, member_id), headers=self.get_rest_headers(), proxies=self.__get_proxies(), verify=False)
         #     r.raise_for_status()
 
-        return response    
+        return response   
 
     def get_metadata_container_id(self):
         query_string = "Select Id from MetadataContainer Where Name = 'MavensMate-"+self.user_id+"'"
@@ -583,28 +605,35 @@ class MavensMateClient(object):
     #TESTING
     ###########    
 
-    def run_async_apex_tests(self, params, dump_to_json=False):
-        classes = params.get("classes", None)
-        if classes == None:
-            classes = params.get("files", None)
+    def run_async_apex_tests(self, params, dump_to_json=False, all_tests=False):
+        if all_tests:
+            classes = []
+            for dirname, dirnames, filenames in os.walk(os.path.join(config.project.location,"src","classes")):
+                for filename in filenames:
+                    if "test" in filename.lower() and "-meta.xml" not in filename:
+                        classes.append(util.get_file_name_no_extension(filename))
+        else:
+            classes = params.get("classes", None)
+            if classes == None:
+                classes = params.get("files", None)
         if classes == None or classes == []:
             raise MMException("Please submit Apex test classes to run")
         responses = []
+        parent_job_ids = []
         debug(classes)
         downloaded_log_ids = []
-        for c in classes:
-            class_id = self.get_apex_entity_id_by_name(object_type="ApexClass", name=c)
-            if class_id == None: continue
-            params = {
-                "ApexClassId" : class_id
-            }
-            payload = json.dumps(params)
+        class_name_result = self.get_apex_entity_id_by_name(object_type="ApexClass",class_or_trigger_names=classes)
+        
+        #submit ApexTestQueueItems for each class
+        for c in class_name_result:
+            if c.Id == None: continue
+            payload = json.dumps({ "ApexClassId" : c.Id })
             r = requests.post(self.get_tooling_url()+"/sobjects/ApexTestQueueItem", data=payload, headers=self.get_rest_headers('POST'), proxies=self.__get_proxies(), verify=False)
             if self.__is_failed_request(r):
                 self.__exception_handler(r)
             res = util.parse_rest_response(r.text)
             if "success" not in res and "message" in res:
-                raise MMException(r["message"])
+                raise MMException(res["message"])
             debug('test queue submission response')
             debug(res)
             if res["success"] == True:
@@ -612,41 +641,63 @@ class MavensMateClient(object):
                 qr = self.query("Select ParentJobId FROM ApexTestQueueItem WHERE Id='{0}'".format(res["id"]))
                 if qr["done"] == True and qr["totalSize"] == 1 and 'records' in qr:
                     parentJobId = qr['records'][0]["ParentJobId"]
-                finished = False
-                while finished == False:
-                    time.sleep(1)
-                    query_string = "SELECT ApexClassId, ApexClass.Name, Status, ExtendedStatus FROM ApexTestQueueItem WHERE ParentJobId = '{0}'".format(parentJobId)
-                    query_result = self.query(query_string)
-                    if query_result["done"] == True and query_result["totalSize"] == 1 and 'records' in query_result:
-                        done_statuses = ['Aborted', 'Completed', 'Failed']
-                        if query_result['records'][0]["Status"] in done_statuses:
-                            #now check for method results
-                            qr = self.query("SELECT Outcome, ApexClassId, ApexClass.Name, MethodName, Message, StackTrace, ApexLogId FROM ApexTestResult WHERE AsyncApexJobId ='{0}'".format(parentJobId))
-                            parent_response = query_result['records'][0]
-                            parent_response["detailed_results"] = []
-                            for r in qr["records"]:
-                                parent_response["detailed_results"].append(r)
-                                if "ApexLogId" in r and r["ApexLogId"] != None and r["ApexLogId"] not in downloaded_log_ids:
-                                    cname = r["ApexClass"]["Name"]
-                                    if os.path.isdir(os.path.join(config.connection.workspace,config.project.project_name,"debug","tests",cname)) == False:
-                                        os.makedirs(os.path.join(config.connection.workspace,config.project.project_name,"debug","tests",cname))
-                                    ts = time.time()
-                                    if not config.is_windows:
-                                        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-                                    else:
-                                        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
-                                    file_name = cname+"-"+st+".log"
-                                    file_path = os.path.join(config.connection.workspace,config.project.project_name,"debug","tests",cname,file_name)
-                                    debug_log_body = self.download_log(r["ApexLogId"])
-                                    src = open(file_path, "w")
-                                    src.write(debug_log_body)
-                                    src.close()
-                                    downloaded_log_ids.append(r["ApexLogId"]) 
-                            responses.append(parent_response)
-                            finished = True
+                parent_job_ids.append(parentJobId)
             else:
-                responses.append({"class":c,"success":False})
+                debug('Failed to submit ApexTestQueueItem')
+                debug(c)
+        
+        debug(parent_job_ids)
+        all_jobs_finished = False
+        while all_jobs_finished == False:
+            id_list = ','.join("'"+job_id+"'" for job_id in parent_job_ids)
+            soql = "Select ID From ApexTestQueueItem Where ParentJobId IN ({0}) AND Status NOT IN ('Aborted','Completed','Failed') LIMIT 1".format(id_list)
+            debug(soql)
+            is_job_done_query_result = self.execute_query(soql)
+            debug(is_job_done_query_result)
+            if is_job_done_query_result["size"] == 1:
+                if all_tests:
+                    time.sleep(10)
+                else:
+                    time.sleep(1)
+            else:
+                all_jobs_finished = True
 
+        for job_id in parent_job_ids:
+            try:
+                extended_result = self.query("SELECT ApexClassId, ApexClass.Name, Status, ExtendedStatus FROM ApexTestQueueItem WHERE ParentJobId = '{0}'".format(job_id))
+                qr = self.query("SELECT Outcome, ApexClassId, ApexClass.Name, MethodName, Message, StackTrace, ApexLogId FROM ApexTestResult WHERE AsyncApexJobId ='{0}'".format(job_id))
+                parent_response = extended_result['records'][0]
+                parent_response["detailed_results"] = []
+                for r in qr["records"]:
+                    parent_response["detailed_results"].append(r)
+                    if "ApexLogId" in r and r["ApexLogId"] != None and r["ApexLogId"] not in downloaded_log_ids:
+                        cname = r["ApexClass"]["Name"]
+                        if os.path.isdir(os.path.join(config.connection.workspace,config.project.project_name,"debug","tests",cname)) == False:
+                            os.makedirs(os.path.join(config.connection.workspace,config.project.project_name,"debug","tests",cname))
+                        ts = time.time()
+                        if not config.is_windows:
+                            st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                        else:
+                            st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
+                        file_name = cname+"-"+st+".log"
+                        file_path = os.path.join(config.connection.workspace,config.project.project_name,"debug","tests",cname,file_name)
+                        
+                        if all_tests and not config.connection.get_plugin_client_setting('mm_download_logs_during_run_all_tests', False):
+                            continue
+                        else:
+                            try:
+                                debug_log_body = self.download_log(r["ApexLogId"])
+                                src = open(file_path, "w")
+                                src.write(debug_log_body)
+                                src.close()
+                            except:
+                                debug('Failed to download debug log with id: '+r["ApexLogId"])
+                            downloaded_log_ids.append(r["ApexLogId"]) 
+                responses.append(parent_response)
+            except Exception, e:
+                raise e
+                responses.append({"job_id":job_id,"success":False})
+    
         if dump_to_json:
             return json.dumps(responses)
         else:
@@ -668,7 +719,7 @@ class MavensMateClient(object):
         for i, clazz in enumerate(classes):
             classes[i] = os.path.basename(clazz).replace(".cls","")
         for i, trigger in enumerate(triggers):
-            triggers[i] = os.path.basename(trigger).replace(".triggers","")
+            triggers[i] = os.path.basename(trigger).replace(".trigger","")
 
         if len(classes) > 0:
             class_name_result = sfdc_client.get_apex_entity_id_by_name(object_type="ApexClass",class_or_trigger_names=classes)
@@ -894,8 +945,10 @@ class MavensMateClient(object):
             return urllib.getproxies()             
 
     def __get_partner_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'partner-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'partner-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'partner.xml')
         try:
@@ -913,8 +966,10 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_metadata_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'metadata-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'metadata-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'metadata.xml')
 
@@ -933,8 +988,10 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_apex_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'apex-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'apex-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'apex.xml')
 
@@ -953,8 +1010,10 @@ class MavensMateClient(object):
             server_url=self.endpoint)
 
     def __get_tooling_client(self):
-        if int(float(util.SFDC_API_VERSION)) >= 29:
+        if int(float(util.SFDC_API_VERSION)) == 29:
             wsdl_location = os.path.join(util.WSDL_PATH, 'tooling-29.xml')
+        elif int(float(util.SFDC_API_VERSION)) >= 30:
+            wsdl_location = os.path.join(util.WSDL_PATH, 'tooling-30.xml')
         else:
             wsdl_location = os.path.join(util.WSDL_PATH, 'tooling.xml')
 

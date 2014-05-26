@@ -132,15 +132,15 @@ class HealthCheck(object):
             apex_parser_threads.append(apex_parser_thread)
             apex_parser_thread.start()
 
-        for files in vf_file_chunks:                    
-            vf_parser_thread = VfParser(files)
-            vf_parser_threads.append(vf_parser_thread)
-            vf_parser_thread.start()
-
         for thread in apex_parser_threads:
             thread.join()
             if thread.complete:
                 self.apex_parser_results.update(thread.result)
+
+        for files in vf_file_chunks:                    
+            vf_parser_thread = VfParser(files)
+            vf_parser_threads.append(vf_parser_thread)
+            vf_parser_thread.start()
 
         for thread in vf_parser_threads:
             thread.join()

@@ -95,18 +95,38 @@ def compile_project(name="unit test project"):
     return stdin
 
 def create_apex_metadata(project_name, metadata_type="ApexClass", api_name="unittestapexclass"):
+    # stdin = {
+    #     "github_template": {
+    #         "author"        : "MavensMate", 
+    #         "description"   : "The default template for an Apex Class", 
+    #         "name"          : "Default", 
+    #         "file_name"     : "ApexClass.cls"
+    #     }, 
+    #     "apex_trigger_object_api_name"  : None, 
+    #     "apex_class_type"               : None, 
+    #     "api_name"                      : api_name, 
+    #     "project_name"                  : project_name, 
+    #     "metadata_type"                 : metadata_type
+    # }
     stdin = {
-        "github_template": {
-            "author"        : "MavensMate", 
-            "description"   : "The default template for an Apex Class", 
-            "name"          : "Default", 
-            "file_name"     : "ApexClass.cls"
-        }, 
-        "apex_trigger_object_api_name"  : None, 
-        "apex_class_type"               : None, 
-        "api_name"                      : api_name, 
-        "project_name"                  : project_name, 
-        "metadata_type"                 : metadata_type
+        'project_name' : project_name,
+        'metadata_type': metadata_type, 
+        'apex_trigger_object_api_name' : None, 
+        'apex_class_type' : None, 
+        'params': {'api_name': api_name}, 
+        'github_template': {
+            'author': 'MavensMate', 
+            'name': 'Default', 
+            'description': 'The default template for an Apex Class', 
+            'file_name': 'ApexClass.cls', 
+            'params': [
+                {
+                    'default': 'MyApexClass', 
+                    'name': 'api_name', 
+                    'description': 'Apex Class API Name'
+                }
+            ]
+        }
     }
     request.get_request_payload = mock.Mock(return_value=stdin)
     sys.argv = ['mm.py', '-o', 'new_metadata']
