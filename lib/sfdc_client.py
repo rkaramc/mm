@@ -136,9 +136,14 @@ class MavensMateClient(object):
     def describeMetadata(self, **kwargs):
         if self.mclient == None:
             self.mclient = self.__get_metadata_client()
+        requested_describe_data = self.mclient.describeMetadata(**kwargs)
         if config.describe_data == None:
-            config.describe_data = self.mclient.describeMetadata(**kwargs)
-        return config.describe_data
+            if type(requested_describe_data) is not dict:
+                dict_describe_result = xmltodict.parse(requested_describe_data,postprocessor=util.xmltodict_postprocessor)
+                config.describe_data = dict_describe_result["soapenv:Envelope"]["soapenv:Body"]["describeMetadataResponse"]["result"]
+            if 'retXml' in kwargs and kwargs['retXml'] == False:
+                return config.describe_data
+        return requested_describe_data
 
     def describeObject(self, object_name):
         r = requests.get(self.get_base_url()+"/sobjects/"+object_name+"/describe", headers=self.get_rest_headers(), proxies=self.__get_proxies(), verify=False)
