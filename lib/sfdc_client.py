@@ -695,7 +695,6 @@ class MavensMateClient(object):
                             downloaded_log_ids.append(r["ApexLogId"]) 
                 responses.append(parent_response)
             except Exception, e:
-                raise e
                 responses.append({"job_id":job_id,"success":False})
     
         if dump_to_json:

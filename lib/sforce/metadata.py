@@ -96,7 +96,7 @@ class SforceMetadataClient(SforceBaseClient):
             for t in package_dict['unpackaged']['types']:
                 if 'name' in t:
                     metadata_type_def = util.get_meta_type_by_name(t['name'])
-                    if 'inFolder' in metadata_type_def and metadata_type_def['inFolder']:
+                    if metadata_type_def is not None and 'inFolder' in metadata_type_def and metadata_type_def['inFolder']: #TODO: right now this skips retrieval of unknown types, we should use describe data
                         if 'members' in t and type(t['members']) is not list:
                             if t['members'] == "*" or t['members'] == []:
                                 mlist = self.listMetadata(t['name'], False)
@@ -142,7 +142,7 @@ class SforceMetadataClient(SforceBaseClient):
                 if 'name' in t:
                     metadata_type_def = util.get_meta_type_by_name(t['name'])
                     debug(metadata_type_def)
-                    if 'inFolder' in metadata_type_def and metadata_type_def['inFolder']:
+                    if metadata_type_def is not None and 'inFolder' in metadata_type_def and metadata_type_def['inFolder']: #TODO: right now this skips retrieval of unknown types, we should use describe data
                         if 'members' in t and (t['members'] == "*" or t['members'] == []):
                             #list_request_name = self.__transformFolderMetadataNameForListRequest(t['name'])
                             #mlist = self.listMetadata(list_request_name, False)
