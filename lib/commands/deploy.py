@@ -1,6 +1,7 @@
 import os
 import time
 import threading
+import shutil
 import lib.util as util
 import lib.config as config
 import datetime
@@ -20,20 +21,201 @@ class DeloyToServerCommand(Command):
     """
     def execute(self):
         archive_deployments = config.connection.get_plugin_client_setting("mm_archive_deployments", True)
+        finish_deploy = self.params.get('finish', False)
+        compare = config.connection.get_plugin_client_setting("mm_compare_before_deployment", True)
+        destinations = self.params['destinations']
         deploy_metadata = config.sfdc_client.retrieve(package=self.params['package'])
+        deploy_name = self.params.get('new_deployment_name', None)
         threads = []
-        for destination in self.params['destinations']:
+        
+        if not finish_deploy and compare:
+            source_retrieve_result = config.sfdc_client.retrieve(package=self.params['package'])
+            debug('source_retrieve_result')
+            debug(source_retrieve_result)
+
+            source_dict = {}
+            for fp in source_retrieve_result.fileProperties:
+                source_dict[fp.fileName] = fp
+
+            debug('source_dict')
+            debug(source_dict) 
+
+            #need to compare package.xml to destination orgs here
+            for destination in destinations:
+                thread = CompareHandler(config.project, destination, self.params, self.params['package'])
+                threads.append(thread)
+                thread.start()  
+                
+            compare_results = []
+            for thread in threads:
+                thread.join()  
+                compare_results.append(thread.result)
+            
+            debug('compare_results')
+            debug(compare_results)
+            destination_dict = {}
+
+            for cr in compare_results:
+                cr_dict = {}
+                for fpfp in cr.fileProperties:
+                    cr_dict[fpfp.fileName] = fpfp
+                destination_dict[cr.username] = cr_dict
+
+            debug('destination_dict')
+            debug(destination_dict)    
+
+            final_compare_result = {}
+            for d in destinations:
+                final_compare_result[d['username']] = {}
+
+            for file_name, file_details in source_dict.iteritems():
+                if 'package.xml' in file_name:
+                    continue; 
+                for username, username_value in destination_dict.iteritems():
+                    destination_retrieve_details = destination_dict[username]
+                    
+                    if 'package.xml' in file_name:
+                        continue
+
+                    short_file_name = file_name.split('/')[-1]
+                    mtype = util.get_meta_type_by_suffix(short_file_name.split('.')[-1])
+   
+                    if file_name not in destination_retrieve_details:
+                        final_compare_result[username][file_name] = {
+                            'name' : short_file_name,
+                            'type' : mtype['xmlName'],
+                            'action': 'insert',
+                            'message' : 'Create'
+                        }
+                    else:
+                        destination_file_detail = destination_retrieve_details[file_name]
+                        source_file_detail = source_dict[file_name]
+                        if source_file_detail.lastModifiedDate >= destination_file_detail.lastModifiedDate:
+                            final_compare_result[username][file_name] = {
+                                'name' : short_file_name,
+                                'type' : mtype['xmlName'],
+                                'action' : 'update',
+                                'message' : 'You will overwrite this file'
+                            }
+                        else:
+                            final_compare_result[username][file_name] = {
+                                'name' : short_file_name,
+                                'type' : mtype['xmlName'],
+                                'action' : 'update_conflict',
+                                'message' : 'Destination file is newer than source file'
+                            }
+            
+
+
+            # final_compare_result = {}
+            # for d in destinations:
+            #     final_compare_result[d['username']] = {}
+
+            # for username, username_value in destination_dict.iteritems():
+            #     #destination_dict = destination_dict[username]
+            #     for file_name, file_details in username_value.iteritems():
+            #         if 'package.xml' in file_name:
+            #             continue;
+
+            #         short_file_name = file_name.split('/')[-1]
+            #         mtype = util.get_meta_type_by_suffix(short_file_name.split('.')[-1])
+
+            #         if file_name not in source_dict:
+            #             final_compare_result[username][file_name] = {
+            #                 'name' : short_file_name,
+            #                 'type' : mtype['xmlName'],
+            #                 'action': 'insert',
+            #                 'message' : 'Create'
+            #             }
+            #         else:
+            #             destination_file_detail = username_value[file_name]
+            #             source_file_detail = source_dict[file_name]
+            #             if source_file_detail.lastModifiedDate >= destination_file_detail.lastModifiedDate:
+            #                 final_compare_result[username][file_name] = {
+            #                     'name' : short_file_name,
+            #                     'type' : mtype['xmlName'],
+            #                     'action' : 'update',
+            #                     'message' : 'You will overwrite this file'
+            #                 }
+            #             else:
+            #                 final_compare_result[username][file_name] = {
+            #                     'name' : short_file_name,
+            #                     'type' : mtype['xmlName'],
+            #                     'action' : 'update_conflict',
+            #                     'message' : 'Destination file is newer than source file'
+            #                 }
+
+            debug('final_compare_result')
+            debug(final_compare_result) 
+
+            if self.args.respond_with_html == True:
+                html = util.generate_html_response('deploy_compare', final_compare_result, self.params)
+                response = json.loads(util.generate_success_response(html, "html"))
+                response['compare_success'] = True
+                # if deployment to one org fails, the entire deploy was not successful
+                # for result in final_compare_result:
+                #     if result['success'] == False:
+                #         response['compare_success'] = False
+                #         break
+                return json.dumps(response)
+            else:
+                return json.dumps(final_compare_result,index=4)   
+
+        for destination in destinations:
             if archive_deployments:
                 deploy_path = os.path.join(config.project.location,"deploy",destination['username'])
                 if not os.path.exists(deploy_path):
                     os.makedirs(deploy_path)
+                if not os.path.isfile(os.path.join(config.project.location,"deploy",'.config')):
+                    config_file = open(os.path.join(config.project.location,"deploy",'.config'), 'wb')
+                    config_file_contents = { 
+                        'deployments' : {
+                            'named' : [],
+                            'timestamped' : []
+                        }
+                    }
+                    config_file.write(json.dumps(config_file_contents))
+                    config_file.close()   
+
                 ts = time.time()
                 if not config.is_windows:
                     timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
                 else:
                     timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H %M %S')
-                os.makedirs(os.path.join(config.project.location,"deploy",destination['username'],timestamp))
-                util.extract_base64_encoded_zip(deploy_metadata.zipFile, os.path.join(config.project.location,"deploy",destination['username'],timestamp))
+
+                if deploy_name:
+                    if os.path.isdir(os.path.join(config.project.location,"deploy",destination['username'],deploy_name)):
+                        shutil.rmtree(os.path.join(config.project.location,"deploy",destination['username'],deploy_name))
+                    os.makedirs(os.path.join(config.project.location,"deploy",destination['username'],deploy_name))
+                    util.extract_base64_encoded_zip(deploy_metadata.zipFile, os.path.join(config.project.location,"deploy",destination['username'],deploy_name))
+
+                    config_file_json = util.parse_json_from_file(os.path.join(config.project.location,"deploy",'.config'))
+                    named_deployment = {
+                        'destination' : destination['username'],
+                        'name' : deploy_name,
+                        'timestamp' : timestamp,
+                        'id' : util.get_random_string(30),
+                        'package' : os.path.join(config.project.location,"deploy",destination['username'],deploy_name,'unpackaged','package.xml')
+                    }
+                    config_file_json['deployments']['named'].append(named_deployment)
+                    config_file = open(os.path.join(config.project.location,"deploy",'.config'), 'wb')
+                    config_file.write(json.dumps(config_file_json))
+                    config_file.close()
+                else:
+                    os.makedirs(os.path.join(config.project.location,"deploy",destination['username'],timestamp))
+                    util.extract_base64_encoded_zip(deploy_metadata.zipFile, os.path.join(config.project.location,"deploy",destination['username'],timestamp))
+
+                    config_file_json = util.parse_json_from_file(os.path.join(config.project.location,"deploy",'.config'))
+                    timestamped_deployment = {
+                        'destination' : destination['username'],
+                        'timestamp' : timestamp,
+                        'id' : util.get_random_string(30),
+                        'package' : os.path.join(config.project.location,"deploy",destination['username'],timestamp,'unpackaged','package.xml')
+                    }
+                    config_file_json['deployments']['timestamped'].append(timestamped_deployment)
+                    config_file = open(os.path.join(config.project.location,"deploy",'.config'), 'wb')
+                    config_file.write(json.dumps(config_file_json))
+                    config_file.close()
 
             thread = DeploymentHandler(config.project, destination, self.params, deploy_metadata)
             threads.append(thread)
@@ -134,6 +316,35 @@ class DeleteOrgConnectionCommand(Command):
         src.close()
         util.delete_password_by_key(self.params['id'])
         return util.generate_success_response('Org Connection Successfully Deleted')
+
+class CompareHandler(threading.Thread):
+    def __init__(self, project, destination, params, package):
+        self.project            = project
+        self.destination        = destination
+        self.params             = params
+        self.package            = package #location of package.xml
+        self.result             = None
+        threading.Thread.__init__(self)
+
+    def run(self):
+        try:
+            if 'password' not in self.destination:
+                self.destination['password'] = util.get_password_by_key(self.destination['id'])
+            deploy_client = MavensMateClient(credentials={
+                "username":self.destination['username'],
+                "password":self.destination['password'],
+                "org_type":self.destination['org_type']
+            })    
+
+            retrieve_result = deploy_client.retrieve(package=self.package)
+            retrieve_result['username'] = self.destination['username']
+            debug('>>>>>> RETRIEVE RESULT >>>>>>')
+            debug(retrieve_result)
+            self.result = retrieve_result
+        except BaseException, e:
+            result = util.generate_error_response(e.message, False)
+            result['username'] = self.destination['username']
+            self.result = result
 
 class DeploymentHandler(threading.Thread):
 

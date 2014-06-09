@@ -138,9 +138,13 @@ class MavensMateClient(object):
             self.mclient = self.__get_metadata_client()
         requested_describe_data = self.mclient.describeMetadata(**kwargs)
         if config.describe_data == None:
+            #debug(requested_describe_data) TODO: config.describe_data can be type instance of object or dict right now which is concerning
             if type(requested_describe_data) is not dict:
-                dict_describe_result = xmltodict.parse(requested_describe_data,postprocessor=util.xmltodict_postprocessor)
-                config.describe_data = dict_describe_result["soapenv:Envelope"]["soapenv:Body"]["describeMetadataResponse"]["result"]
+                if type(requested_describe_data) is not str:
+                    config.describe_data = requested_describe_data
+                else:
+                    dict_describe_result = xmltodict.parse(requested_describe_data,postprocessor=util.xmltodict_postprocessor)
+                    config.describe_data = dict_describe_result["soapenv:Envelope"]["soapenv:Body"]["describeMetadataResponse"]["result"]
             if 'retXml' in kwargs and kwargs['retXml'] == False:
                 return config.describe_data
         return requested_describe_data

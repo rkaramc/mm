@@ -560,6 +560,7 @@ def generate_ui(operation,params={}):
             selected=selected,
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'deploy':
+        compare = config.connection.get_plugin_client_setting("mm_compare_before_deployment", True)
         template = env.get_template('/deploy/index.html')
         file_body = template.render(
             name=config.project.project_name,
@@ -567,6 +568,8 @@ def generate_ui(operation,params={}):
             project_location=config.project.location,
             connections=config.project.get_org_connections(),
             operation=operation,
+            compare=compare,
+            deployments=config.project.get_deployments(),
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'execute_apex':
         template = env.get_template('/execute_apex/index.html')
@@ -693,6 +696,9 @@ def generate_html_response(operation, obj, params=None):
         config.logger.debug(obj)
         config.logger.debug(deploy_results)
         html = template.render(deploy_results=deploy_results,args=params)
+    elif operation == 'deploy_compare':
+        template = env.get_template('/deploy/compare_result.html')
+        html = template.render(compare_result=obj,args=params)
     elif operation == 'project_health_check':
         template = env.get_template('/snippets/health_check_result.html')
         html = template.render(result=obj)

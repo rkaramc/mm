@@ -15,6 +15,8 @@ from lib.sfdc_client import MavensMateClient
 from lib.exceptions import *
 from lib.basecommand import Command
 
+debug = config.logger.debug
+
 class NewMetadataCommand(Command):
     """
         Creates a new element of metadata
@@ -417,18 +419,24 @@ class GetMetadataIndexCommand(Command):
     def execute(self):
         if 'keyword' in self.params or 'ids' in self.params:
             return config.project.filter_indexed_metadata(self.params)
-        elif 'package_name' in self.params:
-            return get_org_metadata(True, True, package_name=self.params["package_name"])
+        elif 'package_location' in self.params:
+            return get_org_metadata(True, True, package_location=self.params["package_location"])
         else:
             return get_org_metadata(True, True)
 
 def get_org_metadata(raw=False, selectBasedOnPackageXml=False, selectedIds=[], keyword=None, **kwargs):
+    # debug('getting org metadata!');
+    # debug(raw)
+    # debug(selectBasedOnPackageXml)
+    # debug(kwargs.get('package_location', None))
     project = config.project
     if project.get_is_metadata_indexed():
         if raw:
             org_metadata_raw = util.get_file_as_string(os.path.join(project.location,"config",".org_metadata"))
             org_index = json.loads(org_metadata_raw)
-            if selectBasedOnPackageXml:
+            if kwargs.get('package_location', None) != None:
+                project.select_metadata_based_on_package_xml(org_index, kwargs.get('package_location'))
+            elif selectBasedOnPackageXml:
                 project.select_metadata_based_on_package_xml(org_index)
             elif len(selectedIds) > 0 or keyword != None:
                 if keyword != None:

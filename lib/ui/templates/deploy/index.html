@@ -1,5 +1,6 @@
 {% extends "layouts/base.html" %}
 {% block yield %}
+<script src="file:///{{ base_path_normal() }}/lib/ui/resources/js/jquery.tablesorter.min.js" type="text/javascript"></script>
 <style>
 	.deploy_options label, .deploy_options div.divlabel {
 		width:180px;
@@ -53,10 +54,36 @@
 		margin-bottom:12px;
 	}
 
+	div#filter > div.select {
+		margin:0px;
+	}
+
+	div#filter > div.select > button {
+		margin:10px 0px 0px 0px;
+	}
+
+	table.tablesorter th.sorter-true {
+		cursor:pointer;
+	}
+
+	table.tablesorter th.sorter-true:hover {
+		background: #f9f9f9;
+	}
+
+	table.tablesorter th.tablesorter-headerAsc,
+	table.tablesorter th.tablesorter-headerDesc
+	{
+		background: #f6f6f6;
+	}
+
 </style>
 <div id="result_output">
-	
+	<div class="alert alert-error">
+		<button type="button" class="close fui-cross"></button>
+		<span id="error_message"></span>
+	</div>
 </div>
+
 
 <div class="content">
 		
@@ -70,6 +97,15 @@
 			</a>
 		</li>
 		<li><a href="#arcade" id="arcade_tab" data-toggle="tab">Arcade</a></li>
+		<li class="compare_results_hidden hidden dropdown active">
+      		<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+        		Compare Results
+        		<b class="caret"></b>
+      		</a>
+      		<ul class="dropdown-menu" id="dropdown-compare-destinations">
+
+      		</ul>
+    	</li>
 		<li class="results_hidden dropdown active">
       		<a class="dropdown-toggle" data-toggle="dropdown" href="#">
         		Deploy Results
@@ -99,6 +135,9 @@
 									</option>
 								{% endfor %} 
 							</select>	
+					</div>	
+					<div class="control-group large">
+						<input class="span12" style="width:100%" placeholder="Deployment Name, e.g. QA Deployment (optional)" type="text" id="new_deployment_name">
 					</div>			
 				</fieldset>
 			</form>
@@ -268,7 +307,7 @@
 	      						</select>
 	      					</div>
 
-	      					<a id="btnSubmit" class="btn btn-success btn-embossed" onclick="newConnection()">Create Connection <i class="icon-circle-arrow-right"></i></a>
+	      					<a id="btnCreateConnection" class="btn btn-success btn-embossed" onclick="newConnection()">Create Connection <i class="icon-circle-arrow-right"></i></a>
 	      									
 	      				</fieldset>
 	      			</form>
@@ -310,6 +349,16 @@
 				<input type="text" placeholder="Search for metadata" id="txtFilter" style="width:300px;height:35px;" />
 				<a href="#" class="btn btn-success btn-embossed" id="search-btn" style="right:45px"><i class="icon-search"></i></a>
 				<a href="#" class="btn btn-select btn-embossed" id="select-btn" ><i class="icon-check-empty"></i></a>
+				<select id="selected_deployment_name"class="select-block mbl info" style="display:none;" data-placeholder="Select a deployment...">>
+					{% for d in deployments %}
+						{% if loop.index0 == 0 %}
+							{% set selected = 'selected="selected"' %}
+						{% else %}
+							{% set selected = '' %}
+						{% endif %}
+						<option value="{{d.location}}">{{d.label}}</option>
+					{% endfor %}
+				</select>
 			</div>
 
 			<div id="project_wrapper">
@@ -335,7 +384,8 @@
 
 
 {% block buttons %}					
-	<input id="btnDeploy" type="button" class="btn btn-info btn-embossed" value="Validate Deployment" onclick='deploy()'>
+	<!-- <input id="btnCompare" type="button" class="btn btn-info btn-embossed" value="Compare" onclick='compare()'> -->
+	<input id="btnDeploy" type="button" class="btn btn-info btn-embossed" value="Validate Deployment">
 	{% include 'snippets/cancel_button.html' %}
 	{% include 'snippets/running_indicator.html' %}
 {% endblock %}
@@ -344,6 +394,8 @@
 <script type="text/javascript">
 	var has_indexed_metadata = {{ has_indexed_metadata|lower }};
 	var operation;
+	var compareModeEnabled = {{compare|lower}};
+	var hasCompared = false;
 
 	function isValidateOnly() {
 		return $("#check_only").is(":checked")
@@ -357,10 +409,46 @@
 		return $("#rollback").is(":checked")
 	}
 
+	function setHasCompared(value) {
+		hasCompared = value;
+		if (!hasCompared) {
+			var deployButtonLabel = $("#btnDeploy").val();
+			if (deployButtonLabel.indexOf('Finish ') >= 0) {
+				deployButtonLabel = deployButtonLabel.replace('Finish ', '');
+			}
+			$("#btnDeploy").val(deployButtonLabel);
+		}
+	}
+
 	$(function() {
+		$("#btnDeploy").click(function() {
+			if (compareModeEnabled && !hasCompared) {
+				compare();
+			} else {
+				deploy();
+			}
+		});
+
+	    $("#un_list").change(function() {
+	    	setHasCompared(false);
+	    });
+
+	    $("#project_wrapper").click(function() {
+	    	setHasCompared(false);
+	    });
+
 		$("#check_only").change(function() {
 			var text = (this.checked)? 'Validate Deployment' : 'Deploy to Server';
 			$("#btnDeploy").val(text);
+			setHasCompared(false);
+		});
+
+		$("#run_tests").change(function() {
+			setHasCompared(false);
+		});
+
+		$("#rollback").change(function() {
+			setHasCompared(false);
 		});
 		
 		$("#un_list").change(function() {
@@ -382,16 +470,16 @@
 		}  
 
 		$(window).resize(function() {
-			resize_arcade()
-			resizeProjectWrapper(86)
+			resize_arcade(280)
+			resizeProjectWrapper(140)
 		});
 
 		//render tree when tab is clicked, otherwise there's an extjs and it doesnt render
 		$('a[data-toggle="tab"]').on('shown', function (e) {
 			if (e.target.href.indexOf("metadata") != -1) {
 				if (tree === undefined) {
-					renderTree(86)
-					setTimeout(resizeProjectWrapper(86),500)
+					renderTree(140)
+					setTimeout(resizeProjectWrapper(140),500)
 					resizeFilter()
 				}
 			}
@@ -425,13 +513,19 @@
 				});
 				$(this).html('<i class="icon-check-empty"></i>')
 			}
-		})
+		});
+
+		$("#selected_deployment_name").change(function() {
+			setHasCompared(false);
+			console.log(this.value);
+			renderTree(140, this.value); 
+		});
 
 		$('label.checkbox input').checkbox();
-		resize_games()
-		window.resizeTo(900, 720)
+		resize_arcade(280)
+		window.resizeTo(1000, 850)
 		centerWindow()
-		setTimeout(resizeProjectWrapper(86),500)
+		setTimeout(resizeProjectWrapper(140),500)
 	});
 
 	function repopulate_connection_list(conns) {
@@ -479,54 +573,125 @@
 	}
 
 	function handle_response(response) {
-		if (operation == "deploy") {
-			$(".result_wrapper").remove()
+		if (operation == "deploy" && isFinish) {
+			$(".compare_results_hidden").addClass('hidden');
+			if (response["success"] === false) {
+				show_message(response["body"])
+			} else {
+				$(".result_wrapper").remove()
 
-			$("#result").html(response["body"]);
+				$("#result").html(response["body"]);
 
-			$("#dropdown-destinations").html($("#destination_options ul").html());
-			$("#destination_options").remove()
+				$("#dropdown-destinations").html($("#destination_options ul").html());
+				$("#destination_options").remove()
 
-			if (response["deploy_success"] == true){
-				$("#check_only").attr('checked', false);
-				$("#check_only").parent().removeClass('checked')
-				$("#btnDeploy").val('Deploy to Server');
+				if (response["deploy_success"] == true){
+					$("#check_only").attr('checked', false);
+					$("#check_only").parent().removeClass('checked')
+					$("#btnDeploy").val('Deploy to Server');
+				}
+
+				$("#main-tab-content").append($("#extra_tabs").html());
+				$("#extra_tabs").remove()
+
+				$('.nav-tabs a').click(function (e) {
+				  e.preventDefault();
+				  $(this).tab('show');
+				})
+
+				$(".results_hidden").show();
+				if ($("#arcade").css("display") == "none") {
+					$("ul#main-tabs > li.active").removeClass('active')
+					$("div#main-tab-content > div.active").removeClass('active')
+					$("#result-0").addClass('active')
+					$('li.dropdown ul li a.test_result_link').tab('show');
+					$(".results_hidden").addClass('active');
+				}
 			}
-
-			$("#main-tab-content").append($("#extra_tabs").html());
-			$("#extra_tabs").remove()
-
-			$('.nav-tabs a').click(function (e) {
-			  e.preventDefault();
-			  $(this).tab('show');
-			})
-
-			$(".results_hidden").show();
-			if ($("#arcade").css("display") == "none") {
-				$("ul#main-tabs > li.active").removeClass('active')
-				$("div#main-tab-content > div.active").removeClass('active')
-				$("#result-0").addClass('active')
-				$('li.dropdown ul li a.test_result_link').tab('show');
-				$(".results_hidden").addClass('active');
-			}
-
 			toggleRunningIndicator();
 			$("#btnDeploy").show();
-			notify_sound()
+			$("#btnCompare").show();
+			notify_sound();
+		} else if (operation == "compare") {
+			$(".results_hidden").hide();
+			if (response["success"] === false) {
+				show_message(response["body"])
+			} else {
+				hasCompared = true;
+
+				var deployButtonLabel = $("#btnDeploy").val();
+				$("#btnDeploy").val('Finish '+deployButtonLabel);
+
+				$(".result_wrapper").remove()
+
+				$("#result").html(response["body"]);
+
+				$("#dropdown-compare-destinations").html($("#destination_compare_options ul").html());
+				$("#destination_compare_options").remove()
+
+				if (response["compare_success"] == true){
+					isFinish = true;
+				}
+
+				$("#main-tab-content").append($("#extra_compare_tabs").html());
+				$("#extra_compare_tabs").remove()
+
+				$('.nav-tabs a').click(function (e) {
+				  e.preventDefault();
+				  $(this).tab('show');
+				})
+				$("table.tablesorter").tablesorter();
+				$(".compare_results_hidden").removeClass('hidden');
+				if ($("#arcade").css("display") == "none") {
+					$("ul#main-tabs > li.active").removeClass('active')
+					$("div#main-tab-content > div.active").removeClass('active')
+					$("#result-compare-0").addClass('active')
+					$('li.dropdown ul li a.test_result_link').tab('show');
+					$(".compare_results_hidden").addClass('active');
+				}
+			}
+			toggleRunningIndicator();
+			$("#btnDeploy").show();
+			$("#btnCompare").show();
+			notify_sound();
 		} else if (operation == "index") {
 			if (response["success"] == false) {
 				show_message(response["body"])
 			} else {
 				if (tree === undefined) {
-					renderTree(86)  
+					renderTree(140)  
 				} else {
 					$("#tree").dynatree("getTree").reload();
 				}
 			}
-			resizeProjectWrapper(86);
+			resizeProjectWrapper(140);
 			notify_sound();
 			hideLoading();
 		}
+	}
+
+	function compare() {
+		operation = "compare"
+		$.ajax({
+			type: "POST",
+			url: "{{ base_local_server_url() }}/project/deploy", 
+			data: JSON.stringify({
+				destinations 		: get_target_json(),
+			    check_only 			: isValidateOnly(),
+			    run_tests 			: isRunTests(),
+			    rollback_on_error 	: isRollbackOnError(),
+			    package 			: get_tree(),
+			    project_name 		: '{{ name }}',
+			    new_deployment_name : $("#new_deployment_name").val(),
+			    debug_categories 	: get_log_levels_json(),
+			    project_location	: $("#STATIC-project-location").val(),
+			    finish 				: false
+			}),
+			beforeSend: function() { toggleRunningIndicator(); $("#btnDeploy").hide(); $("#btnCompare").hide();  },
+			complete: function(data){
+				global_init_handler(data)
+			} 
+	 	});	
 	}
 
 	function deploy() {
@@ -541,10 +706,12 @@
 			    rollback_on_error 	: isRollbackOnError(),
 			    package 			: get_tree(),
 			    project_name 		: '{{ name }}',
+			    new_deployment_name : $("#new_deployment_name").val(),
 			    debug_categories 	: get_log_levels_json(),
-			    project_location	: $("#STATIC-project-location").val()
+			    project_location	: $("#STATIC-project-location").val(),
+			    finish 				: true
 			}),
-			beforeSend: function() { toggleRunningIndicator(); $("#btnDeploy").hide()  },
+			beforeSend: function() { toggleRunningIndicator(); $("#btnDeploy").hide(); $("#btnCompare").hide();  },
 			complete: function(data){
 				global_init_handler(data)
 			} 
@@ -582,6 +749,7 @@
 	}
 
 	function deleteConnection(id) {
+		setHasCompared(false);
 		$.ajax({
 			type: "POST",
 			dataType: 'json',
@@ -611,6 +779,7 @@
 	}
 	
 	function newConnection() {
+		setHasCompared(false);
 		$.ajax({
 			type: "POST",
 			dataType: 'json',
