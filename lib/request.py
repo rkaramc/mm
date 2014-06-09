@@ -68,7 +68,10 @@ class MavensMateRequestHandler():
             if self.args.ui_switch == True:
                 config.logger.debug('UI operation requested, attempting to launch MavensMate UI')
                 tmp_html_file = util.generate_ui(self.operation,self.payload)
-                util.launch_ui(tmp_html_file)
+                if config.connection.plugin_client == 'ATOM': #returning location of html file here so we can open the page inside an atom panel
+                    return tmp_html_file
+                else:
+                    util.launch_ui(tmp_html_file)
                 self.__printr(util.generate_success_response('UI Generated Successfully'))
             
             #non-ui command

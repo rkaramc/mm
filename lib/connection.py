@@ -18,7 +18,7 @@ debug = config.logger.debug
 
 class PluginConnection(object):
 
-    currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3', 'BRACKETS']
+    currently_supported_clients = ['SUBLIME_TEXT_2', 'SUBLIME_TEXT_3', 'BRACKETS', 'ATOM']
     PluginClients = enum(SUBLIME_TEXT_2='SUBLIME_TEXT_2', SUBLIME_TEXT_3='SUBLIME_TEXT_3', ATOM='ATOM', BRACKET='BRACKETS', NOTEPAD_PLUS_PLUS='NOTEPAD_PLUS_PLUS', TEXTMATE='TEXTMATE')
     
     def __init__(self, params={}, **kwargs):
@@ -191,6 +191,12 @@ class PluginConnection(object):
                     return os.path.join(os.path.expanduser('~'),"Library","Application Support","Brackets","extensions","user","mavensmate-user-settings.json")
                 else:
                     return os.path.join(os.path.expanduser('~'),"Library","Application Support","Brackets","extensions","user","mavensmate","settings.json")
+            # elif 'ATOM' in self.plugin_client: #TODO: atom's settings are written in cson which python cannot currently parse, will need to have atom calls include settings in payload
+            #     if type == "User":
+            #         atom_settings = util.get_file_as_string(os.path.join(os.path.expanduser('~'),'.atom','config.cson'))
+            #         json_data = cson.csons2json(atom_settings, 1)
+            #         json_file_location = util.put_generic_tmp_file_on_disk(json_data, 'json')
+            #         return json_file_location
         elif sys.platform == 'win32' or sys.platform == 'cygwin':
             return os.path.join(os.environ['APPDATA'], sublime_ver, 'Packages',type,obj)
         elif sys.platform == 'linux2':
