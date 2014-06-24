@@ -354,6 +354,14 @@ def get_meta_type_by_suffix(suffix):
         for item in data["metadataObjects"]: 
             if 'suffix' in item and item['suffix'] == suffix:
                 return item
+        if config.describe_data != None:
+            project_org_describe = config.describe_data
+        if config.project != None and os.path.isfile(os.path.join(config.project.location,'config','.describe')):
+            project_org_describe = parse_json_from_file(os.path.join(config.project.location,'config','.describe'))
+        if project_org_describe != None and 'metadataObjects' in project_org_describe:
+            for item in project_org_describe["metadataObjects"]: 
+                if 'suffix' in item and item['suffix'] == suffix:
+                    return item
     except:
         return None
 
@@ -366,6 +374,23 @@ def get_meta_type_by_dir(dir_name):
             return item
         elif 'tagName' in item and item['tagName'].lower() == dir_name.lower():
             return item
+    '''
+        > quick and dirty fix for users experiencing issues with "newer" metadata types not properly tested by mm
+        > if the project has a cached .describe, let's use that to detect metadata types
+    '''
+    try:
+        if config.describe_data != None:
+            project_org_describe = config.describe_data
+        if config.project != None and os.path.isfile(os.path.join(config.project.location,'config','.describe')):
+            project_org_describe = parse_json_from_file(os.path.join(config.project.location,'config','.describe'))
+        if project_org_describe != None and 'metadataObjects' in project_org_describe:
+            for item in project_org_describe["metadataObjects"]: 
+                if 'directoryName' in item and item['directoryName'].lower() == dir_name.lower():
+                    return item
+                elif 'tagName' in item and item['tagName'].lower() == dir_name.lower():
+                    return item
+    except:
+        pass
 
 def get_meta_type_by_name(name):
     data = get_default_metadata_data()
@@ -376,6 +401,21 @@ def get_meta_type_by_name(name):
     for item in child_data: 
         if 'xmlName' in item and item['xmlName'] == name:
             return item
+    '''
+        > quick and dirty fix for users experiencing issues with "newer" metadata types not properly tested by mm
+        > if the project has a cached .describe, let's use that to detect metadata types
+    '''
+    try:
+        if config.describe_data != None:
+            project_org_describe = config.describe_data
+        if config.project != None and os.path.isfile(os.path.join(config.project.location,'config','.describe')):
+            project_org_describe = parse_json_from_file(os.path.join(config.project.location,'config','.describe'))
+        if project_org_describe != None and 'metadataObjects' in project_org_describe:
+            for item in project_org_describe["metadataObjects"]: 
+                if 'xmlName' in item and item['xmlName'] == name:
+                    return item
+    except:
+        pass
     #raise MMException('Unknown metadata type: '+name)
 
 def put_skeleton_files_on_disk(metadata_type, where, github_template=None, params={}):
@@ -520,6 +560,7 @@ def generate_ui(operation,params={}):
             selected=selected,
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'deploy':
+        compare = config.connection.get_plugin_client_setting("mm_compare_before_deployment", True)
         template = env.get_template('/deploy/index.html')
         file_body = template.render(
             name=config.project.project_name,
@@ -527,6 +568,8 @@ def generate_ui(operation,params={}):
             project_location=config.project.location,
             connections=config.project.get_org_connections(),
             operation=operation,
+            compare=compare,
+            deployments=config.project.get_deployments(),
             client=config.connection.plugin_client).encode('UTF-8')
     elif operation == 'execute_apex':
         template = env.get_template('/execute_apex/index.html')
@@ -653,6 +696,9 @@ def generate_html_response(operation, obj, params=None):
         config.logger.debug(obj)
         config.logger.debug(deploy_results)
         html = template.render(deploy_results=deploy_results,args=params)
+    elif operation == 'deploy_compare':
+        template = env.get_template('/deploy/compare_result.html')
+        html = template.render(compare_result=obj,args=params)
     elif operation == 'project_health_check':
         template = env.get_template('/snippets/health_check_result.html')
         html = template.render(result=obj)
@@ -674,8 +720,16 @@ def client_subscription_list():
         return []
 
 def metadata_types():
-    return sorted(get_default_metadata_data()["metadataObjects"], key=itemgetter('xmlName'))
-
+    try:
+        if config.describe_data != None and 'metadataObjects' in config.describe_data:
+            return sorted(config.describe_data["metadataObjects"], key=itemgetter('xmlName'))
+        elif config.project != None and os.path.isfile(os.path.join(config.project.location,'config','.describe')):
+            project_org_describe = parse_json_from_file(os.path.join(config.project.location,'config','.describe'))
+            return sorted(project_org_describe["metadataObjects"], key=itemgetter('xmlName'))
+        else:
+            return sorted(get_default_metadata_data()["metadataObjects"], key=itemgetter('xmlName'))
+    except:
+        return sorted(get_default_metadata_data()["metadataObjects"], key=itemgetter('xmlName'))
 
 def does_file_exist(api_name, metadata_type_name):
     metadata_type = get_meta_type_by_name(metadata_type_name)

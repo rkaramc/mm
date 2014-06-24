@@ -14,6 +14,7 @@ import datetime
 import collections
 import webbrowser
 import crawlJson
+import xml.parsers.expat
 from local_store import ConflictManager
 from health_check import HealthCheck
 from xml.dom import minidom
@@ -329,11 +330,8 @@ class MavensMateProject(object):
 
             try:
                 project_metadata = self.sfdc_client.retrieve(package=self.package)
-            except Exception, e:
-                if 'not well-formed (invalid token)' in e.message:
-                    raise MMException('Malformed package.xml: '+e.message)
-                else:
-                    raise e
+            except xml.parsers.expat.ExpatError, e:
+                raise MMException('Malformed package.xml: '+e.message)
 
             #freshen local store
             self.conflict_manager.refresh_local_store(project_metadata.fileProperties)
@@ -566,9 +564,13 @@ class MavensMateProject(object):
     # def refresh_index(self, mtypes=[]):
     #     mm_metadata.index_metadata(mtypes)
 
-    def select_metadata_based_on_package_xml(self, return_list, package_name="package.xml"):
+    def select_metadata_based_on_package_xml(self, return_list, package_location='project'):
         #process package and select only the items the package has specified
-        package_types = self.get_package_types();
+        debug(package_location)
+        if package_location == 'project' or package_location == 'package.xml':
+            package_types = self.get_package_types();
+        else:
+            package_types = self.get_package_types(package_location);
         #expand standard "custombjects" to customfields
         custom_fields = []
         for val in package_types:
@@ -738,13 +740,22 @@ class MavensMateProject(object):
         
         return return_list
 
-    def __get_package_as_dict(self):
-        return util.parse_xml_from_file(os.path.join(self.location,"src","package.xml"))
+    def __get_package_as_dict(self, location='project'):
+        debug(location)
+        if location == 'project':
+            return util.parse_xml_from_file(os.path.join(self.location,"src","package.xml"))
+        else:
+            return util.parse_xml_from_file(location)
 
-    def get_package_types(self):
+    def get_package_types(self, package_location="project"):
+        debug('get_package_types')
+        debug(package_location)
         try:
-            project_package = self.__get_package_as_dict()
-            package_types = project_package['Package']['types']
+            if package_location == 'project':
+                pkg = self.__get_package_as_dict()
+            else:
+                pkg = self.__get_package_as_dict(package_location)
+            package_types = pkg['Package']['types']
             if not isinstance(package_types, (list, tuple)):
                 package_types = [package_types]
             return package_types
@@ -1007,27 +1018,34 @@ class MavensMateProject(object):
         except:
             return []
 
-    #returns a list of all deployment names (FUTURE)
-    # def get_deployment_names(self):
-    #     package_names = ["package.xml"]
-    #     try:
-    #         if not os.path.exists(os.path.join(self.location,"deploy")):
-    #             return package_names
-    #         else:
-    #             for dirname, dirnames, filenames in os.walk(os.path.join(self.location,"deploy")):
-    #                 for filename in filenames:
-    #                     if filename == "package.xml":
-    #                         full_file_path = os.path.join(dirname, filename)
-    #                         if "linux" in sys.platform or "darwin" in sys.platform:
-    #                             directory_parts = full_file_path.split("/");
-    #                         else:
-    #                             directory_parts = full_file_path.split("\\");
-    #                         directory_parts.remove("package.xml")
-    #                         directory_parts.remove("unpackaged")
-    #                         package_names.append(" | ".join(directory_parts[-2:]))
-    #     except:
-    #         return package_names
-    #     return package_names
+    #returns a list of all deployment names
+    def get_deployments(self):
+        package_names = []
+        package_names.append({
+            'label' : 'package.xml',
+            'location' : 'package.xml'
+        })
+        try:
+            if not os.path.isfile(os.path.join(self.location,"deploy",".config")):
+                return package_names
+            else:
+                deploy_config_file = util.parse_json_from_file(os.path.join(self.location,"deploy",".config"))
+                named_deployments = deploy_config_file['deployments']['named']
+                for nd in named_deployments:
+                    package_names.append({
+                        'label' : nd['name'] + ' ['+nd['timestamp']+'] ('+nd['destination']+')',
+                        'location' : nd['package']
+                    })
+
+                timestamped_deployments = deploy_config_file['deployments']['timestamped']
+                for td in timestamped_deployments:
+                    package_names.append({
+                        'label' : td['timestamp'] + ' ('+td['destination']+')',
+                        'location' : td['package']
+                    })
+        except:
+            return package_names
+        return package_names
 
     #returns metadata types for this org, or default types
     def get_org_describe(self):

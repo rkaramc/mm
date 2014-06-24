@@ -67,21 +67,11 @@
 		<div id="advanced" class="tab-pane">
 			<form class="form-stacked" style="padding-top:10px;">
 				<fieldset>
-					<div class="clearfix">
+					<div class="clearfix" id="subscriptionWrapper">
 						<label for="subscription" style="font-weight:bold;">Metadata Subscription List</label> 
-						<select name="huge" class="select-block mbl info" style="display:none;" id="subscription" multiple="multiple" data-placeholder="Select 1 or more metadata types..." data-selected-text-format="count>3" data-size="20">
-
-							{% for m in metadata_types() %}
-								{% if m['xmlName'] in client_subscription_list() %}
-									{% set selected = 'selected="selected"' %}
-								{% else %}
-									{% set selected = '' %}
-								{% endif %}
-								<option {{ selected }} value="{{ m['xmlName'] }}">
-									{{ m['xmlName'] }}
-								</option>
-							{% endfor %} 
-						</select>	
+						<!-- populated by dynamic org data -->
+					</div>
+					<div class="clearfix">
 						<div class="alert alert-info" style="margin-top:20px">
 							<ul>
 								<li>
@@ -125,7 +115,11 @@
 	<script type="text/javascript">
 		var response;
 		var operation;
-		var developer_metadata_types = ['ApexClass', 'ApexComponent', 'ApexTrigger', 'ApexPage', 'StaticResource']
+		var isSubscriptionListBuilt = false;
+		var developer_metadata_types = ['ApexClass', 'ApexComponent', 'ApexTrigger', 'ApexPage', 'StaticResource'];
+		var default_subscription = [
+			"{{ client_subscription_list()|join('", "') }}"
+		];
 
 		function new_custom_project() {
 			operation = "new"
@@ -207,8 +201,8 @@
 			//when user changes tab to metadata selection, use provided creds to login and get session id
 			$('a[data-toggle="tab"]').on('shown', function (e) {
 				//console.log(e.target.href.indexOf("metadata"))
-				if (e.target.href.indexOf("metadata") != -1 && ($('#sid').val() == null || $('#sid').val() == "")) {
-					console.log('checking creds');
+				if ((e.target.href.indexOf("metadata") != -1 || e.target.href.indexOf("advanced") != -1) && ($('#sid').val() == null || $('#sid').val() == "")) {
+					//console.log('checking creds');
 					operation = "check_creds"
 					populateMetadataTree('Attempting to authenticate to Salesforce using the provided credentials')
 				}
@@ -237,25 +231,47 @@
 							show_message(response["body"]);
 							notify_sound();
 						} else {
-							renderBufferedTree(response['metadata'])
-							$('#sid').val(response["sid"])	
+							console.log(response);
+							renderBufferedTree(response['metadata']);
+							$('#sid').val(response["sid"]);	
 							$('#metadata_server_url').val(response["metadata_server_url"])
 							$('#server_url').val(response["server_url"])
 							//tree.setLoading(false)
-							hide_message()
+							if (!isSubscriptionListBuilt)
+								buildSubcriptionList(response['org_metadata_types']);
+							hide_message();
 						}
 						resizeProjectWrapper(10);
 						hideLoading();
 					} catch(e) {
-						console.log(e)
+						console.log(e);
 						show_message('The local MavensMate server did not respond properly. This likely means it is not running or it is malfunctioning. Try restarting your text editor and MavensMate.app.');
-
 						notify_sound();
 						hideLoading();
 					}
 					
 				}
 		 	});
+		}
+
+		function buildSubcriptionList(org_metadata_types) {
+			var htmlWithSelectOptions = '';
+			for (var t in org_metadata_types) {
+				var xmlName = org_metadata_types[t].xmlName;
+				if ($.inArray( xmlName, default_subscription ) >= 0) {
+					htmlWithSelectOptions += '<option value="'+xmlName+'" selected>'+xmlName+'</option>';
+				} else {
+					htmlWithSelectOptions += '<option value="'+xmlName+'">'+xmlName+'</option>';
+				}
+			}
+			var selectList = '<select name="huge" class="select-block mbl info" style="display:none;" id="subscription" multiple="multiple" data-placeholder="Select 1 or more metadata types..." data-selected-text-format="count>3" data-size="20">';
+			htmlWithSelectOptions = selectList+htmlWithSelectOptions+'</select>';
+			console.log(htmlWithSelectOptions);
+			$("#subscriptionWrapper > div").remove();
+			$("#subscriptionWrapper > select").remove();
+			$("#subscriptionWrapper").append(htmlWithSelectOptions);
+			$("select.info").selectpicker({style: 'btn-info btn-embossed'});
+			isSubscriptionListBuilt = true;
 		}
 								
 	</script>

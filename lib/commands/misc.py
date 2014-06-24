@@ -32,6 +32,7 @@ class GetActiveSessionCommand(Command):
             "metadata_server_url"   : client.metadata_server_url,
             "server_url"            : client.server_url,
             "metadata"              : client.get_org_metadata(subscription=self.params.get('subscription', None)),
+            "org_metadata_types"    : util.metadata_types(),
             "success"               : True
         }
         return util.generate_response(response)
